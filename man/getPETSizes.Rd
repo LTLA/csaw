@@ -1,0 +1,55 @@
+\name{getPETSizes}
+\alias{getPETSizes}
+
+\title{Compute fragment lengths for paired-end tags}
+ 
+\description{Compute the length of the sequenced fragment for each read pair in paired-end tag (PET) data.}
+
+\usage{
+getPETSizes(bam.file, param=readParam(pet="both"))
+}
+
+\arguments{
+	\item{bam.file}{a character string containing the file path to a sorted and indexed BAM file}
+    \item{param}{a \code{readParam} object containing read extraction parameters}
+}
+
+\value{
+A list containing:
+\item{sizes}{an integer vector of fragment lengths for all valid read pairs in the library}
+\item{diagnostics}{an integer vector containing the total number of reads, number of singleton reads, pairs with one unmapped read,
+	number of improperly orientated read pairs and interchromosomal pairs}
+}
+
+\details{
+This function assembles a number of paired-end diagnostics.
+First, any read pairs with one or more unmapped reads are ignored.
+A read is only mapped if it is not removed by \code{dedup}, \code{minq}, \code{restrict} or \code{discard} in \code{\link{readParam}}.
+Otherwise, the alignment is not considered to be reliable.
+The total number of read pairs with one unmapped read is recorded.
+
+Of the mapped pairs, the valid (i.e., proper) read pairs are identified.
+These refer to intrachromosomal read pairs where the reads with the lower and higher genomic coordinate map to the forward and reverse strand, respectively.
+The distance between the positions of the mapped 5' ends of the two reads must also be equal to or greater than the read lengths. 
+Any intrachromosomal read pair that fails these criteria will be considered as improperly orientated.
+If the reads are on different chromosomes, the read pair will be recorded as being interchromosomal.
+
+Each valid read pair corresponds to a DNA fragment where both ends are sequenced. 
+The size of the fragment can be determined by calculating the distance between the 5' ends of the mapped reads. 
+The distribution of sizes is useful for assessing the quality of the library preparation, along with all of the recorded diagnostics. 
+}
+
+\author{Aaron Lun}
+
+\seealso{
+\code{\link{readParam}}
+}
+
+\examples{
+bamFile <- system.file("exdata", "pet.bam", package="csaw")
+out <- getPETSizes(bamFile, param=readParam(pet="both"))
+out <- getPETSizes(bamFile, param=readParam(pet="both", restrict="chrA"))
+out <- getPETSizes(bamFile, param=readParam(pet="both", discard=GRanges("chrA", IRanges(1, 50))))
+}
+
+\keyword{diagnostics}

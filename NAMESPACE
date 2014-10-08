@@ -1,0 +1,29 @@
+#  Calling the dynamic library
+useDynLib(csaw, .registration=TRUE, .fixes="cxx_")
+
+#  All functions exported, arranged by sequence of usage.
+export(csawUsersGuide,
+	correlateReads, getPETSizes,
+	regionCounts, windowCounts,
+	normalizeCounts, 
+	combineTests, getBestTest, mergeWindows,
+	detailRanges,
+	extractReads, readParam)
+
+#  Importing required packages
+import(GenomicRanges, Rsamtools,
+	S4Vectors, IRanges, GenomeInfoDb,
+	edgeR, limma,
+	GenomicFeatures, AnnotationDbi,
+	GenomicAlignments,
+	methods)
+
+#  Exporting classes and methods
+exportClasses(
+	readParam
+)
+
+exportMethods(
+	show, "$", reform, normalize, asDGEList
+)
+
