@@ -1,4 +1,4 @@
-windowCounts <- function(bam.files, spacing=50, width=1, ext=100, shift=0,
+windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	filter=NULL, bin=FALSE, param=readParam())
 # Gets counts from BAM files at each position of the sliding window. Applies
 # a gentle filter to remove the bulk of window positions with low counts.
@@ -90,11 +90,15 @@ windowCounts <- function(bam.files, spacing=50, width=1, ext=100, shift=0,
 					out <- .extractPET(bam.files[bf], where=where, dedup=dedup, minq=minq, 
 						discard=extracted$discard[[chr]], max.frag=max.frag)
 				}
-				frag.start <- out$pos
 
-				# Only want to record each pair once in a bin, so forcing it to only use the 5' end.
-				if (bin) { frag.end <- frag.start }
-				else { frag.end <- frag.start+out$size-1L }
+				# Only want to record each pair once in a bin, so forcing it to only use the midpoint.
+				if (bin) { 
+					mid <- as.integer(out$pos + out$size/2)
+					frag.end <- frag.start <- mid
+				} else { 
+					frag.start <- out$pos
+					frag.end <- frag.start + out$size - 1L 
+				}
 			}
 
 # Extending reads to account for window sizes > 1 bp. The start of each read
@@ -129,7 +133,9 @@ windowCounts <- function(bam.files, spacing=50, width=1, ext=100, shift=0,
 	seqlengths(all.regions) <- extracted$chrs
 
 	return(SummarizedExperiment(assays=do.call(rbind, all.out), 
-		rowData=all.regions, colData=DataFrame(totals=totals)))
+		rowData=all.regions, colData=DataFrame(totals=totals),
+		exptData=SimpleList(ext=ext, spacing=spacing, width=width, 
+			shift=shift, param=param)))
 }
 
 ########################################################

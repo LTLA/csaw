@@ -6,7 +6,7 @@
 \description{Count the number of extended reads overlapping a sliding window at spaced positions across the genome.}
 
 \usage{
-windowCounts(bam.files, spacing=50, width=1, ext=100, shift=0,
+windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	filter=NULL, bin=FALSE, param=readParam())
 }
 
@@ -24,8 +24,9 @@ windowCounts(bam.files, spacing=50, width=1, ext=100, shift=0,
 \value{
 A \code{\link{SummarizedExperiment}} object is returned containing one integer matrix.
 Each entry of the matrix contains the count for each library (column) at each window (row).
-The coordinates of each window are stored as the \code{\link{rowData}}.
-The total number of reads in each library are stored as \code{totals} in the \code{\link{colData}}.
+The coordinates of each window are stored as the \code{rowData}.
+The total number of reads in each library are stored as \code{totals} in the \code{colData}.
+Other read counting parameters (e.g., \code{ext}, \code{param}) are stored in the \code{exptData}.
 }
 
 \details{
@@ -52,7 +53,7 @@ If \code{filter=NULL}, the count sum filter threshold is automatically defined a
  
 If \code{bin} is set, settings are internally adjusted so that all reads are counted into non-overlapping adjacent bins of size \code{width}. 
 Specifically, \code{spacing} is set to \code{bin} and \code{filter} is set to 1. 
-Only the 5' end of each read or left-most position of each fragment (for paired-end data) is used in counting.
+Only the 5' end of each read or the midpoint of each fragment (for paired-end data) is used in counting.
 
 }
 
