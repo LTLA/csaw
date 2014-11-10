@@ -6,8 +6,8 @@ export(csawUsersGuide,
 	readParam,
 	correlateReads, getPETSizes, 
 	regionCounts, windowCounts,
-	getWidths,
-	normalizeCounts, scaledAverage,
+	normalizeCounts, 
+	getWidths, scaledAverage,
 	combineTests, getBestTest, mergeWindows,
 	detailRanges,
 	extractReads)
@@ -16,9 +16,11 @@ export(csawUsersGuide,
 import(GenomicRanges, Rsamtools,
 	S4Vectors, IRanges, GenomeInfoDb,
 	edgeR, limma,
-	GenomicFeatures, AnnotationDbi,
-	GenomicAlignments,
 	methods)
+
+importFrom("GenomicAlignments", cigarWidthAlongReferenceSpace)
+importFrom("GenomicFeatures", exonsBy)
+importFrom("AnnotationDbi", select)
 
 #  Exporting classes and methods
 exportClasses(
