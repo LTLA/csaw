@@ -1,0 +1,119 @@
+
+R version 3.1.1 (2014-07-10) -- "Sock it to Me"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ############################################################
+> # This tests the profileSites command, to ensure that it's actually giving proper advice.
+> 
+> source("simsam.R")
+> 
+> sdir<-"profile-test"
+> dir.create(sdir)
+> outfname <- file.path(sdir, "out")
+> 
+> suppressWarnings(suppressPackageStartupMessages(require(csaw)))
+> 
+> comp <- function(nreads, chromos, ext=100, width=200, res=50, weight=TRUE, minq=NA, dedup=FALSE) { 
++ 	# Simulating first.
++ 	bam <- regen(nreads, chromos, outfname)
++ 	win.data <- generateWindows(chrs=chromos, winsize=res, nwin=20)
++ 	windows <- win.data$region
++ 	nwin <- length(windows)
++ 
++ 	# Running profileSites.
++ 	xparam <- readParam(minq=minq, dedup=dedup)
++ 	if (weight) {
++ 		by.win <- regionCounts(bam, windows, ext=ext, param=xparam)
++ 		metric <- rowSums(assay(by.win))
++ 	} else {
++ 		metric <- rep(1, nwin)
++ 	}
++ 	observed <- profileSites(bam, windows, ext=ext, range=width, param=xparam, weight=1/metric)
++ 
++ 	# Running the reference analysis.
++ 	totally <- list()
++ 	for (chr in names(chromos)) {
++ 		out <- extractReads(GRanges(chr, IRanges(1, chromos[[chr]])), bam, param=xparam)
++ 		totally[[chr]] <- suppressWarnings(resize(out, width=ext))
++ 	} 
++ 	totes.prof <- 0
++ 	for (x in 1:nwin) {
++ 		curwin <- windows[x]
++ 		all.reads <- totally[[as.character(seqnames(curwin))]]
++ 		dist.back <- start(all.reads) - end(curwin)
++ 		dist.front <- start(curwin) - end(all.reads)
++ 		totes.prof <- totes.prof + (tabulate(dist.back, nbin=width) + tabulate(dist.front, nbin=width))/metric[x]
++ 	}
++ 
++ 	# Evaluating the two methods.
++ 	reference <- totes.prof/nwin/2
++ 	if (length(reference)!=length(observed)) { stop("vectors are of differing lengths") }
++ 	if (any(abs(reference - observed) > (reference+1e-3)*1e-6)) { stop("coverage profiles don't match up") }
++ 	return(head(observed))
++ }
+> 
+> ############################################################
+> # Fairly hefty simulations are necessary here.
+> 
+> set.seed(123123)
+> nreads <- 5000
+> chromos <- c(chrA=10000, chrB=5000)
+> comp(nreads, chromos)
+[1] 0.005909831 0.010478646 0.008146176 0.006816865 0.006026170 0.006775294
+> comp(nreads, chromos, minq=100)
+[1] 0.005461853 0.004723068 0.008829185 0.008055782 0.007775885 0.007506467
+> comp(nreads, chromos, dedup=TRUE)
+[1] 0.006007977 0.009314962 0.008076691 0.007444186 0.006662113 0.003800911
+> 
+> comp(nreads, chromos, ext=50)
+[1] 0.013046071 0.008899633 0.012985819 0.008752288 0.009921970 0.012375635
+> comp(nreads, chromos, ext=200)
+[1] 0.004634274 0.004020004 0.003321206 0.003110115 0.004988791 0.004362438
+> comp(nreads, chromos, width=100)
+[1] 0.008431367 0.007476433 0.008331271 0.007296050 0.005954891 0.011521462
+> comp(nreads, chromos, width=500)
+[1] 0.006677101 0.004388466 0.006949152 0.005817934 0.006889918 0.006296864
+> 
+> comp(nreads, chromos, res=20)
+[1] 0.009082736 0.008899174 0.007821430 0.007689056 0.006661635 0.009443421
+> comp(nreads, chromos, res=20, width=100)
+[1] 0.010155074 0.009923813 0.008456297 0.007912799 0.010275517 0.010135788
+> comp(nreads, chromos, res=100)
+[1] 0.005347887 0.004451068 0.007752424 0.004202977 0.006595615 0.004840423
+> comp(nreads, chromos, res=100, width=500)
+[1] 0.006116413 0.003832466 0.004283825 0.004346437 0.003156520 0.005176635
+> 
+> comp(nreads, chromos, res=20, weight=FALSE)
+[1] 0.4500 0.4250 0.3250 0.3125 0.3500 0.4000
+> comp(nreads, chromos, res=100, weight=FALSE)
+[1] 0.3500 0.2875 0.4250 0.3750 0.3875 0.4000
+> comp(nreads, chromos, weight=FALSE)
+[1] 0.3500 0.4625 0.3250 0.3375 0.4625 0.4625
+> comp(nreads, chromos, weight=FALSE)
+[1] 0.4000 0.2875 0.3625 0.3500 0.3750 0.2125
+> 
+> ############################################################
+> # Cleaning up.
+> 
+> unlink(sdir, recursive=TRUE)
+> 
+> ############################################################
+> 
+> proc.time()
+   user  system elapsed 
+ 20.241   0.151  20.438 
