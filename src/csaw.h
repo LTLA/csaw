@@ -1,6 +1,7 @@
 #ifndef CSAW_H
 #define CSAW_H
 
+#include <set>
 #include <stdexcept>
 #include <deque>
 #include <algorithm>
@@ -50,6 +51,14 @@ SEXP correlate_reads(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* get_rle_counts.cpp */
 
 SEXP get_rle_counts(SEXP, SEXP, SEXP, SEXP, SEXP);
+
+/* get_profile.cpp */
+
+SEXP get_profile(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
+/* find_maxima.cpp */
+
+SEXP find_maxima(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 }
 

@@ -1,0 +1,90 @@
+profileSites <- function(bam.files, regions, range=5000, ext=100, weight=1, param=readParam()) 
+# This is a function to compute the profile around putative binding sites. The 5' edge of the
+# binding site is identified by counting reads into a window of size `width`, on the left and
+# right of a given position, and determining if the right/left ratio is greater than 5. It then
+# records the coverage of the resulting bases, up to `max.dist`.
+#
+# written by Aaron Lun
+# 2 July 2012
+# modified 10 November, 2014
+{
+    extracted <- .processIncoming(bam.files, param$restrict, param$discard)
+	pet <- param$pet
+	minq <- param$minq
+	dedup <- param$dedup
+	rescue.pairs <- param$rescue.pairs
+	rescue.ext <- param$rescue.ext
+	max.frag <- param$max.frag
+
+	# Splitting up the regions.
+	indices <- split(1:length(regions), seqnames(regions))
+	weight <- as.double(weight)
+	if(length(weight) != length(regions)) { weight <- rep(weight, length.out=length(regions)) }
+
+	ext <- as.integer(ext)
+	range <- as.integer(range)
+	if (range <= 0L) { stop("range should be positive") }
+	blen <- length(bam.files)
+	total.profile <- 0
+		
+	# Running through the chromosomes.
+    for (i in 1:length(extracted$chrs)) {
+		chr <- names(extracted$chrs)[i]
+		chosen <- indices[[chr]]
+		if (!length(chosen)) { next }
+		outlen <- extracted$chrs[i]
+		where <- GRanges(chr, IRanges(1L, outlen))
+
+        # Reading in the reads for the current chromosome for all the BAM files.
+		starts <- ends <- list()
+		for (b in 1:blen) {
+            if (pet!="both") {
+				if (pet=="none") { 
+					reads <- .extractSET(bam.files[b], where=where, dedup=dedup, minq=minq, 
+						discard=extracted$discard[[chr]])
+				} else {
+					reads <- .extractBrokenPET(bam.files[b], where=where, dedup=dedup, minq=minq, 
+						discard=extracted$discard[[chr]], use.first=(pet=="first"))
+				} 
+				start.pos <- ifelse(reads$strand=="+", reads$pos, reads$pos + reads$qwidth - ext)
+				end.pos <- start.pos + ext - 1L
+			} else {
+                if (rescue.pairs) {
+					out <- .rescuePET(bam.files[b], where=where, dedup=dedup, minq=minq,
+						max.frag=max.frag, ext=rescue.ext, discard=extracted$discard[[chr]])
+				} else {
+					out <- .extractPET(bam.files[b], where=where, dedup=dedup, minq=minq,
+						discard=extracted$discard[[chr]], max.frag=max.frag)
+				}
+				start.pos <- out$pos
+				end.pos <- out$pos + out$size - 1L
+			}
+
+			if (!length(start.pos)) { next }
+			ix <- length(starts) + 1L
+			starts[[ix]] <- start.pos 
+ 			ends[[ix]] <- end.pos
+		}
+			
+		# Pulling out the regions.
+		all.starts <- start(regions)[chosen]
+		all.ends <- end(regions)[chosen]
+		os <- order(all.starts)
+		oe <- order(all.ends)
+		rank.e <- 1:length(oe)
+		rank.e[oe] <- rank.e
+
+	    # We call the C++ functions to aggregate profiles.
+		starts <- unlist(starts)
+		ends <- unlist(ends)
+		if (!length(starts)) { next }
+		cur.profile <- .Call(cxx_get_profile, starts, ends, all.starts[os], all.ends[oe], 
+			os-1L, oe-1L, rank.e-1L, weight[chosen], range) 
+		if (is.character(cur.profile)) { stop(cur.profile) }
+		total.profile <- total.profile + cur.profile
+    }
+
+	# Cleaning up and returning the profiles. We divide by 2 to get the coverage,
+	# as total.profile counts both sides of each summit (and is twice as large as it should be).
+    return(total.profile/length(regions)/2)
+}
