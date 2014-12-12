@@ -107,7 +107,7 @@ setMethod("reform", signature("readParam"), function(x, ...) {
 			rescue.ext=as.integer(val),
 			dedup=as.logical(val),
 			minq=as.integer(val),
-			restrict=as.character(restrict),
+			restrict=as.character(val),
 			val)
 	}
 	do.call(initialize, c(x, incoming))
