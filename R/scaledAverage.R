@@ -12,23 +12,35 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, ...)
 	aveLogCPM(y, prior.count=scale*prior.count, ...) - log2(scale)
 }
 
-getWidths <- function(data, pet.len=NULL) 
+getWidths <- function(data)
 # This computes the effective width of the data in the SummarizedExperiment
 # object. This is done by accounting for the effect of read extension; or,
-# for paired end data, the median fragment length.
+# for paired end data, the median fragment length. For multiple libraries,
+# the mean fragment length is used.
 #
 # written by Aaron Lun
-# 5 November 2014
+# created 5 November 2014
+# last modified 12 December 2014
 {
-	is.pet <- exptData(data)$param$pet=="both"
-	if (is.pet) {
-		if (is.null(pet.len)) { stop("pet.len must be specified for paired-end data") }
-		pet.len <- as.integer(pet.len)
-		if (pet.len <= 0L) { stop("pet.len must be a positive integer") }
-		frag.len <- pet.len
+	is.pet <- sapply(paramList(data), FUN=function(x) { x$pet=="both" })
+	frag.len <- integer(ncol(data))
+	if (is.na(exptData(data)$final.ext)) { 
+		frag.len[!is.pet] <- data$ext[!is.pet]
 	} else {
-		frag.len <- exptData(data)$ext
+		frag.len[!is.pet] <- exptData(data)$final.ext
 	}
+	
+	pet.len <- sapply(paramList(data), FUN=function(x) { x$rescue.ext })
+	not.def <- is.na(pet.len)
+	use.pet.len <- is.pet & !not.def
+	frag.len[use.pet.len] <- pet.len[use.pet.len]
+	use.def.len <- is.pet & not.def
+	if (any(use.def.len)) { 
+		warning("using a median fragment length of 100 bp for PE data")
+		frag.len[use.def.len] <- 100L		
+	}
+
+	frag.len <- as.integer(mean(frag.len))
 	width(rowData(data)) + frag.len - 1L
 }
 

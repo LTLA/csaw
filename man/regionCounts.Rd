@@ -6,22 +6,23 @@
 \description{Count the number of extended reads overlapping pre-specified regions}
 
 \usage{
-regionCounts(bam.files, regions, ext=100, param=readParam())
+regionCounts(bam.files, regions, ext=100, final.ext=NULL, param=readParam())
 }
 
 \arguments{
 	\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
 	\item{regions}{a \code{GRanges} object containing the regions over which reads are to be counted}
-	\item{ext}{an integer scalar describing the average length of the sequenced fragment}
-	\item{param}{a \code{readParam} object containing read extraction parameters}
+	\item{ext}{an integer scalar or vector, describing the average length of the sequenced fragment in each library}
+	\item{final.ext}{an integer scalar indicating the desired fragment length for extended reads}
+	\item{param}{a \code{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file)}
 }
 
 \value{
 A \code{\link{SummarizedExperiment}} object is returned containing one integer matrix.
 Each entry of the matrix contains the count for each library (column) at each region (row).
 The coordinates of each region are stored as the \code{rowData}.
-The total number of reads in each library are stored as \code{totals} in the \code{colData}.
-Other read counting parameters (e.g., \code{ext}, \code{param}) are stored in the \code{exptData}.
+The total number of reads in each library are stored as \code{totals} in the \code{colData}, along with the read extension length used in each library.
+Other read counting parameters (i.e., \code{param}) are stored in the \code{exptData}.
 }
 
 \details{
@@ -37,7 +38,8 @@ Checking that the output \code{totals} are the same between the two calls is str
 \code{\link{countOverlaps}},
 \code{\link{windowCounts}},
 \code{\link{readParam}},
-\code{\link{SummarizedExperiment}}
+\code{\link{SummarizedExperiment}},
+\code{\link{paramList}}
 }
 
 \examples{
@@ -54,7 +56,7 @@ regionCounts(bamFile, regions=incoming, param=readParam(pet="both"))
 regionCounts(bamFile, regions=incoming, param=readParam(max.frag=100, 
 	pet="first", restrict="chrA"))
 regionCounts(bamFile, regions=incoming, param=readParam(max.frag=100, 
-	pet="both", restrict="chrA", rescue.pairs=TRUE))
+	pet="both", restrict="chrA", rescue.pairs=TRUE, rescue.ext=100))
 }
 
 \keyword{counting}

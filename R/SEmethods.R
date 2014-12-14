@@ -4,7 +4,7 @@
 # for the library sizes.
 #
 # written by Aaron Lun
-# 2 September, 2014
+# created 2 September 2014
 
 setMethod("normalize", "SummarizedExperiment", function(object, ...) {
 	if (is.null(object$totals)) { 
