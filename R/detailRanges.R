@@ -1,4 +1,5 @@
-detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), max.intron=1e6)
+detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), 
+    max.intron=1e6, key.field="ENTREZID", name.field="SYMBOL")
 # This gives three character vectors for each 'incoming'. The first specifies
 # which features are wholly or partially overlapped by the current range.
 # The second specifies what features are within 'tol' of the 5' end of 
@@ -8,7 +9,8 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 # first and last exon matching is shown.
 #
 # written by Aaron Lun
-# 23 November, 2013
+# Created 23 November, 2013
+# Last modified 28 January, 2015
 {
 	# Obtain exons, and cleaning out the annotation.
 	curex <- exonsBy(txdb, by="gene")
@@ -19,14 +21,15 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 	curex$exon_name <- NULL
 
 	# Getting name annotation.
-	anno <- select(orgdb, keys=gene.id, columns=c("SYMBOL"), keytype="ENTREZID")
-	gene.name <- ifelse(is.na(anno$SYMBOL), paste0("ID:", anno$ENTREZID), anno$SYMBOL)
+	anno <- select(orgdb, keys=gene.id, columns=name.field, keytype=key.field)
+	n.entries <- length(gene.id)
+	if (nrow(anno)!=n.entries) { stop("possible many-to-one relationship between key and name fields") }
+	gene.name <- ifelse(is.na(anno[[name.field]]), paste0("ID:", names(anno[[key.field]])), anno[[name.field]])
 	
 	# Splitting IDs, to avoid problems when genes are assigned to multiple locations.
-	# The start uses '>' as we should be on the same gene by that stage; and exonBy
+	# The start uses '>' as we should be on the same location by that stage; and exonBy
 	# should give sorted locations w.r.t. start, if everything else is the same.
-	gene.id <- as.integer(gene.id)
-	is.diff <- c(TRUE, diff(gene.id)!=0L | diff(as.integer(seqnames(curex)))!=0L
+	is.diff <- c(TRUE, gene.id[-1]!=gene.id[-n.entries] | diff(as.integer(seqnames(curex)))!=0L
 			| diff(gene.str)!=0L | diff(start(curex)) > max.intron)
 	gene.id <- cumsum(is.diff)
 	ngenes <- sum(is.diff)

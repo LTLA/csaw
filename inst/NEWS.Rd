@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.1.17}{\itemize{
+\section{Version 1.1.11}{\itemize{
 \item 
 Added getWidths() and scaledAverage(), to facilitate comparison of abundances during filtering.
 
@@ -20,6 +20,9 @@ Changed all instances of \code{pet} to \code{pe} in read parameter specification
 
 \item 
 Added support for custom column specification in getBestTest(), combineTests().
+
+\item
+Added support for custom key/name specification in detailRanges() for non-human/mouse systems.
 
 \item
 Changed algorithm for splitting of large peaks in mergeWindows().
