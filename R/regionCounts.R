@@ -36,7 +36,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 				frag.start <- extended$start
 				frag.end <- extended$end
             } else {
-                if (curpar$rescue.pairs) {
+                if (!is.na(curpar$rescue.ext)) {
                     out <- .rescuePE(bam.files[bf], where=where, param=curpar)
                 } else {
                     out <- .extractPE(bam.files[bf], where=where, param=curpar)
@@ -52,6 +52,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 		}
 	}
 
+	strand(regions) <- .decideStrand(paramlist)
 	dim(paramlist) <- c(nbam, 1)
 	colnames(paramlist) <- "param"
 	return(SummarizedExperiment(assays=counts, 

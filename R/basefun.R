@@ -14,6 +14,8 @@
 	if (!is.na(param$minq)) { all.fields <- c(all.fields, "mapq") }
 	if (length(param$discard)) { all.fields <- c(all.fields, "cigar") }	
 	all.fields <- unique(all.fields)
+
+	if (length(param$forward)==0L) { stop("read strand extraction must be specified") }
 	reads <- scanBam(bam, param=ScanBamParam(what=all.fields,
 		which=where, flag=scanBamFlag(isUnmappedQuery=FALSE, 
 		isDuplicate=ifelse(param$dedup, FALSE, NA), 
@@ -101,6 +103,7 @@
 	additor[nok.second][second.paired][!is.better] <- TRUE
 
 	# Returning the loot.
+	if (is.na(param$rescue.ext)) { stop("rescue extension length must be specified for improper pair rescuing") }
 	return( list( pos=c(output$pos, ifelse(bitwAnd(reads$flag[additor], 0x10)==0L, reads$pos[additor], 
 					reads$pos[additor]+reads$qwidth[additor]-param$rescue.ext)),
 		      size=c(output$size, rep(param$rescue.ext, sum(additor))) ) )
@@ -201,4 +204,23 @@
 	if (any(ext <= 0L)) { stop("extension width must be a positive integer") }
 	remainder <- as.integer((final.ext - ext)/2)
 	data.frame(ext=ext, remainder=remainder, final=final.ext)
+}
+
+.decideStrand <- function(paramlist) 
+# Decides what strand we should assign to the output GRanges in the
+# SummarizedExperiment object, after counting.
+#
+# written by Aaron Lun
+# created 10 February 2015
+{
+	getfs <- sapply(paramlist, FUN=function(x) { x$forward })
+	if (length(unique(getfs))!=1) {
+		warning("unstranded regions used for counts from multiple strands")
+		return("*")
+	} else if (length(getfs[[1]])==0L) { # Need '[[', if NULL.
+		stop("unspecified strandedness")
+	}
+	if (is.na(getfs[1])) { return("*") }
+	else if (getfs[1]) { return("+") }
+	else { return("-") }
 }

@@ -5,9 +5,11 @@ extractReads <- function(cur.region, bam.file, param=readParam())
 #
 # written by Aaron Lun
 # created 1 September 2014
-# last modified 12 December 2014
+# last modified 10 February 2015
 {
     if (length(cur.region)!=1L) { stop("exactly one range is required for plotting") }
+	if (as.logical(strand(cur.region)!="*")) { warning("strandedness of region will be ignored, use param$forward instead") }
+
     chrs <- scanBamHeader(bam.file)[[1]][[1]]
 	cur.chr <- as.character(seqnames(cur.region)[1])
 	if (length(param$restrict) && ! cur.chr %in% param$restrict) { stop("current chromosome not in restricted subset") }
@@ -17,7 +19,7 @@ extractReads <- function(cur.region, bam.file, param=readParam())
 
 	# Extracting all-of-chromosome for paired-end rescue, as you need to find the read with the higher MAPQ.
 	expand <- 0L
-	if (param$pe=="both" && param$rescue.pairs) {
+	if (param$pe=="both" && !is.na(param$rescue.ext)) {
 		actual.region <- GRanges(cur.chr, IRanges(1L, max.len)) 
 	} else {
 		if (param$pe=="both") {
@@ -43,7 +45,7 @@ extractReads <- function(cur.region, bam.file, param=readParam())
 				strand=cur.reads$strand, seqinfo=sqi))
 		}
 	} else {
-		if (param$rescue.pairs) {
+		if (!is.na(param$rescue.ext)) {
 			cur.reads <- .rescuePE(bam.file, where=actual.region, param=param)
 		} else {
 			cur.reads <- .extractPE(bam.file, where=actual.region, param=param)

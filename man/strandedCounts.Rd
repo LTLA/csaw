@@ -10,7 +10,7 @@ strandedCounts(bam.files, param=readParam(), regions=NULL, ...)
 
 \arguments{
 \item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
-\item{param}{a \code{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file)}
+\item{param}{a \code{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file), where the \code{forward} slot must be set to \code{NULL}}
 \item{regions}{a \code{GRanges} object specifying the regions over which reads are to be counted}
 \item{...}{other arguments to be passed to \code{\link{windowCounts}} or \code{\link{regionCounts}}}
 }
@@ -35,43 +35,40 @@ Note that there may not be two rows for each genomic region.
 This is because any empty rows, or those with counts below \code{filter}, will be removed within each call to \code{\link{windowCounts}}.
 }
 
-\section{Warning}{
-Users should be aware that the downstream range-processing functions are generally not strand-aware, e.g., \code{\link{mergeWindows}}.
+\section{Warnings}{
+Users should be aware that many of the downstream range-processing functions are not strand-aware by default, e.g., \code{\link{mergeWindows}}.
 Any strandedness of the ranges will be ignored in these functions.
-If strand-specific processing is desired, users must manually subset the input by strand, and then reassemble the function outputs - see the examples below.
+If strand-specific processing is desired, users must manually set \code{ignore.strand=FALSE}.
+
+The input \code{param$forward} should be set to \code{NULL}, as a safety measure.
+This is because the returned object is a composite of two separate calls to the relevant counting function.
+If the same \code{param} object is supplied to other functions, an error will be thrown if \code{param$forward} is \code{NULL}.
+This serves to remind users that such functions should instead be called twice, i.e., separately for each strand after setting \code{param$forward} to \code{TRUE} or \code{FALSE}.
 }
 
 \examples{
 bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
-out <- strandedCounts(bamFiles, filter=1)
+xparam <- readParam(forward=NULL)
+out <- strandedCounts(bamFiles, filter=1, param=xparam)
 out
-strandedCounts(bamFiles, filter=1, width=100)
-strandedCounts(bamFiles, filter=1, param=readParam(minq=20))
+strandedCounts(bamFiles, filter=1, width=100, param=xparam)
+strandedCounts(bamFiles, filter=1, param=reform(xparam, minq=20))
 
 incoming <- GRanges(c('chrA', 'chrA', 'chrB', 'chrC'), 
     IRanges(c(1, 500, 100, 1000), c(200, 1000, 700, 1500)))
-strandedCounts(bamFiles, regions=incoming)
-strandedCounts(bamFiles, regions=incoming, param=readParam(dedup=TRUE))
+strandedCounts(bamFiles, regions=incoming, param=xparam)
+strandedCounts(bamFiles, regions=incoming, param=reform(xparam, dedup=TRUE))
+
+# Throws an error, as the same reads are not involved.
+try(windowCounts(bamFiles, filter=1, width=100, param=xparam))
 
 # Running mergeWindows with strand-specificity.
-is.forward <- as.logical(strand(out) == "+")
-fclust <- mergeWindows(rowData(out[is.forward]), tol=100)
-rclust <- mergeWindows(rowData(out[!is.forward]), tol=100)
+mergeWindows(rowData(out), tol=100)
+mergeWindows(rowData(out), tol=100, ignore.strand=FALSE)
 
-strand(fclust$region) <- "+"
-strand(rclust$region) <- "-"
-cluster.ids <- integer(nrow(out))
-cluster.ids[is.forward] <- fclust$id
-cluster.ids[!is.forward] <- rclust$id + length(fclust$region)
-clustered <- list(id=cluster.ids, region=c(fclust$region, rclust$region))
-
-# Running findMaxima with strand-specificity.
 rwsms <- rowSums(assay(out))
-f.ismax <- findMaxima(rowData(out[is.forward]), range=100, metric=rwsms[is.forward])
-r.ismax <- findMaxima(rowData(out[!is.forward]), range=100, metric=rwsms[!is.forward])
-ismax <- logical(nrow(out))
-ismax[is.forward] <- f.ismax
-ismax[!is.forward] <- r.ismax
+summary(findMaxima(rowData(out), range=100, metric=rwsms))
+summary(findMaxima(rowData(out), range=100, metric=rwsms, ignore.strand=FALSE))
 }
 
 \seealso{

@@ -48,6 +48,7 @@ Type 'q()' to quit R.
 + 		chosen <- round(nrow(x)/2)
 + 		my.reg <- rowData(x)[chosen]
 + 		my.reg2 <- suppressWarnings(resize(my.reg, fix="center", width=width(my.reg)+fraglen*2))
++ 		strand(my.reg2) <- "*"
 + 		for (f in 1:length(bamFiles)) {
 + 			collected <- extractReads(my.reg2, bamFiles[f], param=repar)
 + 			collected <- suppressWarnings(resize(collected, width=fraglen))
@@ -366,4 +367,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
- 50.979   0.299  51.312 
+ 48.634   0.239  48.900 

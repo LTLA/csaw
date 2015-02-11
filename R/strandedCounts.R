@@ -5,9 +5,14 @@ strandedCounts <- function(bam.files, param=readParam(), regions=NULL, ...)
 #
 # written by Aaron Lun
 # created 9 February 2015
+# last modified 10 February 2015
 {
 	nbam <- length(bam.files)
 	plist <- .makeParamList(nbam, param)
+	for (i in 1:nbam) { 
+		if (length(plist[[i]]$forward)) { stop("set forward=NULL in param for strand-specific counting") } 
+	}
+
 	if (is.null(regions)) { 
 		fdata <- windowCounts(bam.files=bam.files, param=reformList(plist, forward=TRUE), ...)
 		rdata <- windowCounts(bam.files=bam.files, param=reformList(plist, forward=FALSE), ...)
@@ -19,8 +24,6 @@ strandedCounts <- function(bam.files, param=readParam(), regions=NULL, ...)
 	}	
 	
 	# Combining them together.
-	strand(rowData(fdata)) <- "+"
-	strand(rowData(rdata)) <- "-"
 	combined <- SummarizedExperiment(rbind(assay(fdata), assay(rdata)),
 		rowData=c(rowData(fdata), rowData(rdata)),
 		colData=colData(fdata), exptData=exptData(fdata))
