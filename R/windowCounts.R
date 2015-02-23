@@ -1,5 +1,5 @@
 windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
-	filter=NULL, bin=FALSE, param=readParam())
+	filter=10, bin=FALSE, param=readParam())
 # Gets counts from BAM files at each position of the sliding window. Applies
 # a gentle filter to remove the bulk of window positions with low counts.
 # Returns a DGEList with count and total information, as well as a GRanges
@@ -19,13 +19,13 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 		spacing <- as.integer(spacing)
 		left <- as.integer(shift)
 		right <- as.integer(width) - left - 1L
-		if (is.null(filter)) { filter <- 5*nbam }
 	} else {
 		# A convenience flag, which assigns sensible arguments to everything else.
 		spacing <- as.integer(width)
 		left <- as.integer(shift)
 		right <- spacing - 1L - left
 		ext <- 1L
+		final.ext <- NA
 		filter <- 1
 	}
 	ext.data <- .collateExt(nbam, ext)
@@ -73,11 +73,11 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 				} else {
 					reads <- .extractBrokenPE(bam.files[bf], where=where, param=curpar)
 				}
-				extended <- .extendSE(reads, chrlen=outlen, ext.info=ext.data[bf,])
+				extended <- .extendSE(reads, ext=ext.data$ext[bf])
 				frag.start <- extended$start
 				frag.end <- extended$end
 			} else {
-				if (!is.na(curpar$rescue.ext)) { 
+				if (.rescueMe(curpar)) {
 					out <- .rescuePE(bam.files[bf], where=where, param=curpar)
 				} else {
 					out <- .extractPE(bam.files[bf], where=where, param=curpar)
@@ -87,11 +87,14 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 				if (bin) { 
 					mid <- as.integer(out$pos + out$size/2)
 					frag.end <- frag.start <- mid
-				} else { 
+				} else {
 					frag.start <- out$pos
-					frag.end <- frag.start + out$size - 1L 
+					frag.end <- out$pos + out$size - 1L
 				}
 			}
+			checked <- .checkFragments(frag.start, frag.end, final=ext.data$final, chrlen=outlen)
+			frag.start <- checked$start
+			frag.end <- checked$end
 
 			# Extending reads to account for window sizes > 1 bp. The start of each read
 			# must be extended by 'right' and the end of each read must be extended by
@@ -129,7 +132,8 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	colnames(paramlist) <- "param"
 	return(SummarizedExperiment(assays=do.call(rbind, all.out), 
 		rowData=all.regions, 
-		colData=DataFrame(bam.files=bam.files, totals=totals, ext=ext.data$ext, final.ext=ext.data$final, paramlist),
-		exptData=SimpleList(spacing=spacing, width=width, shift=shift, param=paramlist)))
+		colData=DataFrame(bam.files=bam.files, totals=totals, ext=ext.data$ext, paramlist),
+		exptData=SimpleList(spacing=spacing, width=width, shift=shift, 
+			final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
 }
 
