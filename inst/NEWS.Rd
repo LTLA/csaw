@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.1.23}{\itemize{
+\section{Version 1.1.25}{\itemize{
 \item 
 Added getWidths(), scaledAverage() and filterWindows(), to facilitate comparison of abundances during filtering.
 
