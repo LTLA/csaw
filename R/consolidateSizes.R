@@ -10,12 +10,10 @@ consolidateSizes <- function(data.list, result.list, equiweight=TRUE,
 {
 	nset <- length(data.list)
 	if (nset!=length(result.list)) { stop("data list must have same length as result list") }
-	nall <- 0L
 	for (x in 1:nset) {
 		currows <- nrow(data.list[[x]])
 		ntab <- nrow(result.list[[x]])
 		if (currows!=ntab) { stop("corresponding entries of data and result lists must have same number of entries") }
-		nall <- nall + ntab
 	}
 
 	# Merging windows, or finding overlaps.
@@ -50,32 +48,22 @@ consolidateSizes <- function(data.list, result.list, equiweight=TRUE,
 	# Calculating weights, so each window size (or spacing) has the same contribution to the final outcome.
 	if (equiweight) {
 		last <- 0L
-		rel.weights <- numeric(nall)
+		rel.weights <- list()
 		for (x in 1:nset) {
 			currows <- nrow(result.list[[x]])
-			curdex <- last + 1:currows
-			curid <- merged$id[curdex]
-			ref.weight <- 1/tabulate(curid)
-			rel.weights[curdex] <- ref.weight[curid]
+			curid <- merged$id[last + 1:currows]
+			rel.weights[[x]] <- (1/tabulate(curid))[curid]
 			last <- last + currows
 		}
+		rel.weights <- unlist(rel.weights)
 	} else { 
-		rel.weights <- rep(1, nall) 
+		rel.weights <- NULL
 	}
 
 	# Combining statistics.
 	tabres <- do.call(rbind, result.list)
 	tabcom <- do.call(combineTests, c(list(ids=merged$id, tab=tabres, weight=rel.weights), combine.args))
-
-	if (!is.null(region)) { 
-		nregions <- length(region)
-		expand.vec <- rep(NA, nregions)
-		row.dex <- as.integer(rownames(tabcom))
-		if (any(row.dex <= 0L | row.dex > nregions)) { stop("cluster IDs are not within [1, nregions]") }
-		expand.vec[row.dex] <- 1:nrow(tabcom)
-		tabcom <- tabcom[expand.vec,]
-		rownames(tabcom) <- NULL
-	}
+	if (!is.null(region)) { tabcom <- .expandNA(tabcom, length(region)) }
 
 	return(list(id=final.ids, region=merged$region, table=tabcom))
 }
