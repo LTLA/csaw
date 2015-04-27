@@ -30,6 +30,10 @@ The idea is to generate a pre-filtered BAM file by specifying the appropriate se
 The output BAM file can then be efficiently analyzed with, e.g., \code{\link{windowCounts}} with \code{fast.pe=TRUE}.
 This avoids the need to load and match read names in every function.
 Note that all alignment-specific information is lost, e.g., MAPQ scores, duplicate information, CIGAR strings.
+
+Only proper pairs with sizes less than \code{param$max.frag} will be retained in the output file.
+If \code{max.frag} is increased in downstream calls on the output file, the results may not be correct as proper pairs with sizes between the two settings will not be considered.
+Users are recommended to keep \code{max.frag} constant throughout the pipeline.
 }
 
 \seealso{
@@ -49,13 +53,12 @@ out2 <- windowCounts(outBam, param=reform(xparam, fast.pe=TRUE), filter=1)
 
 stopifnot(identical(assay(out), assay(out2)))
 stopifnot(identical(out$totals, out2$totals))
-unlink("whee.bam")
 
 # Comparing it to a more complex scenario.
 xparam <- readParam(pe="both", rescue.ext=200)
 out <- windowCounts(bamFile, param=xparam, filter=1)
 
-outBam <- dumpPE(bamFile, "whee", param=xparam)
+outBam <- dumpPE(bamFile, "whee", param=xparam, overwrite=TRUE)
 out2 <- windowCounts(outBam, param=reform(xparam, fast.pe=TRUE), filter=1)
 
 stopifnot(identical(assay(out), assay(out2)))
@@ -67,7 +70,11 @@ reg1 <- extractReads(last.reg, bamFile, param=xparam)
 reg2 <- extractReads(last.reg, outBam, param=reform(xparam, fast.pe=TRUE))
 
 stopifnot(identical(sort(reg1), sort(reg2)))
+
+\dontshow{
 unlink("whee.bam")
+unlink("whee.bam.bai")
+}
 }
 
 \keyword{counting}
