@@ -10,7 +10,7 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 #
 # written by Aaron Lun
 # created 23 November 2013
-# last modified 4 March 2015
+# last modified 1 May 2015
 {
 	# Obtain exons, and cleaning out the annotation.
 	curex <- exonsBy(txdb, by="gene")
@@ -30,7 +30,10 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 	for (x in 1:length(name.field)) { 
 		cur.name <- anno[[name.field[x]]]
 		if (!is.character(cur.name)) { cur.name <- as.character(cur.name) } 
-		if (do.check) { cur.name <- ifelse(is.na(cur.name), paste0("<", anno[[key.field]], ">"), cur.name) }
+		if (do.check) { 
+			failed <- is.na(cur.name)
+			if (any(failed)) { cur.name[failed] <- paste0("<", anno[[key.field]][failed], ">") }
+		}
 		all.names[[x]] <- cur.name
 	}
 	gene.name <- do.call(paste, c(all.names, sep=";"))
