@@ -5,14 +5,14 @@ extractReads <- function(cur.region, bam.file, ext=NA, param=readParam())
 #
 # written by Aaron Lun
 # created 1 September 2014
-# last modified 10 February 2015
+# last modified 1 May 2015
 {
     if (length(cur.region)!=1L) { stop("exactly one range is required for plotting") }
 	if (as.logical(strand(cur.region)!="*")) { warning("strandedness of region will be ignored, use param$forward instead") }
 
     chrs <- scanBamHeader(bam.file)[[1]][[1]]
 	cur.chr <- as.character(seqnames(cur.region)[1])
-	if (length(param$restrict) && ! cur.chr %in% param$restrict) { stop("current chromosome not in restricted subset") }
+	if (length(param$restrict) && ! cur.chr %in% param$restrict) { warning("current chromosome not in restricted subset") }
 	if (! cur.chr %in% names(chrs)) { stop("cannot find current chromosome in the BAM file header") }
 	max.len <- chrs[[cur.chr]]
 	sqi <- Seqinfo(cur.chr, max.len)
