@@ -13,15 +13,15 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, ...)
 }
 
 getWidths <- function(data) 
-# This computes the effective width of the data in the SummarizedExperiment
-# object. This is done by accounting for the effect of read extension; or, for
-# paired end data, the median fragment length.
+# This computes the effective width of the data in the
+# RangedSummarizedExperiment object. This is done by accounting for the effect
+# of read extension; or, for paired end data, the median fragment length.
 #
 # written by Aaron Lun
 # created 5 November 2014
 # last modified 6 March 2015
 {
-	flen <- exptData(data)$final.ext
+	flen <- metadata(data)$final.ext
 
 	if (is.na(flen)) { 
 		flen <- data$ext

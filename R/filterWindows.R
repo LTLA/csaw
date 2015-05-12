@@ -1,9 +1,9 @@
 filterWindows <- function(data, background, type="global", prior.count=2) 
 # This is a function for proportion- or background-based filtering of a
-# SummarizedExperiment object. For the former, it computes the relative ranks
-# that can be used to determine the proportion of highest-abundance windows to
-# keep. For the latter, it returns the enrichment term between data and
-# background.
+# RangedSummarizedExperiment object. For the former, it computes the relative
+# ranks that can be used to determine the proportion of highest-abundance
+# windows to keep. For the latter, it returns the enrichment term between data
+# and background.
 #
 # written by Aaron Lun
 # created 18 February 2015	
@@ -71,7 +71,7 @@ filterWindows <- function(data, background, type="global", prior.count=2)
 # Get the total number of windows, to account for those not 
 # reported in windowCounts (for empty windows/those lost by filter > 1).
 {
-	spacing <- exptData(data)$spacing
+	spacing <- metadata(data)$spacing
 	if (is.null(spacing)) { stop("failed to find spacing for windows") }
 	sum(ceiling(seqlengths(rowRanges(data))/spacing)) 
 }

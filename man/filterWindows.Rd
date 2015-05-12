@@ -1,7 +1,7 @@
 \name{filterWindows}
 \alias{filterWindows}
 
-\title{Filtering methods for SummarizedExperiment objects}
+\title{Filtering methods for RangedSummarizedExperiment objects}
 \description{Convenience function to compute filter statistics for windows, based on proportions or using enrichment over background.}
 
 \usage{
@@ -9,8 +9,8 @@ filterWindows(data, background, type="global", prior.count=2)
 }
 
 \arguments{
-\item{data}{a \code{SummarizedExperiment} object containing window- or bin-level counts}
-\item{background}{another \code{SummarizedExperiment} object, containing counts for background regions when \code{type!="proportion"}}
+\item{data}{a \code{RangedSummarizedExperiment} object containing window- or bin-level counts}
+\item{background}{another \code{RangedSummarizedExperiment} object, containing counts for background regions when \code{type!="proportion"}}
 \item{type}{a character string specifying the type of filtering to perform; can be any of \code{c("global", "local", "control", "proportion")}}
 \item{prior.count}{a numeric scalar, specifying the prior count to use in \code{\link{aveLogCPM}}}
 }
