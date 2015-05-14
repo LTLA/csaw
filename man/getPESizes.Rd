@@ -17,7 +17,7 @@ getPESizes(bam.file, param=readParam(pe="both"))
 \value{
 A list containing:
 \item{sizes}{an integer vector of fragment lengths for all valid read pairs in the library}
-\item{diagnostics}{an integer vector containing the total number of mapped reads, number of mapped singleton reads, pairs with exactly one unmapped read,
+\item{diagnostics}{an integer vector containing the total number of reads, the number of mapped reads, number of mapped singleton reads, pairs with exactly one unmapped read,
 	number of improperly orientated read pairs and interchromosomal pairs}
 }
 
@@ -37,9 +37,10 @@ If the reads are on different chromosomes, the read pair will be recorded as bei
 Each valid read pair corresponds to a DNA fragment where both ends are sequenced. 
 The size of the fragment can be determined by calculating the distance between the 5' ends of the mapped reads. 
 The distribution of sizes is useful for assessing the quality of the library preparation, along with all of the recorded diagnostics. 
+Note that any \code{max.frag} specification in \code{param} will be ignored; sizes for all valid pairs will be returned.
 }
 
-% Note; length(out$sizes)*2 == out$diagnostics[1] - out$diagnostics[3] - sum(out$diagnostics[-c(1,3)])*2. Because, read pairs with one mapped = 1 read in total.
+% Note; length(out$sizes)*2 == out$diagnostics[2] - sum(out$diagnostics[3:4]) - sum(out$diagnostics[5:6])*2. Because, read pairs with one mapped = 1 read in total.
 
 \author{Aaron Lun}
 

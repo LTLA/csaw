@@ -5,7 +5,7 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, ...)
 # has to be upscaled during the calculation itself.
 #
 # written by Aaron Lun
-# 5 November 2014
+# created 5 November 2014
 {
 	if (any(scale <= 0)) { stop("scaling factor should be positive") }
 	if (is.null(prior.count)) { prior.count <- formals(aveLogCPM.DGEList)$prior.count }
@@ -19,7 +19,7 @@ getWidths <- function(data)
 #
 # written by Aaron Lun
 # created 5 November 2014
-# last modified 6 March 2015
+# last modified 14 May 2015
 {
 	flen <- metadata(data)$final.ext
 
@@ -28,7 +28,7 @@ getWidths <- function(data)
 		is.missing <- is.na(flen)
 		if (any(is.missing)) { 
 			if (is.null(data$rlen)) { 
-				stop("need to specify read lengths in 'data$ext'")
+				stop("need to specify read lengths in 'data$rlen'")
 			}
 			flen[is.missing] <- data$rlen[is.missing]
 		}

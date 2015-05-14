@@ -16,6 +16,7 @@
 	all.fields <- unique(all.fields)
 
 	if (length(param$forward)==0L) { stop("read strand extraction must be specified") }
+	if (length(where)!=1L) { stop("extraction not supported for multiple ranges at once") }
 	reads <- scanBam(bam, param=ScanBamParam(what=all.fields,
 		which=where, flag=scanBamFlag(isUnmappedQuery=FALSE, 
 		isDuplicate=ifelse(param$dedup, FALSE, NA), 
@@ -43,7 +44,7 @@
 	return(reads)
 }
 
-.extractPE <- function(bam.file, where, param)
+.extractPE <- function(bam.file, where, param, with.reads=FALSE)
 # A function to extract PE data for a particular chromosome. Synchronisation
 # is expected.  We avoid sorting by name  as it'd mean we have to process the
 # entire genome at once (can't go chromosome-by-chromosome).  This probably
@@ -52,33 +53,34 @@
 # 
 # written by Aaron Lun
 # created 8 December 2013
-# last modified 14 February 2015
+# last modified 14 May 2015
 {
-	if (param$fast.pe) {
-		# In fast mode, we can take some shortcuts and ignore read-based parameters.
-		reads <- .extractSE(bam.file, where=where, extras="isize", 
-			param=readParam(forward=TRUE), isPaired=TRUE, 
-			hasUnmappedMate=FALSE, isMateMinusStrand=TRUE)
-		keep <- reads$isize > 0L & reads$isize <= param$max.frag
-		return(list(pos=reads$pos[keep], size=reads$isize[keep]))
-	} 
-
 	reads <- .extractSE(bam.file, extras=c("qname", "flag"), where=where, 	
 		param=param, isPaired=TRUE, hasUnmappedMate=FALSE)
-	.yieldInterestingBits(reads, max(end(where)), max.frag=param$max.frag)
+	output <- .yieldInterestingBits(reads, end(where), max.frag=param$max.frag,	diag=with.reads)
+
+	if (with.reads) {
+		left <- list(pos=reads$pos[output$left], qwidth=reads$qwidth[output$left],
+			strand=rep("+", length(output$left)))
+		right <- list(pos=reads$pos[output$right], qwidth=reads$qwidth[output$right],
+			strand=rep("-", length(output$right)))
+		output$left <- left
+ 	   	output$right <- right
+		output$is.ok <- NULL
+	}
+	return(output)
 }
 
 .extractBrokenPE <- function(bam.file, where, param)
 # A function to extract PE data, but as single-end data (i.e. only using one
-# of the reads).  Useful when paired-end data has gone completely off the
-# rails.
+# of the reads). Useful when paired-end data has gone completely off the rails.
 {
 	use.first <- param$pe=="first"
 	.extractSE(bam.file, where=where, param=param,  
 		isPaired=TRUE, isFirstMateRead=use.first, isSecondMateRead=!use.first)
 }
 
-.rescuePE <- function(bam.file, where, param)
+.rescuePE <- function(bam.file, where, param, with.reads=FALSE)
 # A function to extract PE data where possible, but to rescue those that
 # are invalid by using them as single-end data with read extension. Those
 # reads that form invalid pairs are broken up and the read with the better
@@ -87,11 +89,11 @@
 #
 # written by Aaron Lun
 # created 13 May 2014
-# last modified 1 May 2015
+# last modified 13 May 2015
 {
 	reads <- .extractSE(bam.file, extras=c("qname", "flag", "mapq"), where=where, 
 		param=param, isPaired=TRUE)
-	output <- .yieldInterestingBits(reads, max(end(where)), diag=TRUE, max.frag=param$max.frag)
+	output <- .yieldInterestingBits(reads, end(where), diag=TRUE, max.frag=param$max.frag)
 
 	# Figuring out which reads do pair up.
 	is.first <- bitwAnd(reads$flag, 0x40) != 0L
@@ -112,15 +114,126 @@
 	# Computing rescued positions.
 	rescued.reverse <- bitwAnd(reads$flag[additor], 0x10)!=0L
 	rescued.pos <- reads$pos[additor]
+	rescued.qwidth <- reads$qwidth[additor]
 	if (any(rescued.reverse)) { 
-		rescued.pos[rescued.reverse] <- rescued.pos[rescued.reverse] + reads$qwidth[additor][rescued.reverse] - param$rescue.ext
+		rescued.pos[rescued.reverse] <- rescued.pos[rescued.reverse] + rescued.qwidth[rescued.reverse] - param$rescue.ext
 	}
 
-	# Returning the loot.
+	# Setting up the return values.
 	if (is.na(param$rescue.ext)) { stop("rescue extension length must be specified for improper pair rescuing") }
-	return( list( pos=c(output$pos, rescued.pos),
-		      size=c(output$size, rep(param$rescue.ext, sum(additor))) ) )
+	nrescued <- sum(additor)
+	all.data <- list( pos=c(output$pos, rescued.pos), size=c(output$size, rep(param$rescue.ext, nrescued)) )
+
+	# Adding read data, if requested.		
+	if (with.reads) { 
+		left <- list(pos=reads$pos[output$left], qwidth=reads$qwidth[output$left],
+			strand=rep("+", length(output$left)))
+		right <- list(pos=reads$pos[output$right], qwidth=reads$qwidth[output$right],
+			strand=rep("-", length(output$right)))
+		rescued.str <- rep("+", nrescued)
+		rescued.str[rescued.reverse] <- "-"
+		rescued <- list(pos=reads$pos[additor], qwidth=rescued.qwidth, strand=rescued.str)
+		
+		all.data$left <- left
+ 	   	all.data$right <- right
+		all.data$rescued <- rescued
+	}
+	return(all.data)
 }
+
+.extractFastPE <- function(bam.file, where, param, with.reads=FALSE)
+# A command for fast paired-end read extraction, where we pull out fragments 
+# based on their position and isize. No name loading or matching required!
+# We just look for forward reads where the mate is mapped and reverse, and 
+# we throw out those with negative insert distances to get inward-facing ones.
+#
+# written by Aaron Lun
+# created 14 May 2015
+{
+	if (with.reads) {
+		extras <- c("isize", "mpos")
+		is.dumped <- .isDumpedBam(bam.file)
+		if (is.dumped) { extras <- c(extras, "qname") }
+	} else {
+		extras <- "isize"
+	}
+
+	# In fast mode, we can take some shortcuts and ignore read-based parameters.
+	reads <- .extractSE(bam.file, where=where, extras=extras,
+		param=readParam(forward=TRUE), isPaired=TRUE, 
+		hasUnmappedMate=FALSE, isMateMinusStrand=TRUE)
+	keep <- reads$isize > 0L & reads$isize <= param$max.frag
+
+	output <- list(pos=reads$pos[keep], size=reads$isize[keep])
+	if (!with.reads) { return (output) }
+	
+	# If reads are requested, we need to figure out how to extract the read data.
+	if (is.dumped) {
+		relevant.names <- reads$qname[keep]
+		is.rescued <- .isRescuedRead(relevant.names)
+
+		# Rearranging to get valid pairs first, then rescued pairs last.
+		output$pos <- c(output$pos[!is.rescued], output$pos[is.rescued])
+		output$size <- c(output$size[!is.rescued], output$size[is.rescued])
+
+		# We use information in the read name of dumped files.
+		left <- right <- list()
+		left$pos <- reads$pos[keep][!is.rescued]
+		left$qwidth <- reads$qwidth[keep][!is.rescued]
+		left$strand <- rep("+", length(left$pos))
+		right$pos <- reads$mpos[keep][!is.rescued]
+		right$qwidth <- .getMateWidth(relevant.names[!is.rescued])
+ 	   	right$strand <- rep("-", length(right$pos))	
+
+		rescued <- list()
+		rescued$pos <- reads$mpos[keep][is.rescued]
+		rescued$qwidth <- reads$qwidth[keep][is.rescued]
+		rescued$strand <- .getRescueStr(relevant.names[is.rescued])
+
+		output$left <- left
+		output$right <- right
+		if (any(is.rescued) || .needsRescue(param)) { output$rescued <- rescued }
+	} else {
+		# Otherwise, we estimate the width of the mate from the relative positioning.
+		left <- right <- list()
+		left$pos <- output$pos
+		left$qwidth <- reads$qwidth[keep]
+		right$pos <- reads$mpos[keep]
+		right$qwidth <- left$pos + output$size - right$pos
+		left$strand <- rep("+", length(output$pos))
+		right$strand <- rep("-", length(output$pos))
+		output$left <- left
+		output$right <- right
+	}
+	return(output)
+} 
+
+###########################################################
+# More wrappers, that are to be actually called by each function.
+
+.getSingleEnd <- function(bam, where, param) {
+	if (param$pe=="none") { 
+		reads <- .extractSE(bam, where=where, param=param)
+	} else {
+		reads <- .extractBrokenPE(bam, where=where, param=param)
+	}
+	return(reads)
+}	
+
+.getPairedEnd <- function(bam, where, param, with.reads=FALSE) {
+	if (param$fast.pe) {
+		out <- .extractFastPE(bam, where=where, param=param, with.reads=with.reads)
+	} else if (.needsRescue(param)) { 
+		out <- .rescuePE(bam, where=where, param=param, with.reads=with.reads)
+	} else {
+		out <- .extractPE(bam, where=where, param=param, with.reads=with.reads)
+	}
+	return(out)	
+}
+
+.needsRescue <- function(param) { return(!is.na(param$rescue.ext)) }
+
+###########################################################
 
 .makeParamList <- function(nbam, param) 
 # Converts a readParam object into a list, if it isn't so already.
@@ -237,7 +350,7 @@
 
 .decideStrand <- function(paramlist) 
 # Decides what strand we should assign to the output GRanges in the
-# RangedSummarizedExperiment object, after counting.
+# SummarizedExperiment object, after counting.
 #
 # written by Aaron Lun
 # created 10 February 2015
@@ -254,7 +367,3 @@
 	else { return("-") }
 }
 
-.rescueMe <- function(param) {
-	if (param$fast.pe) { return(FALSE) } 
-	return(!is.na(param$rescue.ext)) 
-}

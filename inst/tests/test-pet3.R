@@ -6,6 +6,7 @@ suppressWarnings(suppressPackageStartupMessages(library(csaw)))
 source("simsam.R")
 dir<-"pe-test"
 dir.create(dir)
+options(width=120)
 
 checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, left=0, right=0, filter=-1, ext=100) {
 	stuff<-file.path(dir, paste("x", 1:2, sep=""))
@@ -146,9 +147,11 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 		        	stuff<-getPESizes(fnames[lib], readParam(pe="both", minq=minq, dedup=dedup, restrict=restrict, discard=discard))
 					if (stuff$diagnostics[["single"]]!=sum(skeep)) { 
 						stop("mismatch in number of singles")
-					} else if (stuff$diagnostics[["total"]]!=sum(keep1)+sum(keep2)+sum(skeep)) {
+					} else if (stuff$diagnostics[["total.reads"]]!=npairs*2L+nsingles) {
 						stop("mismatch in total number of reads")
-					} 
+					} else if (stuff$diagnostics[["mapped.reads"]]!=sum(keep1)+sum(keep2)+sum(skeep)) {
+						stop("mismatch in number of mapped reads")
+					}
 			        if (sum(paired & chr1!=chr2)!=stuff$diagnostics[["inter.chr"]]) { stop("mismatch in interchromosomal PEs") }
 			        if (sum(paired & chr1==chr2 & !valid)!=stuff$diagnostics[["unoriented"]]) { stop("mismatch in invalid numbers") }
 			        if (sum(keep1!=keep2)!=stuff$diagnostics[["mate.unmapped"]]) { stop("mismatch in unmapped numbers") }
@@ -202,18 +205,15 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 			my.reg <- rowRanges(x)[chosen]
 			if (rpam$pe=="both") {
 				for (f in 1:length(fnames)) {
-					collected <- extractReads(my.reg, fnames[f], param=rpam)
+					collected <- extractReads(fnames[f], my.reg, param=rpam)
 					if (!identical(assay(x)[chosen,f], length(collected))) {
 						stop("mismatch in the number of fragments from extractReads")
 					}
 				}
 			} else {
-				my.reg2 <- suppressWarnings(resize(my.reg, fix="center", width=width(my.reg)+ext*2))
 				for (f in 1:length(fnames)) {
-					collected <- extractReads(my.reg2, fnames[f], param=rpam)
-					collected <- suppressWarnings(resize(collected, width=ext))
-					strand(collected) <- "*"
-					if (!identical(assay(x)[chosen,f], suppressWarnings(countOverlaps(my.reg, collected)))) {
+					collected <- extractReads(fnames[f], my.reg, param=rpam, ext=ext)
+					if (!identical(assay(x)[chosen,f], length(collected))) { 
 						stop("mismatch in the number of single reads from extractReads")
 					}
 				}
@@ -231,10 +231,70 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 					width=right+left+1, filter=0, param=fast.param)
 				if (!identical(fast.out$totals, x$totals)) { stop("mismatches in totals upon fast PE extraction") }
 				if (!identical(assay(fast.out), assay(x))) { stop("mismatches in counts upon fast PE extraction") }
+
+				# Checking behaviour with `with.reads=TRUE`, to avoid having to check other functions with PE data.
+				where <- GRanges(names(chromosomes)[1], IRanges(1, chromosomes[1]))
+				extracted.reads <- csaw:::.getPairedEnd(fnames[1], where=where, param=rpam, with.reads=TRUE)
+				fast.extracted <- csaw:::.getPairedEnd(dumped[[1]], where=where, param=fast.param, with.reads=TRUE)
+
+				for (ref in list(extracted.reads, fast.extracted)) { 
+					paired <- 1:length(ref$left$pos)
+					endpoint <- ref$pos[paired] + ref$size[paired]
+					if (!identical(ref$pos[paired], ref$left$pos) || 
+							any(endpoint <= ref$right$pos) || 
+							any(endpoint > ref$right$pos + ref$right$qwidth) || 
+							any(ref$left$pos > ref$right$pos)) { 
+						stop("inconsistent read intervals reported for pairs") 
+					}	
+					if (!is.na(rpam$rescue.ext)) { 
+						rescued <- length(ref$left$pos) + 1:length(ref$rescued$pos)
+						is.forward <- ref$rescued$strand == "+"
+						endpoint <- ref$pos[rescued] + ref$size[rescued]
+						if (!identical(ref$pos[rescued][is.forward], ref$rescued$pos[is.forward]) ||
+								any(endpoint[!is.forward] <= ref$rescued$pos[!is.forward]) ||
+								any(endpoint[!is.forward] > ref$rescued$pos[!is.forward] + ref$rescued$qwidth[!is.forward]) ||
+								any(ref$pos[rescued][!is.forward] > ref$rescued$pos[!is.forward]) ||
+								any(ref$rescued$pos <= 0L)) { 
+							stop("inconsistent read intervals reported for rescued pairs") 
+						}
+					}
+				}
+
+				# Comparing fast and slow extraction of a dumped file.
+				for (type in c("left", "right", "rescued")) { 
+					curslow <- extracted.reads[[type]]
+					curfast <- fast.extracted[[type]]
+					stopifnot(is.null(curslow)==is.null(curfast))
+					if (is.null(curslow)) { next }
+
+					os <- order(curslow$pos, curslow$qwidth, curslow$strand)
+					of <- order(curfast$pos, curfast$qwidth, curfast$strand)
+					if (!identical(curslow$pos[os], curfast$pos[of]) ||
+							!identical(curslow$qwidth[os], curfast$qwidth[of]) ||
+							!identical(curslow$strand[os], curfast$strand[of])) {
+						stop("mismatches in extracted reads between fast and slow modes") 
+					}
+				}
+				stopifnot(length(extracted.reads$pos)==length(fast.extracted$pos))
+				stopifnot(length(extracted.reads$size)==length(fast.extracted$size))
+				
 				unlink(unlist(dumped))
 			}
 		}
 	}
+
+	# Checking what happens if you load fast.pe=TRUE on the raw files.
+	where <- GRanges(names(chromosomes)[1], IRanges(1, chromosomes[1]))
+	stopifnot(!csaw:::.isDumpedBam(fnames[1]))
+	extracted.reads <- csaw:::.getPairedEnd(fnames[1], where=where, 
+		param=readParam(pe="both", fast.pe=TRUE), with.reads=TRUE)
+	if (!identical(extracted.reads$pos, extracted.reads$left$pos) || 
+			!identical(extracted.reads$size, extracted.reads$right$pos + extracted.reads$right$qwidth - extracted.reads$left$pos)) {
+		print(cbind(extracted.reads$size, extracted.reads$right$pos + extracted.reads$right$qwidth - extracted.reads$left$pos))
+		print(extracted.reads)
+		stop("lengths and widths of rapidly extracted reads don't match up")
+	}
+
 	return(rowRanges(x))
 }
 
@@ -280,7 +340,7 @@ checkcount(5000, 20, c(chrA=1000, chrB=2000), spacing=25, ext=200)
 ###################################################################################################
 # Cleaning up.
 
-unlink(dir, recursive=TRUE);
+unlink(dir, recursive=TRUE)
 
 ###################################################################################################
 # End.

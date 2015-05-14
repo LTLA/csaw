@@ -5,6 +5,7 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 #
 # written by Aaron Lun
 # created 1 May 2015
+# last modified 13 May 2015
 {
 	nbam <- length(bam.files)
 	paramlist <- .makeParamList(nbam, param)
@@ -19,6 +20,7 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 
 	for (chr in names(extracted.chrs)) {
 		chosen <- indices[[chr]]
+		if (length(chosen)==0L) { next } 
 		outlen <- extracted.chrs[[chr]]
 		where <- GRanges(chr, IRanges(1, outlen))
 
@@ -26,12 +28,16 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 		collected <- list()
 		for (bf in 1:nbam) {
 			curpar <- paramlist[[bf]]
-			if (curpar$pe=="both") { 
-				stop("bimodality checking not supported for paired-end mode") 
-			} else if (curpar$pe=="none") {
-				reads <- .extractSE(bam.files[bf], where=where, param=curpar)
+    
+       		if (curpar$pe=="both") {
+				out <- .getPairedEnd(bam.files[bf], where=where, param=curpar, with.reads=TRUE)
+				if (.needsRescue(curpar)) { 
+					reads <- mapply(c, out$left, out$right, out$rescued, SIMPLIFY=FALSE)
+				} else {
+					reads <- mapply(c, out$left, out$right, SIMPLIFY=FALSE)
+				}
 			} else {
-				reads <- .extractBrokenPE(bam.files[bf], where=where, param=curpar)
+				reads <- .getSingleEnd(bam.files[bf], where=where, param=curpar)
 			}
 			
 			is.forward <- as.integer(reads$strand=="+")

@@ -7,7 +7,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 # 
 # written by Aaron Lun
 # created 5 April 2012
-# last modified 10 February 2015
+# last modified 14 May 2015
 {   
 	nbam <- length(bam.files)
 	paramlist <- .makeParamList(nbam, param)
@@ -68,23 +68,14 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 		for (bf in 1:nbam) {
 			curpar <- paramlist[[bf]]
 			if (curpar$pe!="both") {
-				if (curpar$pe=="none") { 
-   					reads <- .extractSE(bam.files[bf], where=where, param=curpar)
-				} else {
-					reads <- .extractBrokenPE(bam.files[bf], where=where, param=curpar)
-				}
+   				reads <- .getSingleEnd(bam.files[bf], where=where, param=curpar)
 				extended <- .extendSE(reads, ext=ext.data$ext[bf])
 				frag.start <- extended$start
 				frag.end <- extended$end
 			} else {
-				if (.rescueMe(curpar)) {
-					out <- .rescuePE(bam.files[bf], where=where, param=curpar)
-				} else {
-					out <- .extractPE(bam.files[bf], where=where, param=curpar)
-				}
-
-				# Only want to record each pair once in a bin, so forcing it to only use the midpoint.
+				out <- .getPairedEnd(bam.files[bf], where=where, param=curpar)
 				if (bin) { 
+					# Only want to record each pair once in a bin, so forcing it to only use the midpoint.
 					mid <- as.integer(out$pos + out$size/2)
 					frag.end <- frag.start <- mid
 				} else {
@@ -134,6 +125,6 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 		rowRanges=all.regions, 
 		colData=DataFrame(bam.files=bam.files, totals=totals, ext=ext.data$ext, paramlist),
 		metadata=list(spacing=spacing, width=width, shift=shift, 
-			      final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
+			final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
 }
 

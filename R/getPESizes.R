@@ -6,12 +6,13 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # 
 # written by Aaron Lun
 # a long long time ago
-# last modified 12 December 2014
+# last modified 13 May 2015
 {
 	if (param$pe!="both") { stop("paired-end inputs required") }
     extracted.chrs <- .activeChrs(bam.file, param$restrict)
 
-	singles <- totals <- others <- one.unmapped <- 0L
+	totals <- countBam(bam.file)$records # Simplest way, as filtering is implicit in .extractSE loading.
+	singles <- mapped <- others <- one.unmapped <- 0L
 	stopifnot(length(bam.file)==1L)
 	norm.list <- loose.names.1 <- loose.names.2 <- list()
 
@@ -21,7 +22,7 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 		reads <- .extractSE(bam.file, extras=c("qname", "flag", "isize"), where=where, param=param) 
 
 		# Getting rid of unpaired reads.
-		totals <- totals + length(reads$flag)
+		mapped <- mapped + length(reads$flag)
 		is.single <- bitwAnd(reads$flag, 0x1)==0L
 		singles <- singles + sum(is.single)
  		only.one <- bitwAnd(reads$flag, 0x8)!=0L
@@ -58,9 +59,9 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 	inter.chr <- sum(loose.names.1 %in% loose.names.2)
 	one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
 
-	# Returning sizes and some diagnostic data.
-    return(list(sizes=unlist(norm.list), diagnostics=c(total=totals, single=singles, 
-		mate.unmapped=one.unmapped, unoriented=others, inter.chr=inter.chr)))
+   	# Returning sizes and some diagnostic data.
+    return(list(sizes=unlist(norm.list), diagnostics=c(total.reads=totals, mapped.reads=mapped, 
+		single=singles, mate.unmapped=one.unmapped, unoriented=others, inter.chr=inter.chr)))
 }
 
 ##################################
@@ -72,7 +73,8 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # overrunning the other (if the read lengths are variable).
 #
 # written by Aaron Lun
-# 15 April 2014
+# created 15 April 2014
+# last modified 13 May 2015
 { 
 	if (max.frag <= 0L) {
 		return(list(pos=integer(0), size=integer(0), is.ok=logical(length(reads$flag))))
@@ -88,19 +90,19 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 	stopifnot(all(is.first!=is.second))
 
 	# Matching the reads in each pair so only valid PEs are formed.
-	set.first.A <- should.be.left & is.first
-	set.second.A <- should.be.right & is.second
-	set.first.B <- should.be.left & is.second
-	set.second.B <- should.be.right & is.first
-	corresponding.1 <- match(reads$qname[set.first.A], reads$qname[set.second.A])
-	corresponding.2 <- match(reads$qname[set.first.B], reads$qname[set.second.B])
+	set.left.A <- should.be.left & is.first
+	set.right.A <- should.be.right & is.second
+	set.left.B <- should.be.left & is.second
+	set.right.B <- should.be.right & is.first
+	corresponding.1 <- match(reads$qname[set.left.A], reads$qname[set.right.A])
+	corresponding.2 <- match(reads$qname[set.left.B], reads$qname[set.right.B])
 
 	hasmatch <- logical(length(reads$flag))
-	hasmatch[set.first.A] <- !is.na(corresponding.1)
-	hasmatch[set.first.B] <- !is.na(corresponding.2)
+	hasmatch[set.left.A] <- !is.na(corresponding.1)
+	hasmatch[set.left.B] <- !is.na(corresponding.2)
 	corresponding <- integer(length(reads$flag))
-	corresponding[set.first.A] <- which(set.second.A)[corresponding.1]
-	corresponding[set.first.B] <- which(set.second.B)[corresponding.2]
+	corresponding[set.left.A] <- which(set.right.A)[corresponding.1]
+	corresponding[set.left.B] <- which(set.right.B)[corresponding.2]
 
 	# Selecting the read pairs.
 	fpos <- reads$pos[hasmatch]
@@ -116,13 +118,18 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 	fpos <- fpos[valid]
 	total.size <- total.size[valid]
 
-	if (diag) { 
+	output <- list(pos=fpos, size=total.size)
+	if (diag) {
+		# Don't bother returning matches of invalids; you'd have to re'match
+		# to account for improperly oriented pairs anyway, in getPESizes.
+		output$left <- which(hasmatch)[valid]
+		output$right <- corresponding[hasmatch][valid]
 		is.ok <- logical(length(reads$flag))
-		is.ok[hasmatch][valid] <- TRUE
-		is.ok[corresponding[hasmatch]][valid] <- TRUE
-		return(list(pos=fpos, size=total.size, is.ok=is.ok))
+		is.ok[output$left] <- TRUE
+		is.ok[output$right] <- TRUE
+		output$is.ok <- is.ok
 	}
-	return(list(pos=fpos, size=total.size))
+	return(output)
 }
 
 ##################################

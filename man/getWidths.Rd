@@ -32,6 +32,7 @@ If the fragment lengths are different between libraries, the average is used to 
 
 If \code{final.ext} is \code{NA} and any of \code{ext} are \code{NA}, the function will throw an error.
 Users should set the read length in \code{data$rlen} to avoid this, as \code{NA} values of \code{ext} correspond to the use of unextended reads.
+This information must be manually supplied as it is not automatically stored when constructing \code{data}.
 }
 
 \value{
