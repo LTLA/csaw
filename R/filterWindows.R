@@ -14,7 +14,14 @@ filterWindows <- function(data, background, type="global", prior.count=2, norm.f
 
 	if (type=="proportion") {
 		genome.windows <- .getWindowNum(data)
-		relative.rank <- 1 - (rank(abundances) - 1)/genome.windows
+		ranked.win <- rank(abundances)
+		nwin <- nrow(data)
+
+		if (genome.windows <= nwin) {
+			relative.rank <- ranked.win/nwin
+		} else {
+			relative.rank <- 1 + (ranked.win - nwin)/genome.windows
+		}
 		return(list(abundances=abundances, filter=relative.rank))
 
 	} else {
