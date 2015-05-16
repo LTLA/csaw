@@ -7,7 +7,7 @@ filterWindows <- function(data, background, type="global", prior.count=2, norm.f
 #
 # written by Aaron Lun
 # created 18 February 2015	
-# last modified 14 May 2015
+# last modified 15 May 2015
 {
 	type <- match.arg(type, c("global", "local", "control", "proportion"))
 	abundances <- scaledAverage(asDGEList(data), scale=1, prior.count=prior.count)
@@ -66,8 +66,9 @@ filterWindows <- function(data, background, type="global", prior.count=2, norm.f
 							!identical(norm.fac[[2]]$totals, background$totals)) { 
 						stop("norm.fac SE objects should have same totals as 'data' and 'background'")
 					}
+					rel.width <- median(getWidths(norm.fac[[1]]))/median(dwidth) # Same relative size of prior.
 					adjusted <- filterWindows(norm.fac[[1]], norm.fac[[2]], type="control", 
-						prior.count=prior.count, norm.fac=0)
+						prior.count=prior.count*rel.width, norm.fac=0)
 					norm.fac <- -median(adjusted$filter) # Subtract to remove composition bias.
 				} else if (length(norm.fac)!=1L) { 
 					stop("numeric norm.fac should be a scalar")
@@ -106,7 +107,9 @@ filterWindows <- function(data, background, type="global", prior.count=2, norm.f
 
 .getGlobalBg <- function(data, ab, prior.count)
 # Getting the quantile of those windows that were seen, corresponding to 
-# the median of all windows in the genome.
+# the median of all windows in the genome. Assumes that all lost windows
+# have lower abundances than those that are seen, which should be the
+# case for binned data (where all those lost have zero counts).
 {
 	prop.seen <- length(ab)/.getWindowNum(data)
  	if (prop.seen > 1) { return(median(ab)) }
