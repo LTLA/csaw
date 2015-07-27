@@ -6,8 +6,8 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, weight=1,
 # records the coverage of the resulting bases, up to `range`.
 #
 # written by Aaron Lun
-# created 2 July 2012
-# last modified 15 May 2015
+# created 2 July 2014
+# last modified 22 July 2015
 {
 	weight <- as.double(weight)
 	if(length(weight) != length(regions)) { weight <- rep(weight, length.out=length(regions)) }
@@ -19,7 +19,7 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, weight=1,
 	use.strand <- (strand!="ignore")
 	match.strand <- (strand=="match")
 	if (match.strand) { 
-	    for (i in 1:nbam) { 
+		for (i in seq_len(nbam)) {
 			if (length(paramlist[[i]]$forward)) { stop("set forward=NULL in param for strand-specific profiling") } 
 		}
 	}
@@ -47,22 +47,22 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, weight=1,
 	ext.data <- .collateExt(nbam, ext)
 	range <- as.integer(range)
 	if (range <= 0L) { stop("range should be positive") }
-	total.profile <- 0
-	indices <- split(1:length(regions), seqnames(regions))
+	total.profile <- numeric(range*2 + 1)
+	indices <- split(seq_along(regions), seqnames(regions))
 		
 	# Running through the chromosomes.
-	for (i in 1:length(extracted.chrs)) {
+	for (i in seq_along(extracted.chrs)) {
 		chr <- names(extracted.chrs)[i]
 		chosen <- indices[[chr]]
 		if (!length(chosen)) { next }
 		outlen <- extracted.chrs[i]
 		where <- GRanges(chr, IRanges(1L, outlen))
 
-        # Reading in the reads for the current chromosome for all the BAM files.
+		# Reading in the reads for the current chromosome for all the BAM files.
 		starts <- ends <- list()
-		for (b in 1:nbam) {
+		for (b in seq_len(nbam)) {
 			curpar <- paramlist[[b]]
-            if (curpar$pe!="both") {
+			if (curpar$pe!="both") {
 				reads <- .getSingleEnd(bam.files[b], where=where, param=curpar)
 				extended <- .extendSE(reads, ext=ext.data$ext[b], final=ext.data$final, chrlen=outlen)
 				start.pos <- extended$start
@@ -86,33 +86,34 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, weight=1,
 		all.starts <- all.starts[os]
 		all.weights <- weight[chosen][os]
 
-	    # We call the C++ functions to aggregate profiles.
+		# We call the C++ functions to aggregate profiles.
 		starts <- unlist(starts)
 		ends <- unlist(ends)
 		if (!length(starts)) { next }
 		cur.profile <- .Call(cxx_get_profile, starts, ends, all.starts, all.weights, range) 
 		if (is.character(cur.profile)) { stop(cur.profile) }
 		total.profile <- total.profile + cur.profile
-    }
+	}
 
 	# Cleaning up and returning the profiles. We divide by 2 to get the coverage,
 	# as total.profile counts both sides of each summit (and is twice as large as it should be).
 	out <- total.profile/length(regions)
 	names(out) <- (-range):range
-    return(out)
+	return(out)
 }
 
-wwhm <- function(profile, regions, ext=100, param=readParam(), proportion=0.5, rlen=NULL)
+wwhm <- function(profile, regions, ext=100, proportion=0.5, rlen=NULL)
 # This function computes the window width at half its maximum. This uses
 # the output of profileSites to get the full width of the peak; it then
 # subtracts twice the extension length to obtain the window width. 
 # 
 # written by Aaron Lun
 # created 2 March 2015
-# last modified 14 May 2015
+# last modified 23 July 2015
 {
 	if (proportion <= 0 | proportion >= 1) { stop("proportion should be between 0 and 1") }
 	is.max <- which.max(profile)
+	if (length(is.max)!=1L) { stop("profile cannot be empty or all-NA") }
 	cutoff <- proportion * profile[is.max]
 	above.max <- profile >= cutoff
 
@@ -120,26 +121,30 @@ wwhm <- function(profile, regions, ext=100, param=readParam(), proportion=0.5, r
 	out <- rle(above.max)
 	ends <- cumsum(out$lengths)
 	starts <- c(1L, ends[-length(ends)]+1L)
-	for (ok in which(out$values)) { 
-		if (is.max <= ends[ok] & is.max >= starts[ok]) {
-			chosen.start <- starts[ok]
-			chosen.end <- ends[ok]
-			break
-		}
-	}
-	if (chosen.end==length(profile) || chosen.start==1L) { 
+	chosen <- findInterval(is.max, starts)
+	chosen.start <- starts[chosen]
+	chosen.end <- ends[chosen]
+	if (chosen.end==length(profile) || chosen.start==1L) {
 		warning("width at specified proportion exceeds length of profile")
 	}
 	peak.width <- chosen.end - chosen.start + 1L
 
 	# Getting the median size of the regions.
-	ref.size <- median(width(regions))
+	if (!missing(regions)) {
+		ref.size <- median(width(regions))
+	} else {
+		warning("regions not supplied, assuming width of 1 bp")
+		ref.size <- 1L
+	}
 
 	# To get the average extension length across libraries, via getWidths.
+	# Using a range of width 1 bp, so extension length is directly returned.
+	# Setting start above 1, to future-proof against potential issues with extending before chromosome start.
 	nlibs <- length(ext)
 	ext.data <- .collateExt(nlibs, ext)
 	dummy.data <- SummarizedExperiment(colData=DataFrame(ext=ext.data$ext), 
-		metadata=list(final.ext=ext.data$final), rowRanges=GRanges("chrA", IRanges(1000, 1000))) 
+		metadata=list(final.ext=ext.data$final),
+		rowRanges=GRanges("chrA", IRanges(start=100000, width=1)))
 	if (!is.null(rlen)) { dummy.data$rlen <- rlen }
 	ext.len <- getWidths(dummy.data)
 
