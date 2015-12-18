@@ -88,18 +88,15 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 		}
 
     	# Looping through a number of possible extraction scenarios.
-		for (mode in 1:3) {
+		for (mode in 1:2) {
 			if (mode==1L) {
-				rescue.ext <- NA
 				pe <- "both"
 			} else if (mode==2L) {
-				rescue.ext <- ext
-			} else if (mode==3L) {
 				pe <- "first"
 			}
 
 			# Loading windowCounts.
-			rpam <- readParam(pe=pe, rescue.ext=rescue.ext, max.frag=max.frag, 
+			rpam <- readParam(pe=pe, max.frag=max.frag, 
 				discard=discard, minq=minq, dedup=dedup, restrict=restrict)
 			x <- windowCounts(fnames, spacing=spacing, ext=ext, shift=left, 
 				width=right+left+1, filter=0, param=rpam)
@@ -115,8 +112,8 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 				str2 <- as.logical(strand(seconds[[lib]])=="+")
 
 				valid <- chr1==chr2 & str1!=str2 & ifelse(str1, pos1 <= pos2, pos2 <= pos1)
-		   		pos1[!str1] <- pmin(pos1[!str1]+rlen, chromosomes[chr1][!str1]+1L)
-				pos2[!str2] <- pmin(pos2[!str2]+rlen, chromosomes[chr2][!str2]+1L)
+		   		pos1[!str1] <- pos1[!str1]+rlen
+				pos2[!str2] <- pos2[!str2]+rlen
    				sizes<-abs(pos1-pos2)
 
 				# Checking which ones are lost.
@@ -134,10 +131,12 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 
 				# Checking singles.
 				if (nsingles) {
+                    schr <- as.character(seqnames(singles[[lib]]))
 					skeep <- (!dedup | !singles[[lib]]$dup) & singles[[lib]]$mapq >= minq
 					if (!is.null(discard)) { skeep <- skeep & !overlapsAny(singles[[lib]], discard, type="within") } 
-					if (!is.null(restrict)) { skeep <- skeep & as.character(seqnames(singles[[lib]])) %in% restrict }
-				} else { 
+					if (!is.null(restrict)) { skeep <- skeep & schr %in% restrict }
+				} else {
+                    schr <- character(0) 
 					skeep <- NULL 
 				}
 	
@@ -147,11 +146,12 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 		        	stuff<-getPESizes(fnames[lib], readParam(pe="both", minq=minq, dedup=dedup, restrict=restrict, discard=discard))
 					if (stuff$diagnostics[["single"]]!=sum(skeep)) { 
 						stop("mismatch in number of singles")
-					} else if (stuff$diagnostics[["total.reads"]]!=npairs*2L+nsingles) {
-						stop("mismatch in total number of reads")
 					} else if (stuff$diagnostics[["mapped.reads"]]!=sum(keep1)+sum(keep2)+sum(skeep)) {
 						stop("mismatch in number of mapped reads")
 					}
+                    if (stuff$diagnostics[["total.reads"]]!=npairs*2L+nsingles) {
+                        stop("mismatch in total number of reads")
+                    }
 			        if (sum(paired & chr1!=chr2)!=stuff$diagnostics[["inter.chr"]]) { stop("mismatch in interchromosomal PEs") }
 			        if (sum(paired & chr1==chr2 & !valid)!=stuff$diagnostics[["unoriented"]]) { stop("mismatch in invalid numbers") }
 			        if (sum(keep1!=keep2)!=stuff$diagnostics[["mate.unmapped"]]) { stop("mismatch in unmapped numbers") }
@@ -166,16 +166,6 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 				valid <- valid & sizes <= max.frag
 				if (pe=="both") {
 					pairedness <- GRanges(chr1, IRanges(leftpos, leftpos+sizes-1))[valid & paired]
-					if (!is.na(rescue.ext)) {
-						# We pick the first if the second is inactive, if paired but interchromosomal, or if paired and intrachromosomal
-						# and otherwise invalid and has higher mapping quality.
-						better <- firsts[[lib]]$mapq > seconds[[lib]]$mapq
-						fcopy <- resize(firsts[[lib]][keep1 & (!keep2 | chr1!=chr2 | (!valid & better))], width=ext)
-						fcopy$mapq <- fcopy$dup <- NULL
-						scopy <- resize(seconds[[lib]][keep2 & (!keep1 | chr1!=chr2 | (!valid & !better))], width=ext)
-						scopy$mapq <- scopy$dup <- NULL
-						pairedness <- c(pairedness, fcopy, scopy)
-					}
 				} else {
 					pairedness <- resize(firsts[[lib]][keep1], width=ext)
 				}
@@ -218,83 +208,8 @@ checkcount<-function (npairs, nsingles, chromosomes, spacing=50, max.frag=500, l
 					}
 				}
 			}
-
-			# Comparing to what happens after dumping them and reloading them with fast.pe=TRUE.
-			if (rpam$pe=="both") { 
-				fast.param <- reform(rpam, fast.pe=TRUE)
-				dumped <- list()
-				for (lib in 1:length(fnames)) { 
-					refix <- file.path(dir, paste0("dump_", sub('\\.bam$','', basename(fnames[lib]))))
-					dumped[[lib]] <- dumpPE(fnames[lib], refix, param=fast.param, overwrite=TRUE)
-				}
-				fast.out <- windowCounts(unlist(dumped), spacing=spacing, ext=ext, shift=left, 
-					width=right+left+1, filter=0, param=fast.param)
-				if (!identical(fast.out$totals, x$totals)) { stop("mismatches in totals upon fast PE extraction") }
-				if (!identical(assay(fast.out), assay(x))) { stop("mismatches in counts upon fast PE extraction") }
-
-				# Checking behaviour with `with.reads=TRUE`, to avoid having to check other functions with PE data.
-				where <- GRanges(names(chromosomes)[1], IRanges(1, chromosomes[1]))
-				extracted.reads <- csaw:::.getPairedEnd(fnames[1], where=where, param=rpam, with.reads=TRUE)
-				fast.extracted <- csaw:::.getPairedEnd(dumped[[1]], where=where, param=fast.param, with.reads=TRUE)
-
-				for (ref in list(extracted.reads, fast.extracted)) { 
-					paired <- 1:length(ref$left$pos)
-					endpoint <- ref$pos[paired] + ref$size[paired]
-					if (!identical(ref$pos[paired], ref$left$pos) || 
-							any(endpoint <= ref$right$pos) || 
-							any(endpoint > ref$right$pos + ref$right$qwidth) || 
-							any(ref$left$pos > ref$right$pos)) { 
-						stop("inconsistent read intervals reported for pairs") 
-					}	
-					if (!is.na(rpam$rescue.ext)) { 
-						rescued <- length(ref$left$pos) + 1:length(ref$rescued$pos)
-						is.forward <- ref$rescued$strand == "+"
-						endpoint <- ref$pos[rescued] + ref$size[rescued]
-						if (!identical(ref$pos[rescued][is.forward], ref$rescued$pos[is.forward]) ||
-								any(endpoint[!is.forward] <= ref$rescued$pos[!is.forward]) ||
-								any(endpoint[!is.forward] > ref$rescued$pos[!is.forward] + ref$rescued$qwidth[!is.forward]) ||
-								any(ref$pos[rescued][!is.forward] > ref$rescued$pos[!is.forward]) ||
-								any(ref$rescued$pos <= 0L)) { 
-							stop("inconsistent read intervals reported for rescued pairs") 
-						}
-					}
-				}
-
-				# Comparing fast and slow extraction of a dumped file.
-				for (type in c("left", "right", "rescued")) { 
-					curslow <- extracted.reads[[type]]
-					curfast <- fast.extracted[[type]]
-					stopifnot(is.null(curslow)==is.null(curfast))
-					if (is.null(curslow)) { next }
-
-					os <- order(curslow$pos, curslow$qwidth, curslow$strand)
-					of <- order(curfast$pos, curfast$qwidth, curfast$strand)
-					if (!identical(curslow$pos[os], curfast$pos[of]) ||
-							!identical(curslow$qwidth[os], curfast$qwidth[of]) ||
-							!identical(curslow$strand[os], curfast$strand[of])) {
-						stop("mismatches in extracted reads between fast and slow modes") 
-					}
-				}
-				stopifnot(length(extracted.reads$pos)==length(fast.extracted$pos))
-				stopifnot(length(extracted.reads$size)==length(fast.extracted$size))
-				
-				unlink(unlist(dumped))
-			}
 		}
 	}
-
-	# Checking what happens if you load fast.pe=TRUE on the raw files.
-	where <- GRanges(names(chromosomes)[1], IRanges(1, chromosomes[1]))
-	stopifnot(!csaw:::.isDumpedBam(fnames[1]))
-	extracted.reads <- csaw:::.getPairedEnd(fnames[1], where=where, 
-		param=readParam(pe="both", fast.pe=TRUE), with.reads=TRUE)
-	if (!identical(extracted.reads$pos, extracted.reads$left$pos) || 
-			!identical(extracted.reads$size, extracted.reads$right$pos + extracted.reads$right$qwidth - extracted.reads$left$pos)) {
-		print(cbind(extracted.reads$size, extracted.reads$right$pos + extracted.reads$right$qwidth - extracted.reads$left$pos))
-		print(extracted.reads)
-		stop("lengths and widths of rapidly extracted reads don't match up")
-	}
-
 	return(rowRanges(x))
 }
 
@@ -337,6 +252,60 @@ checkcount(5000, 10, c(chrA=1000, chrB=2000), spacing=25, ext=20)
 
 checkcount(5000, 20, c(chrA=1000, chrB=2000), spacing=25, ext=200)
 	
+###################################################################################################
+# Checking out behaviour with non-trivial CIGAR strings.
+
+suppressPackageStartupMessages(require(GenomicAlignments))
+getFragSizes <- function(positions, cigars, include.clip=TRUE) {
+    left.cig <- cigars[1]
+    right.cig <- cigars[2]
+    left.pos <- positions[1]
+    right.pos <- positions[2]
+
+    # Sanity check.
+    remaining <- right.pos - left.pos - cigarWidthAlongReferenceSpace(left.cig) + cigarWidthAlongReferenceSpace(right.cig)
+    stopifnot(remaining >= 0L)
+
+    left.cig <- cigarToRleList(left.cig)[[1]]
+    new.left.pos <- left.pos
+    if (include.clip) { 
+        new.left.pos <- new.left.pos - ifelse(runValue(left.cig)[1]=="S", runLength(left.cig)[1], 0L)
+    }
+    new.right.pos <- right.pos + cigarWidthAlongReferenceSpace(right.cig)
+    right.cig <- rev(cigarToRleList(right.cig)[[1]])
+    if (include.clip) { 
+        new.right.pos <- new.right.pos +  ifelse(runValue(right.cig)[1]=="S", runLength(right.cig)[1], 0L)
+    }
+
+    return(new.right.pos - new.left.pos)
+}
+
+chromosomes <- c(chrA=100, chrB=200)
+chr <- c("chrA", "chrA")
+positions <- c(5, 10)
+
+for (positions in list(
+                       c(5L, 10L),
+                       c(6L, 100L),
+                       c(10L, 20L)
+                       )) {
+    for (cigars in list(
+                        c("5S5M", "5M5S"),
+                        c("2S3M5S", "1S8M1S"),
+                        c("7S3M", "10M"),
+                        c("10M", "8M2S"),
+                        c("5M5S", "2S8M")
+                        )) {
+        out <- simsam(file.path(dir, "test"), chr, positions, c(TRUE, FALSE), chromosomes, is.first=c(TRUE, FALSE),
+                      names=c("x.1", "x.1"), is.paired=TRUE, mate.chr=rev(chr), mate.pos=rev(positions), mate.str=c(FALSE, TRUE), cigar=cigars)
+        stopifnot(identical(getPESizes(out)$sizes, getFragSizes(positions, cigars)))
+        out2 <- csaw:::.getPairedEnd(out, GRanges("chrA", IRanges(1, chromosomes[1])), param=readParam(pe="both"))
+        stopifnot(identical(out2$pos, positions[1]))
+        stopifnot(identical(out2$size, getFragSizes(positions, cigars, include.clip=FALSE)))
+        cat(sprintf("%i (%s), %i (%s), %i", positions[1], cigars[1], positions[2], cigars[2], getPESizes(out)$sizes), "\n")
+    }
+}
+
 ###################################################################################################
 # Cleaning up.
 

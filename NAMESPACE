@@ -4,9 +4,8 @@ useDynLib(csaw, .registration=TRUE, .fixes="cxx_")
 #  All functions exported, arranged by sequence of usage.
 export(csawUsersGuide,
 	readParam, reformList, checkList,
-	makeExtVector, "[.extVector",
 	correlateReads, maximizeCcf, profileSites, wwhm,
-	getPESizes, dumpPE,
+	getPESizes, 
 	regionCounts, windowCounts, strandedCounts,
 	getWidths, scaledAverage, findMaxima, filterWindows,
 	combineTests, getBestTest, mergeWindows, clusterFDR,
@@ -20,7 +19,7 @@ export(csawUsersGuide,
 import(GenomicRanges, SummarizedExperiment, Rsamtools,
 	S4Vectors, IRanges, GenomeInfoDb,
 	edgeR, 
-	methods)
+	methods, Rhtslib)
 
 importFrom("GenomicAlignments", cigarWidthAlongReferenceSpace)
 importFrom("GenomicFeatures", exonsBy)

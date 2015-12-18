@@ -6,51 +6,57 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # 
 # written by Aaron Lun
 # a long long time ago
-# last modified 22 July 2015
+# last modified 16 December 2015
 {
 	if (param$pe!="both") { stop("paired-end inputs required") }
 	extracted.chrs <- .activeChrs(bam.file, param$restrict)
-
-	totals <- countBam(bam.file)$records # Simplest way, as filtering is implicit in .extractSE loading.
-	singles <- mapped <- others <- one.unmapped <- 0L
-	stopifnot(length(bam.file)==1L)
-	norm.list <- loose.names.1 <- loose.names.2 <- list()
+    norm.list <- list()
+    totals <- singles <- one.unmapped <- mapped <- unoriented <- 0L
+    loose.names.1 <- loose.names.2 <- list()
 
 	for (i in seq_along(extracted.chrs)) {
-		chr <- names(extracted.chrs)[i]
-		where <- GRanges(chr, IRanges(1L, extracted.chrs[i]))
-		reads <- .extractSE(bam.file, extras=c("qname", "flag", "isize"), where=where, param=param) 
+        cur.chr <- names(extracted.chrs)[i]
+        output <- .extractPE(bam.file, GRanges(cur.chr, IRanges(1L, extracted.chrs[i])), param=param, diagnostics=TRUE)
+        totals <- totals + output$total
 
-		# Getting rid of unpaired reads.
-		mapped <- mapped + length(reads$flag)
-		is.single <- bitwAnd(reads$flag, 0x1)==0L
-		singles <- singles + sum(is.single)
- 		only.one <- bitwAnd(reads$flag, 0x8)!=0L
-		one.unmapped <- one.unmapped + sum(!is.single & only.one)
-		for (x in names(reads)) { reads[[x]] <- reads[[x]][!is.single & !only.one] }
+        # Filtering out based on discard.
+        relevant <- seqnames(param$discard)==cur.chr
+        discard <- param$discard[relevant]
 
-		# Identifying valid reads.
-		okay <- .yieldInterestingBits(reads, extracted.chrs[i], diag=TRUE)
-		norm.list[[i]] <- okay$size
-		left.names <- reads$qname[!okay$is.ok]
-		left.flags <- reads$flag[!okay$is.ok]
+        # For valid read pairs; go to 'mapped' (and then norm.list or 'one.unmapped'), or implicitly unmapped.
+        dfkeep <- .discardReads(cur.chr, output$forward[[1]], output$forward[[2]], discard)
+        drkeep <- .discardReads(cur.chr, output$reverse[[1]], output$reverse[[2]], discard)
+        mapped <- mapped + sum(dfkeep) + sum(drkeep)
+        one.unmapped <- one.unmapped + sum(dfkeep!=drkeep)
+        all.sizes <- .getFragmentSizes(output$forward, output$reverse)
+        norm.list[[i]] <- all.sizes$full[dfkeep & drkeep]
 
-		# Setting up some more filters (note, inter-chromosomality is checked more rigorously later).
-		on.same.chr <- reads$isize[!okay$is.ok]!=0L
-		is.first <- bitwAnd(left.flags, 0x40)!=0L
-		is.second <- bitwAnd(left.flags, 0x80)!=0L
+        # For unoriented read pairs; either go to 'mapped' (and then 'unoriented'), 'one.unmapped', or implicitly unmapped.
+        ufkeep <- .discardReads(cur.chr, output$ufirst[[1]], output$ufirst[[2]], discard)
+        uskeep <- .discardReads(cur.chr, output$usecond[[1]], output$usecond[[2]], discard)
+        mapped <- mapped + sum(ufkeep) + sum(uskeep)
+        unoriented <- unoriented + sum(ufkeep & uskeep)
+        one.unmapped <- one.unmapped + sum(ufkeep!=uskeep)
+        
+        # For singles; either go to 'mapped' (and then 'singles') or implicitly unmapped.
+        skeep <- .discardReads(cur.chr, output$single[[1]], output$single[[2]], discard)
+        smapped <- sum(skeep)
+        mapped <- mapped + smapped
+        singles <- singles + smapped
 
-		# Identifying improperly orientated pairs and reads with unmapped counterparts.
-		leftovers.first <- left.names[on.same.chr & is.first]
-		leftovers.second <- left.names[on.same.chr & is.second]
-		has.pair <- sum(leftovers.first %in% leftovers.second)
-		others <- others + has.pair
-		one.unmapped <- one.unmapped + length(leftovers.first) + length(leftovers.second) - 2L*has.pair 
+        # For lone mappers; either go to 'mapped' (and then 'one.unmapped') or implicitly unmapped.
+        omkeep <- .discardReads(cur.chr, output$one.mapped[[1]], output$one.mapped[[2]], discard)
+        omapped <- sum(omkeep)
+        mapped <- mapped + omapped
+        one.unmapped <- one.unmapped + omapped
 
-		# Collecting the rest to match inter-chromosomals.
-		loose.names.1[[i]] <- left.names[!on.same.chr & is.first]
-		loose.names.2[[i]] <- left.names[!on.same.chr & is.second]
-	}
+        # For inter-chromosomals; either mapped (and then store names), or implicitly unmapped.
+        ikeep1 <- .discardReads(cur.chr, output$ifirst[[1]], output$ifirst[[2]], discard)
+        loose.names.1[[i]] <- output$ifirst[[3]][ikeep1]
+        ikeep2 <- .discardReads(cur.chr, output$isecond[[1]], output$isecond[[2]], discard)    
+        loose.names.2[[i]] <- output$isecond[[3]][ikeep2]
+        mapped <- mapped + sum(ikeep1) + sum(ikeep2)
+    }
 
 	# Checking whether a read is positively matched to a mapped counterpart on another chromosome.
 	# If not, then it's just a read in an unmapped pair.
@@ -59,77 +65,19 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 	inter.chr <- sum(loose.names.1 %in% loose.names.2)
 	one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
 
+    bam.file <- path.expand(bam.file)
+    bam.index <- paste0(bam.file, ".bai")
+    out <- .Call(cxx_get_leftovers, bam.file, bam.index, names(extracted.chrs))
+    if (is.character(out)) { stop(out) }
+    totals <- totals + out
+
    	# Returning sizes and some diagnostic data.
-	return(list(sizes=unlist(norm.list), diagnostics=c(total.reads=totals, mapped.reads=mapped,
-		single=singles, mate.unmapped=one.unmapped, unoriented=others, inter.chr=inter.chr)))
+	return(list(sizes=unlist(norm.list), diagnostics=c(total.reads=totals, mapped.reads=mapped, 
+		single=singles, mate.unmapped=one.unmapped, unoriented=unoriented, inter.chr=inter.chr)))
 }
 
-##################################
-
-.yieldInterestingBits <- function(reads, clen, max.frag=Inf, diag=FALSE)
-# This figures out what the interesting reads are, given a list of 
-# read names, flags, positions and qwidths. In particular, reads have
-# to be properly paired in an inward conformation, without one read
-# overrunning the other (if the read lengths are variable).
-#
-# written by Aaron Lun
-# created 15 April 2014
-# last modified 13 May 2015
-{ 
-	if (max.frag <= 0L) {
-		return(list(pos=integer(0), size=integer(0), is.ok=logical(length(reads$flag))))
-	}
-
-	# Figuring out the strandedness and the read number.
- 	is.forward <- bitwAnd(reads$flag, 0x10) == 0L 
- 	is.mate.reverse <- bitwAnd(reads$flag, 0x20) != 0L
-	should.be.left <- is.forward & is.mate.reverse
-	should.be.right <- !is.forward & !is.mate.reverse
-	is.first <- bitwAnd(reads$flag, 0x40) != 0L
-	is.second <- bitwAnd(reads$flag, 0x80) != 0L
-	stopifnot(all(is.first!=is.second))
-
-	# Matching the reads in each pair so only valid PEs are formed.
-	set.left.A <- should.be.left & is.first
-	set.right.A <- should.be.right & is.second
-	set.left.B <- should.be.left & is.second
-	set.right.B <- should.be.right & is.first
-	corresponding.1 <- match(reads$qname[set.left.A], reads$qname[set.right.A])
-	corresponding.2 <- match(reads$qname[set.left.B], reads$qname[set.right.B])
-
-	hasmatch <- logical(length(reads$flag))
-	hasmatch[set.left.A] <- !is.na(corresponding.1)
-	hasmatch[set.left.B] <- !is.na(corresponding.2)
-	corresponding <- integer(length(reads$flag))
-	corresponding[set.left.A] <- which(set.right.A)[corresponding.1]
-	corresponding[set.left.B] <- which(set.right.B)[corresponding.2]
-
-	# Selecting the read pairs.
-	fpos <- reads$pos[hasmatch]
-	fwidth <- reads$qwidth[hasmatch]
-	rpos <- reads$pos[corresponding[hasmatch]]
-	rwidth <- reads$qwidth[corresponding[hasmatch]]
-
-	# Allowing only valid PEs.
-	fend <- pmin(fpos+fwidth, clen+1L)
-	rend <- pmin(rpos+rwidth, clen+1L)
-	total.size <- rend - fpos
-	valid <- fpos <= rpos & fend <= rend & total.size <= max.frag
-	fpos <- fpos[valid]
-	total.size <- total.size[valid]
-
-	output <- list(pos=fpos, size=total.size)
-	if (diag) {
-		# Don't bother returning matches of invalids; you'd have to re'match
-		# to account for improperly oriented pairs anyway, in getPESizes.
-		output$left <- which(hasmatch)[valid]
-		output$right <- corresponding[hasmatch][valid]
-		is.ok <- logical(length(reads$flag))
-		is.ok[output$left] <- TRUE
-		is.ok[output$right] <- TRUE
-		output$is.ok <- is.ok
-	}
-	return(output)
+.getFragmentSizes <- function(left, right) {
+    clipped.sizes <- right[[1]] - left[[1]] + right[[2]]
+    full.sizes <- clipped.sizes + left[[3]] + right[[3]]
+    list(clipped=clipped.sizes, full=full.sizes)
 }
-
-##################################

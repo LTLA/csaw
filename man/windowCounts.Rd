@@ -14,7 +14,7 @@ windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
 	\item{spacing}{an integer scalar specifying the distance between consecutive windows}
 	\item{width}{an integer scalar specifying the width of the window}
-	\item{ext}{an integer scalar or vector, containing the average length(s) of the sequenced fragments in each library}
+	\item{ext}{an integer scalar or vector, or a list of two integer scalars/vectors, containing the average length(s) of the sequenced fragments in each library}
 	\item{shift}{an integer scalar specifying how much the start of each window should be shifted to the left}
 	\item{filter}{an integer scalar for the minimum count sum across libraries for each window}
 	\item{bin}{a logical scalar indicating whether binning should be performed}
@@ -74,17 +74,19 @@ To avoid this, fragment lengths in all libraries can be scaled to \code{final.ex
 For a bimodal peak, scaling effectively aligns the subpeaks on a given strand across all libraries to a common location.
 This removes the most obvious differences in widths.
 
-The value of \code{final.ext} is sourced from the attributes of \code{ext} (see \code{\link{makeExtVector}} for more details).
-If this attribute is not present or is \code{NA}, no rescaling is performed.
+The value of \code{final.ext} can be specified by passing a list (or equivalently subsettable object) of integer vectors in the \code{ext} argument.
+The library-specific fragment lengths are taken from the first element of the list, while the final fragment length is defined from the second element. 
+To this end, the second element should be either a scalar or a vector containing a single duplicated value.
+If \code{final.ext} is set to \code{NA}, no rescaling is performed from the library-specific fragment lengths.
 }
 
 \section{Comments on ext for paired-end data}{
 Directional extension is not performed for paired-end data, so the values in \code{ext} are not used directly.
 Hwoever, rescaling can still be performed to standardize fragment lengths across libraries, by resizing each fragment from its midpoint.
-This still uses \code{final.ext} in the attributes of the \code{ext} parameter.
+This will use the second element of \code{ext} as \code{final.ext}, if \code{ext} is specified as a list of length 2.
 
 On a similar note, some downstream functions will use the extension length in the output \code{colData} as the average fragment length.
-Thus, to maintain compatibility, users are recommended to set \code{ext} to a vector holding the median fragment length in each library.
+Thus, to maintain compatibility, the extension length in the output \code{colData} is set to the average of the inferred fragment lengths for valid read pairs. 
 These values will not be used in \code{windowCounts}, but instead, in functions like \code{\link{getWidths}}.
 }
 
@@ -92,8 +94,7 @@ These values will not be used in \code{windowCounts}, but instead, in functions 
 
 \seealso{
 \code{\link{correlateReads}},
-\code{\link{readParam}},
-\code{\link{makeExtVector}}
+\code{\link{readParam}}
 }
 
 \examples{
@@ -102,7 +103,7 @@ bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
 windowCounts(bamFiles, filter=1)
 windowCounts(bamFiles, width=100, filter=1)
 windowCounts(bamFiles, ext=c(50, 100), spacing=100, filter=1)
-windowCounts(bamFiles, ext=makeExtVector(c(50, 100), 80), width=100)
+windowCounts(bamFiles, ext=DataFrame(c(50, 100), 80), width=100)
 
 # Loading PE data.
 bamFile <- system.file("exdata", "pet.bam", package="csaw")
@@ -110,9 +111,6 @@ windowCounts(bamFile, param=readParam(pe="both"), filter=1)
 windowCounts(bamFile, param=readParam(pe="first"), filter=1)
 windowCounts(bamFile, param=readParam(max.frag=100, pe="both"), filter=1)
 windowCounts(bamFile, param=readParam(max.frag=100, pe="both", restrict="chrA"), filter=1)
-
-# Running rescues of PE data (use max.frag=-1 to coerce failure).
-windowCounts(bamFile, param=readParam(max.frag=50, pe="both", rescue.ext=200), filter=1)
 }
 
 \keyword{counting}
