@@ -48,10 +48,9 @@ Extracted reads are then grouped into proper pairs.
 Proper pairs are those where the two reads are close together (on the same chromosome, obviously) and in an inward-facing orientation. 
 The fragment interval is defined as that bounded by the 5' ends of the two reads in a proper pair.
 
-Fragment sizes above \code{max.frag} are removed.
+The fragment size is defined as the length of the interval bounded by the 5' ends of two inward-facing reads.
+Those pairs with fragment sizes above \code{max.frag} are removed, as they are more likely to be the result of mapping errors than genuinely large fragment sizes.
 Users should run \code{\link{getPESizes}} to pick an appropriate value for their data sets, though thresholds of around 500-1000 bp are usually fine.
-If any soft clipping is present at the 5' ends of the aligned reads, filtering will be done using the full fragment size (i.e., including the length of the soft-clipped sequence).
-All other applications will ignore the soft-clipped sequence.
 
 Paired-end data can also be treated as single-end data by only using one read from each pair with \code{pe="first"} or \code{"second"}.  
 This is useful for poor-quality data where the paired-end procedure has obviously failed, e.g., with many interchromosomal read pairs or pairs with large fragment lengths.
@@ -68,6 +67,12 @@ If \code{forward} is \code{NA}, reads are extracted from all strands.
 Otherwise, reads are only extracted from the forward or reverse strands for \code{TRUE} or \code{FALSE}, respectively.
 This may be useful for applications requiring strand-specific counting.
 A special case is \code{forward=NULL} - see \code{\link{strandedCounts}} for more details.
+
+Any soft clipping in alignments are ignored during extraction (this is also true for paired-end data).
+Soft clips are presumed to be sequencing artifacts, e.g., when the adaptor or barcodes are not properly removed from the read sequence.
+They are not relevant to computing genomic coverage.
+Thus, in this package, any references to the length or 5'/3' ends of the read will actually refer to that of the \emph{alignment}.
+This is often more appropriate, e.g., the 5' end of the alignment represents the end of the fragment after clipping of the artifacts.
 }
 
 \section{Constructor}{

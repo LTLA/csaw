@@ -19,9 +19,10 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 	total.read.num <- 0L
 
 	for (i in seq_along(extracted.chrs)) {
-		if (extracted.chrs[i]<2L) { next } # No way to compute variance if there's only one base.
 		chr <- names(extracted.chrs)[i]
 		where <- GRanges(chr, IRanges(1L, extracted.chrs[i]))
+        total.len <- extracted.chrs[i] + 1L # Length of the conceptual vector to compute the correlations.
+        if (total.len < 2L) { next } # No way to compute variance if the vector's too small.
 
 		# Reading in the reads for the current chromosome for all the BAM files.
 		all.f <- all.r <- list()
@@ -31,27 +32,31 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 			curpar <- paramlist[[b]]
 
 			if (curpar$pe=="both") {
-				out <- .getPairedEnd(bam.files[b], where=where, param=curpar, with.reads=TRUE)
-                reads <- mapply(c, out$left, out$right, SIMPLIFY=FALSE)
-			} else {
+				reads <- .getPairedEnd(bam.files[b], where=where, param=curpar, with.reads=TRUE)
+  			} else {
 				reads <- .getSingleEnd(bam.files[b], where=where, param=curpar)
 			}
+            
+            forward.pos <- reads$forward$pos
+            forward.pos[forward.pos < 1L] <- 1L
+            reverse.pos <- reads$reverse$pos + reads$reverse$qwidth
+            reverse.pos[reverse.pos > total.len] <- total.len
 
-			forwards <- reads$strand=="+"
-			num.reads <- num.reads+length(forwards)
-			forward.reads <- forward.reads+sum(forwards)
-			if (!all(forwards)) { reads$pos[!forwards] <- pmin(extracted.chrs[i], reads$pos[!forwards]+reads$qwidth[!forwards]) }
+			num.reads <- num.reads+length(forward.pos)+length(reverse.pos)
+			forward.reads <- forward.reads+length(forward.pos)
 			if (cross) {
-				all.f[[b]] <- reads$pos[forwards]
-				all.r[[b]] <- reads$pos[!forwards]
-			} else { all.f[[b]] <- reads$pos }
+				all.f[[b]] <- forward.pos
+				all.r[[b]] <- reverse.pos
+			} else { 
+                all.f[[b]] <- c(forward.pos, reverse.pos)
+            }
 		}
 
 		# Assembling RLEs (with some protection from empties). We need reads for any correlation and 
 		# reads on both strands to get cross-correlations. If we're doing cross-correlations, then
 		# we compare between strands; if we're doing autocorrelations, we compare within all reads.		
 		if (num.reads==0L) { next; }
-		if (cross && (forward.reads==0L || forward.reads==num.reads)) { next }
+		if (cross && (forward.reads==0L || forward.reads==num.reads)) { next } # correlations undefined, so they don't contribute to total.read.num.
 		all.f <- rle(sort(do.call(c, all.f)))
 		if (cross) {
 			all.r <- rle(sort(do.call(c, all.r)))
@@ -60,7 +65,7 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 		}
 
 		# We call the C++ function to compute correlations. 
-		ccfs <- .Call(cxx_correlate_reads, all.f$values, all.f$lengths, all.r$values, all.r$lengths, max.dist, extracted.chrs[i])
+		ccfs <- .Call(cxx_correlate_reads, all.f$values, all.f$lengths, all.r$values, all.r$lengths, max.dist, total.len)
 		if (is.character(ccfs)) { stop(ccfs) }
 
 		# Returning some output. Note that the coefficient is weighted according to the number
