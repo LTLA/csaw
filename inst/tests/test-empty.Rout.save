@@ -28,20 +28,20 @@ Type 'q()' to quit R.
 > getBestTest(integer(0), empty, by.pval=FALSE)
 [1] best   logFC  PValue logCPM FDR   
 <0 rows> (or 0-length row.names)
-> getBestOverlaps(Hits(), empty)
+> getBestOverlaps(Hits(sort.by.query=TRUE), empty)
 [1] best   logFC  PValue logCPM FDR   
 <0 rows> (or 0-length row.names)
 > 
 > combineTests(integer(0), empty)
 [1] nWindows   logFC.up   logFC.down PValue     FDR       
 <0 rows> (or 0-length row.names)
-> combineOverlaps(Hits(), empty)
+> combineOverlaps(Hits(sort.by.query=TRUE), empty)
 [1] nWindows   logFC.up   logFC.down PValue     FDR       
 <0 rows> (or 0-length row.names)
 > 
 > upweightSummit(integer(0), integer(0))
 numeric(0)
-> summitOverlaps(Hits(), integer(0))
+> summitOverlaps(Hits(sort.by.query=TRUE), integer(0))
 numeric(0)
 > 
 > findMaxima(GRanges(), range=10, metric=numeric(0))

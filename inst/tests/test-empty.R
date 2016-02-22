@@ -5,13 +5,13 @@ suppressWarnings(suppressPackageStartupMessages(require(csaw)))
 empty <- data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0))
 getBestTest(integer(0), empty)
 getBestTest(integer(0), empty, by.pval=FALSE)
-getBestOverlaps(Hits(), empty)
+getBestOverlaps(Hits(sort.by.query=TRUE), empty)
 
 combineTests(integer(0), empty)
-combineOverlaps(Hits(), empty)
+combineOverlaps(Hits(sort.by.query=TRUE), empty)
 
 upweightSummit(integer(0), integer(0))
-summitOverlaps(Hits(), integer(0))
+summitOverlaps(Hits(sort.by.query=TRUE), integer(0))
 
 findMaxima(GRanges(), range=10, metric=numeric(0))
 
