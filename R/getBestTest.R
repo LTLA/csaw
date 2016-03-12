@@ -7,35 +7,16 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 #
 # written by Aaron Lun
 # created 17 April 2014
-# last modified 25 March 2015
+# last modified 14 January 2016
 {
-	if (!is.integer(ids)) { ids <- as.integer(ids + 0.5) }
-	stopifnot(length(ids)==nrow(tab))
-	id.order <- order(ids)
-	ids <- ids[id.order]
-	tab <- tab[id.order,]
+    input <- .check_test_inputs(ids, tab, weight)
+    ids <- input$ids
+    tab <- input$tab
+    weight <- input$weight
 
-	# Checking what's what.
-	if (length(pval.col)==0L) { 
-		pval.col <- which(colnames(tab)=="PValue")
-		if (length(pval.col)==0L) { stop("result table should have one PValue field") }
-	} else if (length(pval.col)>1L) { 
-		stop("multiple p-value columns are not supported")
-	} else { 
-		if (is.character(pval.col)) {
-			pval.col <- match(pval.col, colnames(tab)) 
-			if (any(is.na(pval.col))) { stop("failed to match p-value column names") }
-		}
-		pval.col <- as.integer(pval.col) 
-	}
-
+    pval.col <- .getPValCol(pval.col, tab)
 	if (by.pval) { 
 		# Identifying the minimum P-value, and Bonferroni-correcting it.
-		if (is.null(weight)) { weight <- rep(1, length(ids)) } 
-		else if (!is.double(weight)) { weight <- as.double(weight) }
-		stopifnot(length(ids)==length(weight))
-
-		weight <- weight[id.order]
 		out <- .Call(cxx_best_in_cluster, tab[,pval.col], ids, weight)
 		if (is.character(out)) { stop(out) }
 		pval <- out[[1]]
@@ -54,7 +35,6 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 			}
 			cpm.col <- as.integer(cpm.col)
 		}
-		weight <- rep(1, length(ids))
 
 		# Identifying the window with the maximum logCPM.
 		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weight)
@@ -65,7 +45,7 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 	
 	subtab <- tab[best,]
 	subtab[,pval.col] <- pval
-	result <- data.frame(best=id.order[best], subtab, FDR=p.adjust(pval, method="BH"))
+	result <- data.frame(best=input$original[best], subtab, FDR=p.adjust(pval, method="BH"))
 	if (length(ids)) { rownames(result) <- ids[c(TRUE, diff(ids)!=0L)] }
 
 	return(result)
@@ -81,3 +61,18 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 # effective number of independent tests 'n'. You can then apply that to the Bonferroni 
 # correction for a cluster of that size.
 
+.getPValCol <- function(pval.col, tab) {
+	if (length(pval.col)==0L) { 
+		pval.col <- which(colnames(tab)=="PValue")
+		if (length(pval.col)==0L) { stop("result table should have only one PValue field") }
+	} else if (length(pval.col)>1L) { 
+		stop("multiple p-value columns are not supported")
+	} else { 
+		if (is.character(pval.col)) {
+			pval.col <- match(pval.col, colnames(tab)) 
+			if (any(is.na(pval.col))) { stop("failed to match p-value column names") }
+		}
+		pval.col <- as.integer(pval.col) 
+	}
+    return(pval.col)
+}

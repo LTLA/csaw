@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.5.8}{\itemize{
+\section{Version 1.5.10}{\itemize{
 \item 
 Restored normalize() as a S4 method returning a RangedSummarizedExperiment object.
 
@@ -37,7 +37,10 @@ Modified checkBimodality() so that the width argument behaves like ext in window
 extractReads() with as.reads=TRUE for PE data now returns a GRangesList.
 
 \item
-Added the controlClusterFDR() function to automate control of the cluster-level FDR.
+Added the controlClusterFDR(), clusterWindows() and consolidateClusters() functions to automate control of the cluster-level FDR.
+
+\item 
+Added protection against NA values in the cluster IDs for combineTests(), getBestTest(), upweightSummits().
 
 \item
 All read extraction methods are now CIGAR-aware and will ignore soft-clipped sequence.

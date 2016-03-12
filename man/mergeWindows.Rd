@@ -10,7 +10,7 @@ mergeWindows(regions, tol, sign=NULL, max.width=NULL, ignore.strand=TRUE)
 }
 
 \arguments{
-	\item{regions}{a \code{GRanges} object}
+	\item{regions}{a GRanges or RangedSummarizedExperiment object containing window coordinates}
 	\item{tol}{a numeric scalar specifying the maximum distance between adjacent windows}
 	\item{sign}{a logical vector specifying whether each window has a positive log-FC}
 	\item{max.width}{a numeric scalar specifying the maximum size of merged intervals}
@@ -19,11 +19,11 @@ mergeWindows(regions, tol, sign=NULL, max.width=NULL, ignore.strand=TRUE)
 
 \value{
 	A list containing \code{id}, an integer vector containing the cluster ID for each window; and \code{region},
-	  a \code{GRanges} object containing the start/stop coordinates for each cluster of windows.
+	  a GRanges object containing the start/stop coordinates for each cluster of windows.
 }
 
 \details{
-Windows are merged if the gap between the end of one window and the start of the next is no greater than \code{tol}. 
+Windows in \code{regions} are merged if the gap between the end of one window and the start of the next is no greater than \code{tol}. 
 Adjacent windows can then be chained together to build a cluster of windows across the linear genome. 
 A value of zero for \code{tol} means that the windows must be contiguous whereas negative values specify minimum overlaps.
 
@@ -45,7 +45,8 @@ considered part of the same region.
 
 Arbitrary regions can also be used in this function.
 However, caution is required if any fully nested regions are present.
-Clustering with \code{sign!=NULL} will throw an error as splitting by sign becomes undefined.
+Clustering with \code{sign!=NULL} will lead to a warning as splitting by sign becomes undefined.
+This is because any genomic region involving the parent window must contain the nested window, such that the cluster will always contain opposite log-fold changes.
 Splitting with \code{max.width!=NULL} will not fail, but cluster sizes may not be reduced if very large regions are present.
 
 % For example, if you have a large region and lots of little nested regions within,
