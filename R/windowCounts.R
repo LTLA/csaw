@@ -1,5 +1,5 @@
-windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
-	filter=10, bin=FALSE, param=readParam())
+windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, 
+    shift=0, filter=10, bin=FALSE, param=readParam())
 # Gets counts from BAM files at each position of the sliding window. Applies
 # a gentle filter to remove the bulk of window positions with low counts.
 # Returns a RangedSummarizedExperiment object with counts and genomic
@@ -10,8 +10,11 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 # last modified 21 December 2015
 {   
 	nbam <- length(bam.files)
-	paramlist <- .makeParamList(nbam, param)
-	extracted.chrs <- .activeChrs(bam.files, paramlist[[1]]$restrict)
+    if (is.list(param)) { 
+        .Deprecated(msg="supplying a list of readParam objects is deprecated, using first element only")
+        param <- param[[1]]
+    }
+	extracted.chrs <- .activeChrs(bam.files, param$restrict)
 
 	# Processing input parameters.
 	if (length(bin)>1L || !is.logical(bin)) { stop("bin must be a logical scalar") }
@@ -51,7 +54,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	all.out <- list(matrix(0L, ncol=nbam, nrow=0))
 	all.regions <- list(GRanges())
 	ix <- 1
-    all.pe <- all.rlen <- rep(list(list()), nbam)
+    all.extras <- rep(list(list()), nbam)
 
 	for (i in seq_along(extracted.chrs)) {
 		chr <- names(extracted.chrs)[i]
@@ -60,44 +63,26 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 
 		# Accounting for the possible gain of a centrepoint from the back when
 		# shift/left is non-zero, i.e., does the shift bring the next centre point
-		# (floor((outlen-1)/spacing)*spacing+1+spacing) under outlen?  [note that 
-		# floor - original for (outlen-1) is equal to the negative remainder].
+		# (floor((outlen-1)/spacing)*spacing+1+spacing) under outlen? In other words:
+        #     floor((outlen-1)/spacing)*spacing+1+spacing - left <= outlen
+        #     floor((outlen-1)/spacing)*spacing - (outlen - 1) + spacing <= left
+        # [note that floor - original for (outlen-1) is equal to the negative remainder].
 		at.end <- spacing - (outlen - 1L) %% spacing <= left
 		total.pts <- as.integer((outlen-1)/spacing) + at.start + at.end
-		outcome <- matrix(0L, total.pts, nbam) 
-
-		for (bf in seq_len(nbam)) {
-			curpar <- paramlist[[bf]]
-			if (curpar$pe!="both") {
-   				reads <- .getSingleEnd(bam.files[bf], where=where, param=curpar)
-				extended <- .extendSE(reads, ext=ext.data$ext[bf], final=ext.data$final, chrlen=outlen)
-				frag.start <- extended$start
-				frag.end <- extended$end
-                all.rlen[[bf]] <- .runningWM(all.rlen[[bf]], reads$forward$qwidth)
-                all.rlen[[bf]] <- .runningWM(all.rlen[[bf]], reads$reverse$qwidth)
-			} else {
-				out <- .getPairedEnd(bam.files[bf], where=where, param=curpar)
-				if (bin) { 
-					# Only want to record each pair once in a bin, so forcing it to only use the midpoint.
-					mid <- as.integer(out$pos + out$size/2)
-					frag.end <- frag.start <- mid
-				} else {
-					checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=ext.data$final, chrlen=outlen)
-					frag.start <- checked$start
-					frag.end <- checked$end
-				}
-                all.pe[[bf]] <- .runningWM(all.pe[[bf]], out$size)
-			}
-
-			# Extending reads to account for window sizes > 1 bp. The start of each read
-			# must be extended by 'right' and the end of each read must be extended by
-			# 'left'. We then pull out counts at the specified spacing. We do have to 
-			# keep track of whether or not we want to use the first point, though.
-			out <- .Call(cxx_get_rle_counts, frag.start-right, frag.end+left, total.pts, spacing, at.start)
-			if (is.character(out)) { stop(out) }
-			outcome[,bf] <- out
-			totals[bf] <- totals[bf]+length(frag.start)
-		}
+		
+        # Parallelized loading.
+        bp.out <- bpmapply(FUN=.window_counts, bam.file=bam.files, init.ext=ext.data$ext, 
+                           MoreArgs=list(where=where, param=param, 
+                                         final.ext=ext.data$final, outlen=outlen, bin=bin, 
+                                         left=left, right=right, total.pts=total.pts, spacing=spacing, at.start=at.start),
+                           BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
+        
+        outcome <- matrix(0L, total.pts, nbam)
+        for (bf in seq_along(bp.out)) {
+            outcome[,bf] <- bp.out[[bf]]$counts
+            totals[bf] <- totals[bf] + bp.out[[bf]]$totals
+            all.extras[[bf]][[i]] <- bp.out[[bf]]$extra
+        }
 
 		# Filtering on row sums (for memory efficiency). Note that redundant windows
 		# are avoided by enforcing 'shift < spacing', as a window that is shifted to 
@@ -119,12 +104,46 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	all.regions <- suppressWarnings(do.call(c, all.regions))
 	seqlevels(all.regions) <- names(extracted.chrs)
 	seqlengths(all.regions) <- extracted.chrs
-	strand(all.regions) <- .decideStrand(paramlist)
+	strand(all.regions) <- .decideStrand(param)
 
 	return(SummarizedExperiment(assays=SimpleList(counts=do.call(rbind, all.out)), 
 		rowRanges=all.regions, 
-		colData=.formatColData(bam.files, totals, ext.data, all.pe, all.rlen, paramlist),
-		metadata=list(spacing=spacing, width=width, shift=shift, 
-			final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
+		colData=.formatColData(bam.files, totals, ext.data, all.extras, param),
+		metadata=list(spacing=spacing, width=width, shift=shift, bin=bin, 
+            param=param, final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
+}
+
+.window_counts <- function(bam.file, where, param, 
+                           init.ext, final.ext, outlen, bin, 
+                           left, right, total.pts, spacing, at.start) {
+    if (param$pe!="both") {
+        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        extended <- .extendSE(reads, ext=init.ext, final=final.ext, chrlen=outlen)
+        frag.start <- extended$start
+        frag.end <- extended$end
+
+        extra <- cbind(c(mean(reads$forward$qwidth), mean(reads$reverse$qwidth)),
+                       c(length(reads$forward$qwidth), length(reads$reverse$qwidth)))
+    } else {
+        out <- .getPairedEnd(bam.file, where=where, param=param)
+        if (bin) { 
+            # Only want to record each pair once in a bin, so forcing it to only use the midpoint.
+            mid <- as.integer(out$pos + out$size/2)
+            frag.end <- frag.start <- mid
+        } else {
+            checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)
+            frag.start <- checked$start
+            frag.end <- checked$end
+        }
+        extra <- c(mean(out$size), length(out$size))
+    }
+
+    # Extending reads to account for window sizes > 1 bp. The start of each read
+    # must be extended by 'right' and the end of each read must be extended by
+	# 'left'. We then pull out counts at the specified spacing. We do have to 
+    # keep track of whether or not we want to use the first point, though.
+    out <- .Call(cxx_get_rle_counts, frag.start-right, frag.end+left, total.pts, spacing, at.start)
+    if (is.character(out)) { stop(out) }
+    return(list(counts=out, totals=length(frag.start), extra=extra))
 }
 

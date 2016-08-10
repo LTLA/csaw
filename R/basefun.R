@@ -106,29 +106,6 @@
 
 ###########################################################
 
-.makeParamList <- function(nbam, param) 
-# Converts a readParam object into a list, if it isn't so already.
-# 
-# written by Aaron Lun
-# created 12 December 2014
-# last modified 22 July 2015
-{
-	if (!is.list(param)) { 
-		paramlist <- lapply(seq_len(nbam), FUN=function(x) { param })
-	} else if (nbam!=length(param)) {
-		stop("number of readParam objects is not equal to the number of BAM files")
-	} else {
-		paramlist <- param
-		all.restrict <- paramlist[[1]]$restrict
-		for (x in paramlist) {
-			if (!identical(x$restrict, all.restrict)) { 
-				stop("non-identical restrict settings between readParam objects")
-			}		
-		}
-	}
-	return(paramlist)
-}	
-
 .activeChrs <- function(bam.files, restrict) 
 # Processes the incoming data; checks that bam headers are all correct,
 # truncates the list according to 'restrict'.
@@ -184,32 +161,31 @@
 # Collates the extension parameters into a set of ext and remainder values.
 # The idea is to extend each read directionally to 'ext', and then extend in
 # both directions by 'remainder' to reach the desired fragment length.
-# 
-# written by Aaron Lun
-# created 12 December 2014
-# last modified 16 December 2015
 {
-    if (!is.vector(ext)) {
+    if (is.list(ext)) {
         if (length(ext)!=2L) {
             stop("'ext' must be a list of length 2")
-        } else {
-            final.ext <- unique(as.integer(round(ext[[2]])))
-        	if (length(final.ext)!=1L || (!is.na(final.ext) && final.ext <= 0L)) { 
-                stop("final extension length must be a positive integer or NA") 
-            }
-        }
+        } 
+        final.ext <- ext[[2]]
         ext <- ext[[1]]
     } else {
+        if (length(ext)!=1L) {
+            stop("'ext' must be an integer scalar")
+        }
+		ext <- rep(ext, length.out=nbam)
         final.ext <- NA_integer_
     }
-	
-	if (length(ext)==1L) { 
-		ext <- rep(ext, nbam)
-	} else if (length(ext)!=nbam) {
-		stop("length of extension vector is not consistent with number of libraries")
-	}
+
 	ext <- as.integer(round(ext))
+    if (length(ext)!=nbam) {
+        stop("length of extension vector is not consistent with number of libraries")
+    } 
 	if (any(!is.na(ext) & ext <= 0L)) { stop("extension length must be NA or a positive integer") }
+
+    final.ext <- as.integer(round(final.ext))
+    if (length(final.ext)!=1L || (!is.na(final.ext) && final.ext <= 0L)) { 
+        stop("final extension length must be a positive integer or NA") 
+    }
 
 	list(ext=ext, final=final.ext)
 }
@@ -247,23 +223,20 @@
 
 ############################################################
 
-.decideStrand <- function(paramlist) 
+.decideStrand <- function(param) 
 # Decides what strand we should assign to the output GRanges in the
 # SummarizedExperiment object, after counting.
-#
-# written by Aaron Lun
-# created 10 February 2015
 {
-	getfs <- sapply(paramlist, FUN=function(x) { x$forward })
-	if (length(unique(getfs))!=1) {
-		warning("unstranded regions used for counts from multiple strands")
-		return("*")
-	} else if (length(getfs[[1]])==0L) { # Need '[[', if NULL.
+	getfs <- param$forward
+    if (length(getfs)==0L) { 
 		stop("unspecified strandedness")
-	}
-	if (is.na(getfs[1])) { return("*") }
-	else if (getfs[1]) { return("+") }
-	else { return("-") }
+	} else if (is.na(getfs)) { 
+        return("*") 
+    } else if (getfs) { 
+        return("+") 
+    } else { 
+        return("-") 
+    }
 }
 
 .runningWM <- function(store, x)
@@ -275,17 +248,21 @@
     return(store)
 }
 
-.formatColData <- function(bam.files, totals, ext.data, all.pe, all.rlen, paramlist) {
+.formatColData <- function(bam.files, totals, ext.data, all.extras, param) {
     nbam <- length(bam.files)
     store.ext <- ext.data$ext
     store.rlen <- rep(NA_integer_, nbam)
+
+    store.extras <- numeric(nbam)
     for (bf in seq_len(nbam)) {
-        if (paramlist[[bf]]$pe=="both") { store.ext[bf] <- as.integer(round(all.pe[[bf]][[1]])) }
-        else { store.rlen[bf] <- as.integer(round(all.rlen[[bf]][[1]])) }
+        current.extras <- do.call(rbind, all.extras[[bf]])
+        store.extras[bf] <- weighted.mean(current.extras[,1], current.extras[,2])
     }
-    dim(paramlist) <- c(nbam, 1)
-    colnames(paramlist) <- "param"
-    DataFrame(bam.files=bam.files, totals=totals, ext=store.ext, rlen=store.rlen, paramlist)
+    store.extras <- as.integer(round(store.extras))
+    if (param$pe=="both") { store.ext <- store.extras }
+    else { store.rlen <- store.extras }
+
+    DataFrame(bam.files=bam.files, totals=totals, ext=store.ext, rlen=store.rlen)
 }
 
 ############################################################

@@ -4,7 +4,7 @@
 
 setClass("readParam", representation(pe="character", max.frag="integer",
     dedup="logical", minq="integer", forward="logical", 
-	restrict="character", discard="GRanges"))
+	restrict="character", discard="GRanges", BPPARAM="BiocParallelParam"))
 
 setValidity("readParam", function(object) {
     if (length(object@pe)!=1L || ! object@pe %in%c("none", "both", "first", "second")) { 
@@ -24,7 +24,7 @@ setValidity("readParam", function(object) {
 	if (length(object@forward)>1L || !is.logical(object@forward)) { 
 		return("forward strand specification must be a logical scalar or NULL")
 	} else if ((length(object@forward)==0L || !is.na(object@forward)) && object@pe == "both") {
-		stop("strand-specific extraction makes no sense for paired-end data")
+		stop("strand-specific extraction is not supported for paired-end data")
 	}
 
 	return(TRUE)
@@ -79,9 +79,12 @@ setMethod("show", signature("readParam"), function(object) {
 	} else {
 		cat("    No regions are specified to discard reads\n")
 	}
+
+    nc <- bpworkers(object@BPPARAM)
+    cat("    Using", class(object@BPPARAM)[1], "with", nc, ifelse(nc>1L, "workers", "worker\n"))
 })
 
-readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges())
+readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=SerialParam())
 # This creates a list of parameters, formally represented as a readParam
 # object, specifying how reads should be extracted from the BAM files. The
 # aim is to synchronize read loading throughout the package, such that
@@ -97,7 +100,7 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 	restrict <- as.character(restrict) 
 	new("readParam", pe=pe, max.frag=max.frag, 
 		dedup=dedup, forward=forward, minq=minq, 
-		restrict=restrict, discard=discard)
+		restrict=restrict, discard=discard, BPPARAM=BPPARAM)
 }
 
 setGeneric("reform", function(x, ...) { standardGeneric("reform") })

@@ -7,22 +7,23 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, average=TRUE, 
 #
 # written by Aaron Lun
 # created 2 July 2014
-# last modified 21 December 2015
+# last modified 5 August 2016
 {
 	weight <- as.double(weight)
 	if(length(weight) != length(regions)) { weight <- rep(weight, length.out=length(regions)) }
 	average <- as.logical(average)
 	nbam <- length(bam.files)
-	paramlist <- .makeParamList(nbam, param)
+    if (is.list(param)) { 
+        .Deprecated(msg="supplying a list of readParam objects is deprecated, using first element only")
+        param <- param[[1]]
+    }
 
 	# A bit of work for strand-specificity.
 	strand <- match.arg(strand)
 	use.strand <- (strand!="ignore")
 	match.strand <- (strand=="match")
-	if (match.strand) { 
-		for (i in seq_len(nbam)) {
-			if (length(paramlist[[i]]$forward)) { stop("set forward=NULL in param for strand-specific profiling") } 
-		}
+	if (match.strand && length(param$forward)) { 
+        stop("set forward=NULL in param for strand-specific profiling")  
 	}
 	if (use.strand) { 
 		reverse <- strand(regions)=="-"
@@ -31,11 +32,10 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, average=TRUE, 
 			rregs <- regions[reverse]
 			start(rregs) <- end(rregs) # Using the 5' end of the reverse-stranded region.
 			rprof <- Recall(bam.files=bam.files, regions=rregs, range=range, ext=ext, average=average, weight=weight[reverse], 
-				param=reformList(paramlist, forward=ifelse(match.strand, FALSE, NA)), strand="ignore") 
+				param=reform(param, forward=ifelse(match.strand, FALSE, NA)), strand="ignore") 
 			if (any(!reverse)) { 
-				fprof <- Recall(bam.files=bam.files, regions=regions[!reverse], range=range, 
-					ext=ext, average=average, weight=weight[!reverse], param=reformList(paramlist, 
-						forward=ifelse(match.strand, TRUE, NA)), strand="ignore") 
+				fprof <- Recall(bam.files=bam.files, regions=regions[!reverse], range=range, ext=ext, average=average, 
+                    weight=weight[!reverse], param=reform(param, forward=ifelse(match.strand, TRUE, NA)), strand="ignore") 
 			} else { 
 				fprof <- 0 
 			}
@@ -54,7 +54,7 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, average=TRUE, 
 	}
 
 	# Setting up.
-	extracted.chrs <- .activeChrs(bam.files, paramlist[[1]]$restrict)
+	extracted.chrs <- .activeChrs(bam.files, param$restrict)
 	ext.data <- .collateExt(nbam, ext)
 	range <- as.integer(range)
 	if (range <= 0L) { stop("range should be positive") }
@@ -75,26 +75,13 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, average=TRUE, 
 		where <- GRanges(chr, IRanges(1L, outlen))
 
 		# Reading in the reads for the current chromosome for all the BAM files.
-		starts <- ends <- list()
-		for (b in seq_len(nbam)) {
-			curpar <- paramlist[[b]]
-			if (curpar$pe!="both") {
-				reads <- .getSingleEnd(bam.files[b], where=where, param=curpar)
-				extended <- .extendSE(reads, ext=ext.data$ext[b], final=ext.data$final, chrlen=outlen)
-				start.pos <- extended$start
-				end.pos <- extended$end
-			} else {
-				out <- .getPairedEnd(bam.files[b], where=where, param=curpar)
-				checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=ext.data$final, chrlen=outlen)
-				start.pos <- checked$start
-				end.pos <- checked$end
-			}
+        bp.out <- bpmapply(FUN=.profile_sites, bam.file=bam.files, init.ext=ext.data$ext, 
+                           MoreArgs=list(where=where, param=param,
+                                         final.ext=ext.data$final, outlen=outlen),
+                           BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
 
-			if (!length(start.pos)) { next }
-			ix <- length(starts) + 1L
-			starts[[ix]] <- pmax(start.pos, 1L) # Avoid considering off ends of chromosomes.
- 			ends[[ix]] <- pmin(end.pos, outlen)
-		}
+		starts <- lapply(bp.out, "[[", "starts")
+        ends <- lapply(bp.out, "[[", "ends")
 			
 		# Pulling out the regions.
 		all.starts <- start(regions)[chosen]
@@ -126,6 +113,24 @@ profileSites <- function(bam.files, regions, range=5000, ext=100, average=TRUE, 
 		colnames(total.profile) <- (-range):range
 	}
 	return(total.profile)
+}
+
+.profile_sites <- function(bam.file, where, param,
+                           init.ext, final.ext, outlen) {
+    if (param$pe!="both") {
+        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        extended <- .extendSE(reads, ext=init.ext, final=final.ext, chrlen=outlen)
+        start.pos <- extended$start
+        end.pos <- extended$end
+    } else {
+        out <- .getPairedEnd(bam.file, where=where, param=param)
+        checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)
+        start.pos <- checked$start
+        end.pos <- checked$end
+    }
+   
+    list(starts=pmax(start.pos, 1L), # Avoid considering off ends of chromosomes.
+         ends=pmin(end.pos, outlen))
 }
 
 wwhm <- function(profile, regions, ext=100, proportion=0.5, rlen=NULL)

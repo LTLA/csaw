@@ -2,6 +2,19 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.7.3}{\itemize{
+\item Added protection against NA values in filterWindows().
+
+\item Deprecated the use of parameter lists in any param= arguments.
+
+\item Tightened up allowable values of ext= arguments in various functions.
+
+\item Added the BPPARAM slot in the readParam class to store BiocParallelParam objects.
+
+\item Added support for parallelization in windowCounts(), regionCounts() and others.
+}
+}
+
 \section{Version 1.6.0}{\itemize{
 \item 
 Restored normalize() as a S4 method returning a RangedSummarizedExperiment object.
