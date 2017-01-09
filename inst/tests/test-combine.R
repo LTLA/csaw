@@ -33,6 +33,23 @@ comp <- function(total.n, n.clusters, weights=NULL) {
 	if (!almostidentical(osimes, out$PValue)) { stop("combined p-values are not identical") }
 	if (!almostidentical(p.adjust(osimes, method="BH"), out$FDR)) { stop("q-values are not identical") }
 
+    # Checking inferred directions.
+    going.up <- tab$logFC > 0
+    tab.up <- tab
+    tab.up$PValue[!going.up] <- 1
+    out.up <- combineTests(merged.ids, tab.up, weight=weights)
+    tab.down <- tab
+    tab.down$PValue[going.up] <- 1
+    out.down <- combineTests(merged.ids, tab.down, weight=weights)
+    
+    direction <- rep("mixed", nrow(out))
+    tol <- 1e-6
+    up.same <- out.up$PValue/out$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
+    down.same <- out.down$PValue/out$PValue - 1 <= tol
+    direction[up.same & !down.same] <- "up"
+    direction[!up.same & down.same] <- "down"
+    stopifnot(identical(direction, out$direction))
+
 	# Checking the rownames.
 	if (!identical(rownames(out), as.character(sort(unique(merged.ids))))) { stop("row names are not matched") }
 
@@ -43,6 +60,11 @@ comp <- function(total.n, n.clusters, weights=NULL) {
         || !almostidentical(out$PValue, out2$PValue) || !identical(rownames(out), rownames(out2))) { 
         stop("values not preserved after shuffling") 
     }
+
+    # Checking we get the same results with a character vector (though ordering might be different).
+    out3 <- combineTests(as.character(merged.ids), tab, weight=weights)
+    out3 <- out3[rownames(out),]
+    if (!identical(out, out3)) { stop("values not preserved with character vector input") }
 
     # Checking what happens if the first id becomes NA.
     na.ids <- merged.ids

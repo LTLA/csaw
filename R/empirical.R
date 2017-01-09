@@ -1,0 +1,55 @@
+empiricalFDR <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
+# Converts two-tailed p-values to one-tailed p-values, combines them 
+# and takes the number of rejections in the "wrong" direction as an 
+# estimate of the number of false positives.
+#
+# written by Aaron Lun
+# created 7 January 2017
+# last modified 8 January 2017
+{
+    if (length(fc.col)==0L) { 
+        fc.col <- grep("logFC", colnames(tab))
+    }
+    if (length(fc.col)!=1L) {
+        stop("only one column should be specified by 'fc.col'")
+    }
+    cur.fc <- tab[,fc.col]
+    if (neg.down) {
+        wrong.dir <- cur.fc < 0
+    } else {
+        wrong.dir <- cur.fc > 0
+    }
+    
+    pval.col <- .getPValCol(pval.col, tab)
+    pval.colname <- colnames(tab)[pval.col]
+
+    # Converting to one-sided p-values and combining.
+    new.p <- tab[,pval.col]/2
+    new.p[wrong.dir] <- 1 - new.p[wrong.dir]
+    right.tab <- tab
+    right.tab[,pval.col] <- new.p
+    right.com <- combineTests(ids, right.tab, weight=weight, pval.col=pval.col, fc.col=fc.col)
+    right.com$direction <- NULL
+    
+    # Repeating in the other direction (calculating 'new.p' fresh, to avoid numeric imprcesion from repeated "1-" ops).
+    new.p <- tab[,pval.col]/2
+    new.p[!wrong.dir] <- 1 - new.p[!wrong.dir]
+    wrong.tab <- tab
+    wrong.tab[,pval.col] <- new.p
+    wrong.com <- combineTests(ids, wrong.tab, weight=weight, pval.col=pval.col, fc.col=integer(0))
+
+    # Computing empirical FDR.
+    right.comp <- right.com[,pval.colname]
+    o <- order(right.comp)
+    right.comp <- right.comp[o]
+    empirical <- findInterval(right.comp, sort(wrong.com[,pval.colname]))/seq_along(right.comp)
+    
+    # Enforcing monotonicity and other characteristics.
+    empirical <- pmin(1, empirical)
+    empirical <- rev(cummin(rev(empirical)))
+    empirical[o] <- empirical
+    right.com$FDR <- empirical
+    return(right.com)
+}
+
+

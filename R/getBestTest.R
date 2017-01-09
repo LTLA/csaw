@@ -7,11 +7,12 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 #
 # written by Aaron Lun
 # created 17 April 2014
-# last modified 14 January 2016
+# last modified 8 January 2017
 {
     input <- .check_test_inputs(ids, tab, weight)
     ids <- input$ids
     tab <- input$tab
+    groups <- input$groups
     weight <- input$weight
 
     pval.col <- .getPValCol(pval.col, tab)
@@ -23,18 +24,10 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 		best <- out[[2]]
 
 	} else {
-		if (length(cpm.col)==0L) {
-			cpm.col <- which(colnames(tab)=="logCPM")
-			if (length(cpm.col)==0L) { stop("result table should have one logCPM field") }
-		} else if (length(cpm.col)>1L) { 
-			stop("multiple logCPM columns are not supported")
-		} else {
-			if (is.character(cpm.col)) {
-				cpm.col <- match(cpm.col, colnames(tab)) 
-				if (any(is.na(cpm.col))) { stop("failed to match CPM column names") }
-			}
-			cpm.col <- as.integer(cpm.col)
-		}
+		if (is.null(cpm.col)) { cpm.col <- "logCPM" }
+		if (length(cpm.col)!=1L) { 
+			stop("absent or multiple logCPM columns are not supported")
+		} 
 
 		# Identifying the window with the maximum logCPM.
 		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weight)
@@ -45,9 +38,7 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 	
 	subtab <- tab[best,]
 	subtab[,pval.col] <- pval
-	result <- data.frame(best=input$original[best], subtab, FDR=p.adjust(pval, method="BH"))
-	if (length(ids)) { rownames(result) <- ids[c(TRUE, diff(ids)!=0L)] }
-
+	result <- data.frame(best=input$original[best], subtab, FDR=p.adjust(pval, method="BH"), row.names=groups)
 	return(result)
 }
 
@@ -62,17 +53,19 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 # correction for a cluster of that size.
 
 .getPValCol <- function(pval.col, tab) {
-	if (length(pval.col)==0L) { 
-		pval.col <- which(colnames(tab)=="PValue")
-		if (length(pval.col)==0L) { stop("result table should have only one PValue field") }
-	} else if (length(pval.col)>1L) { 
-		stop("multiple p-value columns are not supported")
-	} else { 
-		if (is.character(pval.col)) {
-			pval.col <- match(pval.col, colnames(tab)) 
-			if (any(is.na(pval.col))) { stop("failed to match p-value column names") }
-		}
-		pval.col <- as.integer(pval.col) 
-	}
+    if (length(pval.col)>1L) { 
+        stop("multiple p-value columns are not supported")
+    }
+	if (is.null(pval.col)) { 
+		pval.col <- "PValue"
+    }
+    if (is.character(pval.col)) {
+        pval.col <- which(colnames(tab)==pval.col)
+    } else {
+        pval.col <- as.integer(pval.col) # coerce to integer, just in case.
+    }
+    if (length(pval.col)==0) { 
+        stop("failed to find any p-value column")
+    }
     return(pval.col)
 }

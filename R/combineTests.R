@@ -7,24 +7,22 @@ combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 # 
 # written by Aaron Lun
 # created 30 July 2013
-# last modified 14 January 2016
+# last modified 8 January 2017
 {
     input <- .check_test_inputs(ids, tab, weight)
     ids <- input$ids
     tab <- input$tab
+    groups <- input$groups
     weight <- input$weight
 
 	# Saying which columns have the log-fold change field.
-	if (length(fc.col)==0L) { 
-		fc.col <- grep("logFC", colnames(tab)) - 1L	
-		if (!length(fc.col)) { stop("result table should have at least one logFC field") }
-	} else {
-		if (is.character(fc.col)) { 
-			fc.col <- match(fc.col, colnames(tab)) 
-			if (any(is.na(fc.col))) { stop("failed to match logFC column names") }
-		}
-		fc.col <- as.integer(fc.col) - 1L
-	}
+	if (is.null(fc.col)) { 
+		fc.col <- grep("logFC", colnames(tab))
+	} else if (is.character(fc.col)) { 
+        fc.col <- match(fc.col, colnames(tab)) 
+        if (any(is.na(fc.col))) { stop("failed to match logFC column names") }
+    }
+    fc.col <- as.integer(fc.col) - 1L
 
 	# Saying which column is the p-value field.
     is.pval <- .getPValCol(pval.col, tab) - 1L
@@ -32,17 +30,24 @@ combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 	# Running the clustering procedure.
 	out <- .Call(cxx_get_cluster_stats, fc.col, is.pval, tab, ids, weight, 0.5)
 	if (is.character(out)) { stop(out) }
-	combined <- data.frame(out[[1]], out[[2]], out[[3]], p.adjust(out[[3]], method="BH"))
- 	if (length(ids)) { rownames(combined) <- ids[c(TRUE, diff(ids)!=0L)] } 
+	combined <- data.frame(out[[1]], out[[2]], out[[3]], p.adjust(out[[3]], method="BH"), row.names=groups)
 	colnames(combined) <- c("nWindows", 
-			paste0(rep(colnames(tab)[fc.col+1L], each=2), ".", c("up", "down")), 
+			sprintf("%s.%s", rep(colnames(tab)[fc.col+1L], each=2), c("up", "down")), 
 			colnames(tab)[is.pval+1L], "FDR")
 
-	return(combined)
+    # Adding direction.
+    if (length(fc.col)==1L) {
+        labels <- c("mixed", "up", "down")
+        combined$direction <- labels[out[[4]] + 1L]
+    }
+    return(combined)
 }
 
 .check_test_inputs <- function(ids, tab, weight) {
-	if (!is.integer(ids)) { ids <- as.integer(ids) }
+    f <- factor(ids)
+    all.names <- levels(f)
+    ids <- as.integer(f)
+    
 	if (is.null(weight)) { 
         weight <- rep(1, length(ids)) 
     } else if (!is.double(weight)) { 
@@ -67,5 +72,5 @@ combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
     } else {
         originals <- id.order
     }
-    return(list(ids=ids, tab=tab, weight=weight, original=originals))
+    return(list(ids=ids, groups=all.names, tab=tab, weight=weight, original=originals))
 }
