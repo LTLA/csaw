@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.9.7}{\itemize{
+\section{Version 1.9.8}{\itemize{
 \item 
 Added calculation of dominant directionality in combineTests().
 
@@ -16,11 +16,11 @@ Added the empiricalFDR(), empiricalOverlaps() functions for controlling the empi
 Added the mixedClusters(), mixedOverlaps() functions for testing for mixed clusters.
 
 \item 
-Ensured that window-level FDR threshold chosen by controlClusterFDR() not above the cluster-level FDR.
+Ensured that window-level FDR threshold chosen by controlClusterFDR() is not above the cluster-level FDR.
 
 \item
 Minor fix to scaledAverage() to avoid slightly inaccurate results.
-Zero or negative scale factors now return -Inf and NA, respectively.
+Also, zero or negative scale factors now return -Inf and NA, respectively.
 
 \item
 Switched to new scaleOffset() function for adding offsets in asDGEList().
@@ -28,6 +28,12 @@ Added option to specify the assay to be used.
 
 \item
 Added multi-TSS support in detailRanges().
+
+\item 
+Modified paired-end machinery in windowCounts(), getPESizes() to be more accommodating of overruns.
+
+\item
+Ignored secondary and supplementary alignments in all functions.
 
 \item
 Added options to specify assay in SE objects in filterWindows().
