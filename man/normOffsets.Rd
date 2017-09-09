@@ -1,6 +1,10 @@
 \name{normOffsets}
 \alias{normOffsets}
 \alias{normOffsets,matrix-method}
+\alias{normOffsets,SummarizedExperiment-method}
+
+\alias{normalize}
+\alias{normalize,SummarizedExperiment-method}
 
 \title{Normalize counts between libraries}
 
@@ -9,14 +13,20 @@
 \usage{
 \S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
     weighted=FALSE, ...)
+
+\S4method{normOffsets}{SummarizedExperiment}(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL)
+
+\S4method{normalize}{SummarizedExperiment}(object, ...)
 }
 
 \arguments{
-  \item{object}{a matrix of integer counts with one column per library}
-  \item{lib.sizes}{a numeric vector specifying the total number of reads per library}
-  \item{type}{a character string indicating what type of normalization is to be performed}
-  \item{weighted}{a logical scalar indicating whether precision weights should be used for TMM normalization}
-  \item{...}{other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}}
+  \item{object}{A matrix of numeric counts with one column per library and one row per genomic feature (e.g., window).}
+  \item{lib.sizes}{A numeric vector specifying the total number of reads per library.}
+  \item{type}{A character string indicating what type of normalization is to be performed.}
+  \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
+  \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
+  \item{assay}{An integer scalar or string specifying the assay values to use for normalization.}
+  \item{se.out}{A logical scalar indicating whether or not a SummarizedExperiment object should be returned.}
 }
 
 \details{
@@ -35,18 +45,29 @@ Assigning excessive weight to such regions will defeat the purpose of trimming w
 
 If \code{type="loess"}, this function performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
 For each sample, a lowess curve is fitted to the log-counts against the log-average count. 
-The fitted value for each bin pair is used as the generalized linear model offset for that sample. 
+The fitted value for each genomic window is used as an offset in a generalized linear model for that feature and sample. 
 The use of the average count provides more stability than the average log-count when low counts are present for differentially bound regions.
 
 If \code{lib.sizes} is not specified, a warning is issued and the column sums of \code{counts} are used instead.
-Note that the same \code{lib.sizes} should be used throughout the analysis if \code{\link{normOffsets}} is called multiple times on the same libraries, e.g., with different bin or window sizes or after different filtering steps.
-This ensures that the normalization factors or offsets are comparable between calls.
+Note that the same \code{lib.sizes} should be used throughout the analysis if \code{normOffsets} with \code{type="scaling"} is called multiple times on the same libraries, , 
+e.g., with different bin or window sizes or after different filtering steps.
+This ensures that the normalization factors are comparable between calls.
+
+If a SummarizedExperiment object is supplied, the values to be used for normalization will be extracted according to the specified \code{assay} field.
+Furthermore, \code{se.out=TRUE} means that the SummarizedExperiment method will return a modified version of \code{object} containing normalization information.
+Normalization factors are stored in the \code{"norm.factors"} field in the \code{mcols}, whie the offset matrix is stored in the \code{"offset"} field in the \code{assays}.
+\code{se.out=NULL} will soon be deprecated and defaults to \code{FALSE}.
+
+\code{normalize,SummarizedExperiment-method} has the same behaviour as \code{normOffsets} with \code{se.out=TRUE}.
+However, this will be deprecated to avoid clashes with other \code{normalize} methods for SummarizedExperiment objects.
 }
 
 \value{
-For \code{type="scaling"}, a numeric vector containing the relative normalization factors for each library.
+For \code{type="scaling"}, a numeric vector containing the relative normalization factors for each library is returned.
 
 For \code{type="loess"}, a numeric matrix of the same dimensions as \code{counts}, containing the log-based offsets for use in GLM fitting.
+
+If \code{se.out=TRUE}, a SummarizedExperiment is returned that contains the normalization values but is otherwise identical to \code{object}.
 }
 
 \author{Aaron Lun}
@@ -96,6 +117,14 @@ offsets <- normOffsets(counts, type="loess", lib.size=full.lib.size)
 head(offsets)
 offsets <- normOffsets(counts, type="loess", span=0.4, lib.size=full.lib.size)
 offsets <- normOffsets(counts, type="loess", iterations=1, lib.size=full.lib.size)
+
+# Same for SummariedExperiment objects. 
+bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
+data <- windowCounts(bamFiles, width=100, filter=1)
+
+normOffsets(data)
+normOffsets(data, lib.sizes=c(10, 100))
+head(normOffsets(data, type="loess"))
 }
 
 \seealso{

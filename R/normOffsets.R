@@ -41,20 +41,31 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, ...) {
+setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL) {
 	if (missing(lib.sizes)) { 
 		if (is.null(object$totals)) { warning("library sizes not found in 'totals', setting to NULL") }
 		lib.sizes <- object$totals 
 	}
-	normOffsets(assay(object, assay), lib.sizes=lib.sizes, ...)
+	
+    out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
+    
+    if (is.null(se.out)) {
+        .Deprecated(old="se.out=NULL", new="se.out=TRUE")
+        se.out <- FALSE 
+    }
+    if (!se.out) {
+        return(out)
+    } else {
+        if (type=="scaling") {
+            object$norm.factors <- out
+        } else {
+            assay(object, "offset") <- out
+        }
+        return(object)
+    }
 })
 
-setMethod("normalize", "SummarizedExperiment", function(object, lib.sizes, type="scaling", assay=1, ...) {
-	out <- normOffsets(object, lib.sizes=lib.sizes, type=type, assay=assay, ...)
-	if (type=="scaling") {
-		object$norm.factors <- out
-	} else if (type=="loess") {
-		assays(object)$offset <- out
-	}
-	return(object) 
+setMethod("normalize", "SummarizedExperiment", function(object, ...) {
+    .Deprecated(old="normalize", new="normOffsets")
+    return(normOffsets(object, ..., se.out=TRUE))
 })
