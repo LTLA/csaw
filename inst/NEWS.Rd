@@ -2,6 +2,14 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.11.2}{\itemize{
+\item Removed support for paramList objects. 
+
+\item Added option for normOffsets() to return SummarizedExperiment objects.
+
+\item Deprecated normalize() to avoid S4 method clashes. 
+}}
+
 \section{Version 1.10.0}{\itemize{
 \item 
 Added calculation of dominant directionality in combineTests().
