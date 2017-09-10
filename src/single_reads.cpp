@@ -6,17 +6,8 @@ SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end,
     BEGIN_RCPP
 
     // Checking input values.
-    Rcpp::IntegerVector _mapq(mapq);
-    if (_mapq.size()!=1) { 
-        throw std::runtime_error("mapping quality should be an integer scalar");
-    }    
-    const int minqual=_mapq[0];
-
-    Rcpp::LogicalVector _dedup(dedup);
-    if (_dedup.size()!=1) {    
-        throw std::runtime_error("duplicate removal should be a logical scalar"); 
-    }
-    const bool rmdup=_dedup[0];
+    const int minqual=check_integer_scalar(mapq, "minimum mapping quality");
+    const bool rmdup=check_logical_scalar(dedup, "duplicate removal specification");
 
     Rcpp::LogicalVector _use_forward(use_forward);
     if (_use_forward.size()!=1) {    
