@@ -34,14 +34,15 @@ SEXP merge_windows(SEXP chrs, SEXP start, SEXP end, SEXP sign, SEXP tolerance, S
 	// Proceeding with the merge operation.
     Rcpp::IntegerVector out_index(n);
 	int start_index=0;
+    int ngroups=0;
     int last_end, last_sign;
     if (n) { 
+        ngroups=1;
         last_end=_end[0];
         last_sign=_sign[0];
         out_index[0]=1;
     }
     bool warned=false;
-    int ngroups=0;
 
 	for (int i=1; i<n; ++i) {
         bool diffchr=(_chrs[i]!=_chrs[i-1]);

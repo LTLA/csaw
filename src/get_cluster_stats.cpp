@@ -104,13 +104,14 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 		 */
 		std::sort(psorter.begin(), psorter.end());
         double remaining=_weight[psorter.front().second];
-        int minx=i;
 		double& outp=(out_p[element]=psorter.front().first/remaining); 
-
-		for (int x=i+1; x<j; ++x) {
-	    	const int& current=psorter[x].second;
+        std::deque<std::pair<double, int> >::iterator itps=psorter.begin()+1;
+ 
+        int minx=i;
+		for (int x=i+1; x<j; ++x, ++itps) {
+	    	const int& current=itps->second;
 			remaining+=_weight[current];
-			double more_temp=psorter[x].first/remaining;
+			const double more_temp=(itps->first)/remaining;
 			if (more_temp < outp) { 
                 outp=more_temp; 
                 minx=x;
@@ -125,18 +126,29 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
          */
         if (fcn==1) {
             bool has_up=false, has_down=false;
-            for (int x=i; x<=minx; ++x) {
-                const double& curfc=fcs[0][psorter.front().second];
-                if (curfc > 0) { has_up=true; }
-                if (curfc < 0) { has_down=true; }
-                if (has_up & has_down) { break; }
+            std::deque<std::pair<double, int> >::iterator itps=psorter.begin();
+            for (int x=i; x<=minx; ++x, ++itps) {
+                const double& curfc=fcs[0][itps->second];
+                if (curfc > 0) { 
+                    has_up=true; 
+                } else if (curfc < 0) {
+                    has_down=true;
+                }
+                if (has_up & has_down) { 
+                    break; 
+                }
             }
+
             int& current_dir=out_dir[element];
-            if (has_up & !has_down) { current_dir=1; }
-            else if (has_down & !has_up) { current_dir=2; }
+            if (has_up & !has_down) { 
+                current_dir=1; 
+            } else if (has_down & !has_up) { 
+                current_dir=2; 
+            }
         }
 
 		// Setting it up for the next round.
+        psorter.clear();
 		++element;
         i=j;
 	}
@@ -177,6 +189,8 @@ SEXP get_cluster_weight(SEXP ids, SEXP weight) {
     if (total) { 
         Rcpp::NumericVector::iterator oIt=output.begin(), wIt=_weight.begin();
         *oIt=*wIt;
+        ++wIt;
+
         for (int i=1; i<n; ++i) {
             if (_ids[i]!=_ids[i-1]) { 
                 ++oIt;
