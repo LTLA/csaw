@@ -3,15 +3,18 @@
 
 #include "Rcpp.h"
 
-#include <set>
-#include <stdexcept>
 #include <deque>
-#include <algorithm>
-#include <cmath>
-#include <string>
-#include <sstream>
+#include <vector>
+#include <set>
 #include <map>
 #include <queue>
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
+#include <string>
+#include <sstream>
 
 extern "C" {
 

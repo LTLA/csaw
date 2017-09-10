@@ -1,7 +1,4 @@
-#include <sstream> // Before R.h in csaw.h, to resolve remapping issues (see Section 6, Writing R extensions).
 #include "csaw.h"
-#include <string>
-#include <map>
 #include "utils.h"
 
 /* This function spits out the ID for each exon, with some degree of strand-awareness, 
