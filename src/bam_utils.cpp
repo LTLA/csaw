@@ -1,17 +1,9 @@
 #include "bam_utils.h"
+#include "utils.h"
 
 BamFile::BamFile(SEXP bam, SEXP idx) {
-    Rcpp::StringVector _bam(bam);
-    if (_bam.size()!=1) {
-        throw std::runtime_error("BAM file path must be a string");
-    }
-    const char* path=CHAR(_bam[0]);
-
-    Rcpp::StringVector _idx(idx);
-    if (_idx.size()!=1) { 
-        throw std::runtime_error("BAM index file path must be a string"); 
-    }
-    const char* xpath=CHAR(_idx[0]);
+    const char* path=check_string(bam, "BAM file path");
+    const char* xpath=check_string(idx, "BAM index file path");
 
     in = sam_open(path, "rb");
     if (in == NULL) {
@@ -77,18 +69,10 @@ BamIterator::BamIterator(const BamFile& bf) : iter(NULL) {
 }
 
 BamIterator::BamIterator(const BamFile& bf, SEXP Chr, SEXP Start, SEXP End) : iter(NULL) {
-    // Length checks on inputs.
-    Rcpp::StringVector _chr(Chr);
-    if (_chr.size()!=1) { 
-        throw std::runtime_error("chromosome name should be a string"); 
-    }
-    const char* chr=CHAR(_chr[0]);
-
-    Rcpp::IntegerVector _Start(Start), _End(End);
-    if (_Start.size()!=1 || _End.size()!=1) {
-        throw std::runtime_error("region start and end coordinates should be integer scalars"); 
-    }
-    int start=_Start[0]-1, end=_End[0]; // Get start to 0-indexed closed, end to 0-indexed open.
+    // Checks on inputs. Get start to 0-indexed closed, end to 0-indexed open.
+    const char* chr=check_string(Chr, "chromosome name");
+    int start=check_integer_scalar(Start, "start position")-1;
+    int end=check_integer_scalar(End, "end position");
 
     // Pulling out chromsoome name.
     int cid=bam_name2id(bf.header, chr);

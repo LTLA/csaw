@@ -1,4 +1,5 @@
 #include "csaw.h"
+#include "utils.h"
 
 /* This function computes the mean and standard deviation of the count vectors
  * across the genome, at every delay distance. This accounts for the genomic
@@ -153,19 +154,12 @@ SEXP correlate_reads (SEXP pos1, SEXP num1, SEXP pos2, SEXP num2, SEXP max_dist,
     }
 
 	// Checking other scalars.
-    Rcpp::IntegerVector _max_dist(max_dist), _total_len(total_len);
-    if (_max_dist.size()!=1) { 
-        throw std::runtime_error("maximum distance should be an integer scalar"); 
-    }
-    const int mdist=_max_dist[0];
+    const int mdist=check_integer_scalar(max_dist, "maximum distance");
 	if (mdist <= 0) { 
         throw std::runtime_error("maximum distance should be a positive integer"); 
     }
-    if (_total_len.size()!=1) { 
-        throw std::runtime_error("length of chromosome+1 must be an integer scalar");
-    } 
-	const int tlen=_total_len[0];
-
+    const int tlen=check_integer_scalar(total_len, "length of chromosome+1");
+ 
 	// Computing the mean and variance.
 	std::deque<double> fmean, rmean, fsd, rsd;
 	const int ffirst=fill(mdist, fmean, fsd, _pos1, _num1, fLen, tlen, false);

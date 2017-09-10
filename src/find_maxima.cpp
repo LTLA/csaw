@@ -1,5 +1,5 @@
 #include "csaw.h"
-#include <queue>
+#include "utils.h"
 
 struct region_data {
     region_data(int i, int e, double m) : index(i), endpt(e), metric(m) {}
@@ -38,16 +38,12 @@ SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
 	     throw std::runtime_error("vectors must be of equal length"); 
     }
 
-	// Pulling out scalars and pointers.	
-    Rcpp::IntegerVector _range(range);
-    if (_range.size()!=1) {
-        throw std::runtime_error("range should be an integer scalar"); 
-    }
-	const int maxrange=_range[0];
+    const int maxrange=check_integer_scalar(range, "range");
 	if (maxrange <= 0) { 
         throw std::runtime_error("range should be a positive integer"); 
     }
-
+    
+    // Setting up structures to compute maxima on the fly.
 	order_set incoming;
 	pqueue first_to_leave;
     if (nlen) { 

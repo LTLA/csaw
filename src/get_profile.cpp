@@ -1,4 +1,5 @@
 #include "csaw.h"
+#include "utils.h"
 
 /* This function scans through the track and pulls out local maxima. */
 
@@ -16,23 +17,9 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
     }
 	
     // Setting up scalars.
-    Rcpp::IntegerVector _normalize(normalize);
-    if (_normalize.size()!=1) { 
-        throw std::runtime_error("normalize specification should be an integer scalar"); 
-    }
-    const int norm_type=_normalize[0];
-
-    Rcpp::IntegerVector _range(range);
-    if (_range.size()!=1) { 
-        throw std::runtime_error("range distance should be an integer scalar"); 
-    }
-	const int maxrange=_range[0];
-    
-    Rcpp::LogicalVector _average(average);
-    if (_average.size()!=1) { 
-        throw std::runtime_error("average specification should be a logical scalar"); 
-    }
-	const bool use_average=_average[0];
+    const int norm_type=check_integer_scalar(normalize, "normalize specification");
+    const int maxrange=check_integer_scalar(range, "range distance");
+    const bool use_average=check_logical_scalar(average, "average specification");
 
 	/* Setting up a separate profile for each region. This is necessary
 	 * to ensure that the calculations are integer (despite weighting),

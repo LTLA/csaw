@@ -2,6 +2,7 @@
 #include "csaw.h"
 #include <string>
 #include <map>
+#include "utils.h"
 
 /* This function spits out the ID for each exon, with some degree of strand-awareness, 
  * such that the first exon in the gene is labelled as exon 1, then 2, 3, etc. They
@@ -157,13 +158,9 @@ std::string digest2string (const std::deque<feature_data>& gelements, const Rcpp
 SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, SEXP leftDist,
 		SEXP rightQ, SEXP rightS, SEXP rightDist, 
 		SEXP symbol, SEXP genefeature, SEXP geneid, SEXP genestr) {
-    BEGIN_RCPP
 
-    Rcpp::IntegerVector _N(N);
-    if (_N.size()!=1) { 
-        throw std::runtime_error("N should be a integer scalar"); 
-    }
-	const int nin=_N[0];
+    BEGIN_RCPP
+    const int nin=check_integer_scalar(N, "number of query regions");
 
     // Setting up overlap information.
     Rcpp::IntegerVector _fullQ(fullQ), _fullS(fullS), _leftQ(leftQ), _leftS(leftS), _leftDist(leftDist),
@@ -199,10 +196,8 @@ SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, 
 	Rcpp::IntegerVector::iterator cur_sIt;
 	Rcpp::IntegerVector::iterator cur_dIt;
     Rcpp::StringVector::iterator cur_oIt;
-    bool use_dist;
-
-	std::deque<feature_data> allindices;
-    std::vector<int> distance_holder(nsym);
+    bool use_dist=false;
+    std::deque<feature_data> allindices;
 
 	for (int curreg=0; curreg<nin; ++curreg) {
 		// Adding all overlaps of each type. Assuming that findOverlaps gives ordered output, which it should.

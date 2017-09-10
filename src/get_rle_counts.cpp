@@ -1,25 +1,12 @@
 #include "csaw.h"
+#include "utils.h"
 
 SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
     BEGIN_RCPP
 
-    Rcpp::IntegerVector _nr(nr);
-    if (_nr.size()!=1) {
-        throw std::runtime_error("number of rows must be an integer scalar"); 
-    }
-    const int nrows=_nr[0];
-
-    Rcpp::IntegerVector _space(space);
-    if (_space.size()!=1) { 
-        throw std::runtime_error("spacing must be an integer scalar"); 
-    }
-    const int spacing=_space[0];
-
-    Rcpp::LogicalVector _first(first);
-    if (_first.size()!=1) { 
-        throw std::runtime_error("first point specification must be a logical scalar");
-    }
-    const int usefirst=_first[0];
+    const int nrows=check_integer_scalar(nr, "number of rows");
+    const int spacing=check_integer_scalar(space, "spacing");
+    const int usefirst=check_logical_scalar(first, "first point specification"); // yes, "int" type with "logical" check is deliberate!
 	
     Rcpp::IntegerVector _start(start), _end(end);
 	const int n=_start.size();

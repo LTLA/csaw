@@ -1,4 +1,5 @@
 #include "csaw.h"
+#include "utils.h"
 
 int split_cluster(const Rcpp::IntegerVector&, const Rcpp::IntegerVector&, Rcpp::IntegerVector&, const int&, const int&, const int&, const int&);
 
@@ -18,12 +19,7 @@ SEXP merge_windows(SEXP chrs, SEXP start, SEXP end, SEXP sign, SEXP tolerance, S
         throw std::runtime_error("lengths of vectors are not equal"); 
     }
 
-    Rcpp::IntegerVector _tolerance(tolerance);
-	if (_tolerance.size()!=1) { 
-        throw std::runtime_error("tolerance should be an integer scalar"); 
-    }
-	const int tol=_tolerance[0];
-
+    const int tol=check_integer_scalar(tolerance, "tolerance");
     Rcpp::IntegerVector _max_size(max_size);
 	if (_max_size.size() > 1) { 
         throw std::runtime_error("maximum size should be an integer scalar or NULL"); 

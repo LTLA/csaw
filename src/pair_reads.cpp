@@ -100,23 +100,9 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     BEGIN_RCPP
 
     // Checking input values.
-    Rcpp::IntegerVector _mapq(mapq);
-    if (_mapq.size()!=1) {
-        throw std::runtime_error("mapping quality should be an integer scalar");
-    }    
-    const int minqual=_mapq[0];
-
-    Rcpp::LogicalVector _dedup(dedup);
-    if (_dedup.size()!=1) {
-        throw std::runtime_error("duplicate removal should be a logical scalar"); 
-    }
-    const bool rmdup=_dedup[0];
-
-    Rcpp::LogicalVector _diagnostics(diagnostics);
-    if (_diagnostics.size()!=1) {
-        throw std::runtime_error("diagnostics specification should be a logical scalar"); 
-    }
-    const bool getnames=_diagnostics[0];
+    const int minqual=check_integer_scalar(mapq, "minimum mapping quality");
+    const bool rmdup=check_logical_scalar(dedup, "duplicate removal specification");
+    const bool getnames=check_logical_scalar(diagnostics, "diagnostics specification");
 
     // Initializing odds and ends.
     BamFile bf(bam, index);

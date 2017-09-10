@@ -1,5 +1,5 @@
 #include "csaw.h"
-#include <queue>
+#include "utils.h"
 
 enum posttype { START, MIDSTART, MIDEND, END };
 
@@ -74,17 +74,8 @@ SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SE
 	}
 
 	// Setting up the prior count and inversion flag.
-    Rcpp::NumericVector _priorcount(priorcount);
-    if (_priorcount.size()!=1) { 
-        throw std::runtime_error("double-precision scalar required for the prior count"); 
-    }
-	const double pc=_priorcount[0];
-    
-    Rcpp::LogicalVector _invert(invert);
-    if (_invert.size()!=1) {
-        throw std::runtime_error("inversion flag should be a logical scalar"); 
-    }
-	const int inv=_invert[0];
+    const double pc=check_numeric_scalar(priorcount, "prior count");
+	const bool inv=check_logical_scalar(invert, "invert specification");
 
     // Reporting bimodality output.
     Rcpp::NumericVector output(nregs);
