@@ -13,95 +13,95 @@ struct signpost {
 	}
 };
 
-SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SEXP invert) try {
+SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SEXP invert) {
 	// Setting structures for the data.
-    if (!isNewList(all)) { throw std::runtime_error("data on fragments must be contained within a list"); }
-    const int nlibs=LENGTH(all);
-	std::deque<const int*> left1_ptrs(nlibs), right1_ptrs(nlibs), left2_ptrs(nlibs), right2_ptrs(nlibs), strand_ptrs(nlibs);
-	std::deque<int> nums(nlibs), indices(nlibs), widths(nlibs);
+    Rcpp::List _all(all);
+    const int nlibs=_all.size();
+	std::deque<Rcpp::IntegerVector> left1(nlibs), right1(nlibs), left2(nlibs), right2(nlibs), strand(nlibs);
+	std::deque<int> nums(nlibs), indices(nlibs);
 	std::priority_queue<signpost, std::deque<signpost>, std::greater<signpost> > next;
 	
 	for (int i=0; i<nlibs; ++i) {
-		SEXP current=VECTOR_ELT(all, i);
-		if (!isNewList(current) || LENGTH(current)!=5) { 
-			throw std::runtime_error("fragment data must be supplied as a list of length 5"); }
+        Rcpp::List current=_all[i];
+        if (current.size()!=5) { 
+			throw std::runtime_error("fragment data must be supplied as a list of length 5"); 
+        }
 		
 		for (int j=0; j<5; ++j) {
-			SEXP current_col=VECTOR_ELT(current, j);
-			if (!isInteger(current_col)) { throw std::runtime_error("fragment data must be in integer format"); }
-			const int* ptr=INTEGER(current_col);
+            Rcpp::IntegerVector current_col=current[j];
 			switch (j) {
 				case 0: 
-					left1_ptrs[i]=ptr; 
-					nums[i]=LENGTH(current_col);
+					left1[i]=current_col;
+					nums[i]=current_col.size();
                     break;
 				case 1:
-					right1_ptrs[i]=ptr;
+					right1[i]=current_col;
                     break;
 				case 2: 
-					left2_ptrs[i]=ptr; 
+					left2[i]=current_col; 
                     break;
 				case 3:
-					right2_ptrs[i]=ptr;
+					right2[i]=current_col;
                     break;
 				case 4:
-					strand_ptrs[i]=ptr;
+					strand[i]=current_col;
                     break;
 			}
-            if (LENGTH(current_col)!=nums[i]) { throw std::runtime_error("length of vectors must be equal"); }
+            if (current_col.size()!=nums[i]) { 
+                throw std::runtime_error("length of vectors must be equal"); 
+            }
 		}
 		
 		// Populating the priority queue.
 		if (nums[i]) { 
-            next.push(signpost(left1_ptrs[i][0], START, i, 0)); 
-            next.push(signpost(left2_ptrs[i][0], MIDSTART, i, 0)); 
+            next.push(signpost(left1[i][0], START, i, 0)); 
+            next.push(signpost(left2[i][0], MIDSTART, i, 0)); 
         }
 	}
 
 	// Setting up structures for the regions.
-	if (!isInteger(regstart) || !isInteger(regend)) { throw std::runtime_error("region starts or ends should be integer vectors"); }
-	const int nregs=LENGTH(regstart);
-	if (nregs!=LENGTH(regend)) { throw std::runtime_error("length of region vectors should be equal"); }
-	const int * rs_ptr=INTEGER(regstart), 
-		      * re_ptr=INTEGER(regend);
+    Rcpp::IntegerVector _regstart(regstart), _regend(regend);
+	const int nregs=_regstart.size();
+	if (nregs!=_regend.size()) { 
+        throw std::runtime_error("length of region vectors should be equal"); 
+    }
 	int reg_index=0, next_regstart=-1;
 	if (nregs) { 
-		next.push(signpost(rs_ptr[0], START, -1, 0));
-		next_regstart=rs_ptr[0];
+		next.push(signpost(_regstart[0], START, -1, 0));
+		next_regstart=_regstart[0];
 	}
 
 	// Setting up the prior count and inversion flag.
-	if (!isReal(priorcount) || LENGTH(priorcount)!=1) { throw std::runtime_error("double-precision scalar required for the prior count"); }
-	const double pc=asReal(priorcount);
-	if (!isLogical(invert) || LENGTH(invert)!=1) { throw std::runtime_error("inversion flag should be a logical scalar"); }
-	const int inv=asLogical(invert);
-	
-	SEXP output=PROTECT(allocVector(REALSXP, nregs));
-try {
-	double* optr=REAL(output);
-	
-	// Odds and ends.
+    Rcpp::NumericVector _priorcount(priorcount);
+    if (_priorcount.size()!=1) { 
+        throw std::runtime_error("double-precision scalar required for the prior count"); 
+    }
+	const double pc=_priorcount[0];
+    
+    Rcpp::LogicalVector _invert(invert);
+    if (_invert.size()!=1) {
+        throw std::runtime_error("inversion flag should be a logical scalar"); 
+    }
+	const int inv=_invert[0];
+
+    // Reporting bimodality output.
+    Rcpp::NumericVector output(nregs);
 	std::set<int> current_regs;
-	int current_position, current_library, current_index;
-	posttype current_type;
 	int left_forward=0, left_reverse=0, right_forward=0, right_reverse=0;
 	double current_score=1; // default when no reads added; prior counts cancel out.
-
 	std::deque<int> new_regs;
-	bool modified_stats=false;
-	size_t itnr;
-	std::set<int>::iterator itcr;
 
 	// Running through the set; stopping when there are no regions, or when everything is processed.
 	while (!next.empty()) { 
+		int current_position=next.top().position;
+        bool modified_stats=false;
+//		Rprintf("At position %i\n", current_position);
 
 		// Pulling out all features at this current position.
-		current_position=next.top().position;
-//		Rprintf("At position %i\n", current_position);
 		do {
-			current_library=next.top().library;
-			current_type=next.top().type;
-			current_index=next.top().index;
+			int current_library=next.top().library;
+			posttype current_type=next.top().type;
+			int current_index=next.top().index;
 //			Rprintf("\t\t processing %i: %i -> %i\n", current_type, current_library, current_index);
 			next.pop();
 
@@ -111,12 +111,12 @@ try {
 					current_regs.insert(current_index);
 					new_regs.push_back(current_index);
 					if ((++reg_index) < nregs) { 
-						next.push(signpost(rs_ptr[reg_index], START, -1, reg_index));
-						next_regstart=rs_ptr[reg_index];
+						next.push(signpost(_regstart[reg_index], START, -1, reg_index));
+						next_regstart=_regstart[reg_index];
 					} else {
 						next_regstart=-1;
 					}
-					next.push(signpost(re_ptr[current_index]+1, END, -1, current_index));
+					next.push(signpost(_regend[current_index]+1, END, -1, current_index));
 				} else {
 					current_regs.erase(current_index);
 				}
@@ -124,17 +124,17 @@ try {
 			} else {
 				// Recording the number of forward/reverse reads to the left or right of the current position.
 				modified_stats=true;
-				const int& isforward=strand_ptrs[current_library][current_index];
+				const int& isforward=strand[current_library][current_index];
 				switch (current_type) { 
 					case START:
 						if (isforward) { ++right_forward; }
 						else { ++right_reverse; }
-						next.push(signpost(right1_ptrs[current_library][current_index] + 1, MIDEND, current_library, current_index));
+						next.push(signpost(right1[current_library][current_index] + 1, MIDEND, current_library, current_index));
 						break;
 					case MIDSTART:
 						if (isforward) { ++left_forward; } 
 						else { ++left_reverse; }
-						next.push(signpost(right2_ptrs[current_library][current_index] + 1, END, current_library, current_index));
+						next.push(signpost(right2[current_library][current_index] + 1, END, current_library, current_index));
 						break;
 					case MIDEND:
 						if (isforward) { --right_forward; }
@@ -152,12 +152,11 @@ try {
 				if (current_type==START) {
 					int& next_index=indices[current_library];
 					while ((++next_index) < nums[current_library]) { 
-						if (current_regs.empty() && next_regstart >=0 &&
-								next_regstart >= right2_ptrs[current_library][next_index] + 1) {
+						if (current_regs.empty() && next_regstart >=0 && next_regstart >= right2[current_library][next_index] + 1) {
  							continue; 
 						}
-						next.push(signpost(left1_ptrs[current_library][next_index], START, current_library, next_index));
-						next.push(signpost(left2_ptrs[current_library][next_index], MIDSTART, current_library, next_index));
+						next.push(signpost(left1[current_library][next_index], START, current_library, next_index));
+						next.push(signpost(left2[current_library][next_index], MIDSTART, current_library, next_index));
 						break;
 					}
 				}
@@ -177,28 +176,21 @@ try {
 //		Rprintf("\t values are Left forward/reverse: %i/%i, right reverse/forward %i/%i\n", left_forward, left_reverse, right_reverse, right_forward);
 //		Rprintf("\t score is %.3f\n", current_score);
 		if (!new_regs.empty()) { 
-			for (itnr=0; itnr<new_regs.size(); ++itnr) { 
-				optr[new_regs[itnr]]=current_score; 
+			for (size_t itnr=0; itnr<new_regs.size(); ++itnr) { 
+				output[new_regs[itnr]]=current_score; 
 			}
 			new_regs.clear();
 		}
 		if (modified_stats) { 
-			for (itcr=current_regs.begin(); itcr!=current_regs.end(); ++itcr) {
- 			    if (optr[*itcr] < current_score) { optr[*itcr]=current_score; }
+			for (std::set<int>::iterator itcr=current_regs.begin(); itcr!=current_regs.end(); ++itcr) {
+                double& curout=output[*itcr];
+ 			    if (curout < current_score) { curout=current_score; }
 			}
-			modified_stats=false;
 		}
  	   	
 		// Quitting if there's no more regions to process.
 		if (current_regs.empty() && next_regstart < 0) { break; }
 	}
 
-} catch (std::exception& e) {
-	UNPROTECT(1);
-	throw;
-}
-	UNPROTECT(1);
 	return output;
-} catch (std::exception &e) { 
-	return mkString(e.what());
 }

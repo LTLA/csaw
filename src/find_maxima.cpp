@@ -1,96 +1,108 @@
 #include "csaw.h"
 #include <queue>
 
-typedef std::multiset<int, sort_row_index<double> > order_set;
-struct compare_iterators {
-	compare_iterators(const int* ptr) : endptr(ptr) {}
-	bool operator() (const order_set::iterator& left, const order_set::iterator& right) const {
-		if (endptr[*left]==endptr[*right]) { return (*left > *right); } // Opposite, as we want the smallest value to be treated as the largest in the queue.
-		return (endptr[*left] > endptr[*right]);
-	}
-private:
-	const int* endptr;
+struct region_data {
+    region_data(int i, int e, double m) : index(i), endpt(e), metric(m) {}
+    int index, endpt;
+    double metric;
+
+    friend bool operator<(const region_data& left, const region_data& right) { 
+        if (left.metric==right.metric) { 
+            if (left.endpt==right.endpt) {
+                return left.index < right.index; 
+            } 
+            return left.endpt < right.endpt;
+        }
+        return left.metric < right.metric;  
+    }
 };
+
+typedef std::multiset<region_data> order_set;
+struct compare_iterators {
+	bool operator() (const order_set::iterator& left, const order_set::iterator& right) const {
+		if (left->endpt==right->endpt)  { return (left->index > right->index); } // Opposite, as we want the smallest value to be treated as the largest in the queue.
+		return (left->endpt > right->endpt); 
+	}
+};
+typedef std::priority_queue<order_set::iterator, std::deque<order_set::iterator>, compare_iterators> pqueue;
 
 /* This function scans through the track and pulls out local maxima. */
 
-SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) try {
-	if (!isInteger(chrs) || !isInteger(starts) || !isInteger(ends)) { throw std::runtime_error("chr, start and end vectors must be integer"); }
-	const int nlen=LENGTH(starts);
-	if (!isReal(metric)) { throw std::runtime_error("metric must be a double-precision vector"); }
-	if (LENGTH(chrs)!=nlen || LENGTH(metric) != nlen || LENGTH(ends)!=nlen) { throw std::runtime_error("vectors must be of equal length"); }
+SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
+    Rcpp::IntegerVector _chrs(chrs), _starts(starts), _ends(ends);
+    Rcpp::NumericVector _metric(metric);
+	const int nlen=_chrs.size();
+    if (nlen!=_starts.size() || nlen!=_ends.size() || nlen!=_metric.size()) {
+	     throw std::runtime_error("vectors must be of equal length"); 
+    }
 
 	// Pulling out scalars and pointers.	
-	if (!isInteger(range) || LENGTH(range)!=1) { throw std::runtime_error("range should be an integer scalar"); }
-	const int maxrange=asInteger(range);
-	if (maxrange <= 0) { throw std::runtime_error("range should be a positive integer"); }
-	const int* sptr=INTEGER(starts), *eptr=INTEGER(ends), *cptr=INTEGER(chrs);
-	const double* mptr=REAL(metric);
+    Rcpp::IntegerVector _range(range);
+    if (_range.size()!=1) {
+        throw std::runtime_error("range should be an integer scalar"); 
+    }
+	const int maxrange=_range[0];
+	if (maxrange <= 0) { 
+        throw std::runtime_error("range should be a positive integer"); 
+    }
 
-	const sort_row_index<double> comp(mptr);
-	order_set incoming(comp);
-	const compare_iterators comp2(eptr);
-	typedef std::priority_queue<order_set::iterator, std::deque<order_set::iterator>, compare_iterators> pqueue;
-	pqueue first_to_leave(comp2);
-	first_to_leave.push(incoming.insert(0));
-
-	SEXP output=PROTECT(allocVector(LGLSXP, nlen));
-try {
-	if (nlen==0) { 
-		UNPROTECT(1);
-		return output;
-	}
-	int* optr=LOGICAL(output);
+	order_set incoming;
+	pqueue first_to_leave;
+    if (nlen) { 
+	    first_to_leave.push(incoming.insert(region_data(0, _ends[0], _metric[0])));
+    }
+    Rcpp::LogicalVector output(nlen);
 
 	// Assuming we're sorted by sptr.
-	int right_edge=1, is_max, right_copy;
-	double cur_max=mptr[0], max_right;
-	order_set::iterator it;
+	int right_edge=1;
+	double cur_max=_metric[0];
 	for (int i=0; i<nlen; ++i) {
 		if (i) {
-			if (cptr[i] < cptr[i-1]) { throw std::runtime_error("regions must be sorted by chromosome"); }
-			else if (cptr[i]==cptr[i-1]) { 
-				if (sptr[i] < sptr[i-1]) { throw std::runtime_error("regions on the same chromosome must be sorted by start position"); }
-				if (eptr[i] < eptr[i-1]) { throw std::runtime_error("nested regions are not supported"); }
+			if (_chrs[i] < _chrs[i-1]) { throw std::runtime_error("regions must be sorted by chromosome"); }
+			else if (_chrs[i]==_chrs[i-1]) { 
+				if (_starts[i] < _starts[i-1]) { throw std::runtime_error("regions on the same chromosome must be sorted by start position"); }
+				if (_ends[i] < _ends[i-1]) { throw std::runtime_error("nested regions are not supported"); }
 			}
 		}
 
 		// Getting rid of regions running off the end.
-		while (!first_to_leave.empty() && (cptr[i] != cptr[*(first_to_leave.top())] || sptr[i] - eptr[*(first_to_leave.top())] > maxrange)) {
+		while (!first_to_leave.empty() && (_chrs[i] != _chrs[first_to_leave.top()->index] || _starts[i] - first_to_leave.top()->endpt > maxrange)) {
 			incoming.erase(first_to_leave.top());
 			first_to_leave.pop();
 		}
 
 		// Finding the maximum (records first tie, if there are ties).
-		max_right=R_NaReal;
-		while (right_edge < nlen && cptr[i]==cptr[right_edge] && sptr[right_edge] - eptr[i] <= maxrange) {
-			if (ISNA(max_right) || max_right < mptr[right_edge]) {
+		double max_right=R_NaReal;
+        int is_max=0;
+		while (right_edge < nlen && _chrs[i]==_chrs[right_edge] && _starts[right_edge] - _ends[i] <= maxrange) {
+			if (ISNA(max_right) || max_right < _metric[right_edge]) {
 				is_max=right_edge;
-				max_right=mptr[right_edge];				
+				max_right=_metric[right_edge];
 			}
 			++right_edge;
 		}
 
-		if (!ISNA(max_right)) { 	
+		if (!ISNA(max_right)) {
 			/* Checking if the new maximum is greater than the current maximum, in which 
 			 * case we clear out everything because the new maximum supercedes anything 
 			 * already in the set.
 			 */	
 			if (cur_max < max_right) {
 				incoming.clear();
-				first_to_leave = pqueue(comp2);
+				first_to_leave = pqueue(compare_iterators());
 			}
 		
 			/* Only adding those after the maximum, and which are also reverse
 	 		 * cumulative maxima themselves (ties allowed). There's no point having a 
 			 * window which is sandwiched by two maxima, as it'll never be its own maxima.
 			 */
-			right_copy=right_edge-1;
-			max_right=mptr[right_copy];
+			int right_copy=right_edge-1;
+			max_right=_metric[right_copy];
 			while (right_copy >= is_max) { 
-				if (mptr[right_copy] >= max_right) { 
-					first_to_leave.push(incoming.insert(right_copy));
-					max_right=mptr[right_copy];
+                const double& cur_metric=_metric[right_copy];
+				if (cur_metric >= max_right) { 
+					first_to_leave.push(incoming.insert(region_data(right_copy, _ends[right_copy], cur_metric)));
+					max_right=cur_metric;
 				}
 				--right_copy;
 			}
@@ -102,31 +114,23 @@ try {
 //		}
 
 		// Checking if we're currently the max (some allowance for exactly tied values).
-		optr[i]=0;
 		if (incoming.size()) { 
-			it=incoming.end();
+            order_set::iterator it=incoming.end();
 			--it;
-			cur_max=mptr[*it];
+			cur_max=it->metric;
 			do {
-				if (*it==i) { 
-					optr[i]=1;
+				if (it->index==i) { 
+					output[i]=1;
 					break;
 				}
 				if (it==incoming.begin()) { break; } 
 				--it;
-			} while (mptr[*it]==cur_max);
+			} while (it->metric==cur_max);
 		} else {
 			throw std::runtime_error("empty set during maxima detection");
 		}
 	}
-} catch (std::exception& e) {
-	UNPROTECT(1);
-	throw;
-}
-
-	UNPROTECT(1);
-	return output;
-} catch (std::exception& e) {
-	return mkString(e.what());
+	
+    return output;
 }
 

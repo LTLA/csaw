@@ -8,95 +8,67 @@
  * are assumed to be stored in genomic order so we just label them as-is.
  */
 
-SEXP collate_exon_data (SEXP geneid, SEXP strand, SEXP start, SEXP end) try {
+SEXP collate_exon_data (SEXP geneid, SEXP strand, SEXP start, SEXP end) {
 	// Checking inputs.
-	if (!isInteger(geneid)) { throw std::runtime_error("gene ID vector should be integer"); }
-	if (!isLogical(strand)) { throw std::runtime_error("vector of strands should be logical"); }
-	if (!isInteger(start) || !isInteger(end)) { throw std::runtime_error("start/end positions and indices should be integer vectors"); }
-	const int n=LENGTH(geneid);
-	if (n!=LENGTH(strand)) { throw std::runtime_error("strand/ID vectors should have same length"); }
-	if (n!=LENGTH(start) || n!=LENGTH(end)) { throw std::runtime_error("start/end/index vectors should have the same length"); }
-	const int* gixptr=INTEGER(geneid),
-		* strptr=LOGICAL(strand),
-		* staptr=INTEGER(start),
-		* endptr=INTEGER(end);
-	sort_row_index<int> endcomp(endptr);
+    Rcpp::IntegerVector _geneid(geneid), _start(start), _end(end);
+    Rcpp::LogicalVector _strand(strand);
+    const int n=_geneid.size();
+    if (n!=_start.size() || n!=_end.size() || n!=_strand.size()) {
+        throw std::runtime_error("exon data vectors should have the same length");
+    }
 	
 	// Scanning through to determine the number of unique genes.
 	int nuniq=0;
 	if (n > 0) {
 		nuniq=1;
 		for (int x=1; x<n; ++x) {
-			if (gixptr[x]!=gixptr[x-1]) {
+			if (_geneid[x]!=_geneid[x-1]) {
 				++nuniq;
-			} else if (strptr[x]!=strptr[x-1]) {
+			} else if (_strand[x]!=_strand[x-1]) {
 				throw std::runtime_error("exons of the same gene should have the same strand");
-			} else if (staptr[x]<staptr[x-1]) {
+			} else if (_start[x]<_start[x-1]) {
 				throw std::runtime_error("exons of the same gene should be sorted by the start index");
 			}
 		}
 	}
 
 	// Setting up output structures.
-	SEXP output=PROTECT(allocVector(VECSXP, 2));
-try {
-	SET_VECTOR_ELT(output, 0, allocVector(INTSXP, n));
-	SET_VECTOR_ELT(output, 1, allocVector(VECSXP, 3));
-	SEXP genebody=VECTOR_ELT(output, 1);
-	SET_VECTOR_ELT(genebody, 0, allocVector(INTSXP, nuniq));
-	SET_VECTOR_ELT(genebody, 1, allocVector(INTSXP, nuniq));
-	SET_VECTOR_ELT(genebody, 2, allocVector(INTSXP, nuniq));
-	if (nuniq==0) {
-		UNPROTECT(1);
-		return output;
-	}
-
-	int* eiptr=INTEGER(VECTOR_ELT(output, 0));
-	int * oiptr=INTEGER(VECTOR_ELT(genebody, 0)),
-		* osptr=INTEGER(VECTOR_ELT(genebody, 1)),
-		* oeptr=INTEGER(VECTOR_ELT(genebody, 2));
-
-	int curex=0, counter=0, ngene=0;
-	std::deque<int> current_indices;
+    Rcpp::IntegerVector out_exnum(n), out_index(nuniq), out_start(nuniq), out_end(nuniq);
+    int curex=0, ngene=0;
+	std::deque<std::pair<int, int> > current_indices;
 	while (curex<n) {
-		const int& current=gixptr[curex];
-		oiptr[ngene]=curex+1;
-		osptr[ngene]=staptr[curex]; // Input should be sorted by start positions within each gene ID, so first element should be earliest.
-		int& last_end=(oeptr[ngene]=endptr[curex]);
+		const int& current=_geneid[curex];
+	    out_index[ngene]=curex+1;
+	    out_start[ngene]=_start[curex]; // Input should be sorted by start positions within each gene ID, so first element should be earliest.
+		int& last_end=(out_end[ngene]=_end[curex]);
 		++ngene;
 
 		// Resorting by end positions, if the gene is on the negative strand.
-		if (!strptr[curex]) { 
+		if (!_strand[curex]) { 
 			do {
-				current_indices.push_back(curex);
+				current_indices.push_back(std::make_pair(_end[curex], curex));
 				++curex;
-			} while (curex < n && current==gixptr[curex]);
+			} while (curex < n && current==_geneid[curex]);
 			
 			const int& stretch=current_indices.size();
-			std::sort(current_indices.begin(), current_indices.end(), endcomp); 
-			for (counter=0; counter<stretch; ++counter) { 
-				eiptr[current_indices[counter]]=stretch - counter;
+			std::sort(current_indices.begin(), current_indices.end()); 
+			for (int counter=0; counter<stretch; ++counter) { 
+				out_exnum[current_indices[counter].second]=stretch - counter;
 			}
-			last_end=endptr[current_indices.back()];
+			last_end=current_indices.back().first;
 			current_indices.clear();
 		} else {
-			counter=1;
+			int counter=1;
 			do {
-				eiptr[curex]=counter;
-				if (last_end < endptr[curex]) { last_end=endptr[curex]; }
+				out_exnum[curex]=counter;
+				if (last_end < _end[curex]) { last_end=_end[curex]; }
 				++counter;
 				++curex;
-			} while (curex < n && current==gixptr[curex]);
+			} while (curex < n && current==_geneid[curex]);
 		}
 	}
-} catch (std::exception& e) {
-	UNPROTECT(1);
-	throw;
-}
-	UNPROTECT(1);
-	return output;
-} catch (std::exception& e) {
-	return mkString(e.what()); 
+
+	return Rcpp::List::create(out_exnum, Rcpp::List::create(out_index, out_start, out_end));
 }
 
 /* This function collapses indices into a string. The overlaps are also assigned
@@ -106,53 +78,69 @@ try {
  * feature (i.e., collate exon-level overlaps to a gene-level string).
  */
 
-std::string digest2string (const std::deque<int>& indices, const int* geneid, SEXP symbols, const int* features, const int* strand, const int* dists) {
-	if (!indices.size()) { return ""; }
+struct feature_data { 
+    feature_data(int ID, int Feature, int Strand, int Index) : id(ID), feature(Feature), strand(Strand), index(Index), distance(0) {}
+    int id, feature, strand, index;
+    double distance;
+
+    friend bool operator< (const feature_data& left, const feature_data& right) {
+        if (left.id==right.id) {
+            if (left.feature==right.feature) {
+                return left.index < right.index;
+            }
+            return left.feature < right.feature;
+        } 
+        return left.id < right.id;
+    }
+};
+
+std::string digest2string (const std::deque<feature_data>& gelements, const Rcpp::StringVector& symbols, bool use_dist) {
+	if (!gelements.size()) { return ""; }
 	std::stringstream ss;
 	size_t start=0, end, index=0;
 
-	while (start < indices.size()) {
+	while (start < gelements.size()) {
 		if (start!=0) { ss << ","; }
-		ss << CHAR(STRING_ELT(symbols, indices[start])) << '|'; 
+		ss << Rcpp::as<std::string>(symbols[gelements[start].index]) << '|'; 
 		end=start+1;	
-		while (end < indices.size() && 	geneid[indices[end]]==geneid[indices[start]]) { ++end; }
+		while (end < gelements.size() && gelements[end].id==gelements[start].id) { ++end; }
 
 		// Deciding what to print.
 		if (end==start+1) {
-			if (features[indices[start]]==-1) {
+			if (gelements[start].feature==-1) {
 				ss << "I"; 
 			} else {
-				ss << features[indices[start]];
+				ss << gelements[start].feature;
 			}
 		} else {	
 			index=start;
             // Skipping gene bodies and extra promoters.
-			if (features[indices[start]]==-1) { ++index; }
-			ss << features[indices[index]];
-            while (index+1 < end && features[indices[index+1]]==0) { ++index; }
+			if (gelements[start].feature==-1) { ++index; }
+			ss << gelements[index].feature;
+            while (index+1 < end && gelements[index+1].feature==0) { ++index; }
 			bool wasokay=false;
 
 			// Running through and printing all stretches of contiguous exons.
 			while ((++index) < end) {
-                if (features[indices[index]]==features[indices[index-1]]+1) { 
+                if (gelements[index].feature==gelements[index-1].feature+1) { 
 					wasokay=true;
 				} else {
 					if (wasokay) {
-						ss << '-' << features[indices[index-1]];
+						ss << '-' << gelements[index-1].feature;
 						wasokay=false;
 					}
-					ss << ',' << features[indices[index]];
+					ss << ',' << gelements[index].feature;
 				}
 			}
-			if (wasokay) { ss << '-' << features[indices[index-1]]; }
+			if (wasokay) { ss << '-' << gelements[index-1].feature; }
 		}
 		
 		// Adding the strand and distance information.	
-		ss << '|' << (strand[indices[start]] ? '+' : '-');
-		if (dists!=NULL) {
-			int lowest=dists[indices[start]];
+		ss << '|' << (gelements[start].strand ? '+' : '-');
+		if (use_dist) {
+			int lowest=gelements[start].distance;
 			for (index=start+1; index < end; ++index) {
-				if (lowest > dists[indices[index]]) { lowest=dists[indices[index]]; }
+				if (lowest > gelements[index].distance) { lowest=gelements[index].distance; }
 			}
 			ss << '[' << lowest << ']';
 		}
@@ -161,87 +149,56 @@ std::string digest2string (const std::deque<int>& indices, const int* geneid, SE
 	return ss.str();
 }
 
-/* A sorting class for two elements. */
-
-struct sort_pair_int_index { 
-	sort_pair_int_index(const int* p1, const int* p2) : ptr1(p1), ptr2(p2) {}
-	bool operator() (const int& l, const int& r) const { 
-		if (ptr1[l]==ptr1[r]) { 
-			if (ptr2[l]==ptr2[r]) { 
-				return (l < r); 
-			} else {
-				return (ptr2[l] < ptr2[r]);
-			}
-		} else { 
-			return (ptr1[l] < ptr1[r]); 
-		}
-	}
-private:
-	const int* ptr1, *ptr2;
-};
-
 /* The main function */
 
 SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, SEXP leftDist,
 		SEXP rightQ, SEXP rightS, SEXP rightDist, 
-		SEXP symbol, SEXP genefeature, SEXP geneid, SEXP genestr) try {
-	if (!isInteger(N) || LENGTH(N)!=1) { throw std::runtime_error("N should be a integer scalar"); }
-	const int nin=asInteger(N);
-	if (!isInteger(fullQ) || !isInteger(fullS)) { throw std::runtime_error("full overlap query/subject IDs should be integer vectors"); }
-	const int nfull=LENGTH(fullQ);
-	if (nfull!=LENGTH(fullS)) { throw std::runtime_error("full overlap vectors should have equal length"); }
-	if (!isInteger(leftQ) || !isInteger(leftS) || !isInteger(leftDist)) { throw std::runtime_error("left overlap query/subject/distances should be integer vectors"); }
-	const int nleft=LENGTH(leftQ);
-	if (nleft!=LENGTH(leftS) || nleft!=LENGTH(leftDist)) { throw std::runtime_error("left overlap vectors should have equal length"); }
-	if (!isInteger(rightQ) || !isInteger(rightS) || !isInteger(rightDist)) { throw std::runtime_error("right overlap query/subject/distances should be integer vectors"); }
-	const int nright=LENGTH(rightQ);
-	if (nright!=LENGTH(rightS) || nright!=LENGTH(rightDist)) { throw std::runtime_error("right overlap vectors should have equal length"); }
+		SEXP symbol, SEXP genefeature, SEXP geneid, SEXP genestr) {
+
+    Rcpp::IntegerVector _N(N);
+    if (_N.size()!=1) { 
+        throw std::runtime_error("N should be a integer scalar"); 
+    }
+	const int nin=_N[0];
+
+    // Setting up overlap information.
+    Rcpp::IntegerVector _fullQ(fullQ), _fullS(fullS), _leftQ(leftQ), _leftS(leftS), _leftDist(leftDist),
+        _rightQ(rightQ), _rightS(rightS), _rightDist(rightDist);
+	const int nfull=_fullQ.size();
+	if (nfull!=_fullS.size()){ 
+        throw std::runtime_error("full overlap vectors should have equal length"); 
+    }
+    const int nleft=_leftQ.size();
+	if (nleft!=_leftS.size() || nleft!=_leftDist.size()) { 
+        throw std::runtime_error("left overlap vectors should have equal length"); 
+    }
+	const int nright=_rightQ.size();
+	if (nright!=_rightS.size() || nright!=_rightDist.size()) { 
+        throw std::runtime_error("right overlap vectors should have equal length"); 
+    }
 
 	// Declaring metafeatures.
-	if (!isString(symbol)) { throw std::runtime_error("symbols should be a character vector"); }
-	const int nsym=LENGTH(symbol);
-	if (!isInteger(geneid)) { throw std::runtime_error("gene IDs should be an integer vector"); }
-	if (!isInteger(genefeature)) { throw std::runtime_error("gene feature should be an integer vector"); }
-	if (!isLogical(genestr)) {throw std::runtime_error("gene strand should be a logical vector"); }
-	if (nsym!=LENGTH(geneid) || nsym!=LENGTH(genefeature) || nsym!=LENGTH(genestr)) { 
+    Rcpp::StringVector _symbol(symbol);
+    Rcpp::IntegerVector _geneid(geneid), _genefeature(genefeature), _genestr(genestr);
+    const int nsym=_symbol.size();
+	if (nsym!=_geneid.size() || nsym!=_genefeature.size() || nsym!=_genestr.size()) {
 		throw std::runtime_error("gene data vectors should have the same length"); 
 	}
 
-	// Setting up pointers.
-	const int * fqptr=INTEGER(fullQ),
-		  * fsptr=INTEGER(fullS),
-		  * lqptr=INTEGER(leftQ),
-		  * lsptr=INTEGER(leftS),
-		  * ldptr=INTEGER(leftDist),
-		  * rqptr=INTEGER(rightQ),
-		  * rsptr=INTEGER(rightS),
-		  * rdptr=INTEGER(rightDist),
-		  * giptr=INTEGER(geneid),
-		  * gfptr=INTEGER(genefeature),
-		  * gsptr=LOGICAL(genestr);
-	
-	// Okay, now going through them and assembling the output vectors. 
-	SEXP output=PROTECT(allocVector(VECSXP, 3));
-try {
-	SET_VECTOR_ELT(output, 0, allocVector(STRSXP, nin));
-	SEXP full_out=VECTOR_ELT(output, 0);
-	SET_VECTOR_ELT(output, 1, allocVector(STRSXP, nin));
-	SEXP left_out=VECTOR_ELT(output, 1);
-	SET_VECTOR_ELT(output, 2, allocVector(STRSXP, nin));
-	SEXP right_out=VECTOR_ELT(output, 2);
-
+    // Going through them and assembling the output vectors. 
+    Rcpp::StringVector out_full(nin), out_left(nin), out_right(nin);
+    
 	int fullx=0, leftx=0, rightx=0;
-	int* curx_p;
-	const int* curn_p;
-	const int* cur_qptr;
-	const int* cur_sptr;
-	const int* cur_dptr;
-	SEXP curout;
+    int* curx_p;
+    const int* curn_p;
+    Rcpp::IntegerVector::iterator cur_qIt;
+	Rcpp::IntegerVector::iterator cur_sIt;
+	Rcpp::IntegerVector::iterator cur_dIt;
+    Rcpp::StringVector::iterator cur_oIt;
+    bool use_dist;
 
-	std::deque<int> allindices;
-	sort_pair_int_index indexcomp(giptr, gfptr);
-	int* distance_holder=(int*)R_alloc(nsym, sizeof(int));
-	std::string resultstr;
+	std::deque<feature_data> allindices;
+    std::vector<int> distance_holder(nsym);
 
 	for (int curreg=0; curreg<nin; ++curreg) {
 		// Adding all overlaps of each type. Assuming that findOverlaps gives ordered output, which it should.
@@ -249,50 +206,49 @@ try {
 			if(mode==0) {
 				curx_p=&fullx;
 				curn_p=&nfull;
-				cur_qptr=fqptr;
-				cur_sptr=fsptr;
-				cur_dptr=NULL;
-				curout=full_out;
+				cur_qIt=_fullQ.begin();
+				cur_sIt=_fullS.begin();
+				cur_oIt=out_full.begin();
+                use_dist=false;
 			} else if (mode==1) {
 				curx_p=&leftx;
 				curn_p=&nleft;
-				cur_qptr=lqptr;
-				cur_sptr=lsptr;
-				cur_dptr=ldptr;
-				curout=left_out;
+				cur_qIt=_leftQ.begin();
+				cur_sIt=_leftS.begin();
+				cur_dIt=_leftDist.begin();
+				cur_oIt=out_left.begin();
+                use_dist=true;
 			} else if (mode==2) {
 				curx_p=&rightx;
 				curn_p=&nright;
-				cur_qptr=rqptr;
-				cur_sptr=rsptr;
-				cur_dptr=rdptr;
-				curout=right_out;
+				cur_qIt=_rightQ.begin();
+				cur_sIt=_rightS.begin();
+				cur_dIt=_rightDist.begin();
+				cur_oIt=out_right.begin();
+                use_dist=true;
 			}
 
 			// For the current region, we get everything in the current overlap.
 			int& curx=*curx_p;
 			const int& curn=*curn_p;
 			allindices.clear();
-			while (curx < curn && cur_qptr[curx]==curreg) {
-				allindices.push_back(cur_sptr[curx]);
-				if (allindices.back() >= nsym) { throw std::runtime_error("symbol out of range for overlap index"); }
-				if (cur_dptr!=NULL) { distance_holder[allindices.back()] = cur_dptr[curx]; } // Storing distance to each overlapped feature.
+			while (curx < curn && *(cur_qIt+curx)==curreg) {
+                const int& index=*(cur_sIt+curx);
+				if (index >= nsym) { 
+                    throw std::runtime_error("symbol out of range for overlap index"); 
+                }
+				allindices.push_back(feature_data(_geneid[index], _genefeature[index], _genestr[index], index));
+				if (use_dist) { 
+                    // Storing distance to each overlapped feature.
+                    allindices.back().distance = *(cur_dIt+curx); 
+                } 
 				++curx;
 			}
 
 			// Sorting by gene index, then feature index; then collapsing into a string.
-			std::sort(allindices.begin(), allindices.end(), indexcomp);
-			resultstr = digest2string(allindices, giptr, symbol, gfptr, gsptr, (cur_dptr!=NULL ? distance_holder : NULL));
-			SET_STRING_ELT(curout, curreg, mkChar(resultstr.c_str()));
+			std::sort(allindices.begin(), allindices.end());
+			*(cur_oIt+curreg) = digest2string(allindices, _symbol, use_dist);
 		} 
 	}
-} catch (std::exception& e) {
-	UNPROTECT(1);
-	throw;
+    return Rcpp::List::create(out_full, out_left, out_right);
 }
-	UNPROTECT(1);
-	return output;
-} catch (std::exception& e) {
-	return mkString(e.what());
-}
-

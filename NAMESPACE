@@ -28,6 +28,7 @@ importFrom("AnnotationDbi", select)
 importFrom("limma", loessFit)
 importFrom("BiocGenerics", normalize)
 importFrom("stats", p.adjust, weighted.mean)
+importFrom("Rcpp", sourceCpp)
 
 #  Exporting classes and methods
 exportClasses(

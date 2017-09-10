@@ -1,4 +1,5 @@
 #include "bam_utils.h"
+#include "utils.h"
 
 struct OutputContainer {
     OutputContainer(bool d) : diagnostics(d), totals(0) {}
@@ -95,22 +96,25 @@ struct OutputContainer {
  * inter-chromosomals.
  */
 
-SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEXP mapq, SEXP dedup, SEXP diagnostics) try {
+SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEXP mapq, SEXP dedup, SEXP diagnostics) {
     // Checking input values.
-    if (!isInteger(mapq) || LENGTH(mapq)!=1) {
+    Rcpp::IntegerVector _mapq(mapq);
+    if (_mapq.size()!=1) {
         throw std::runtime_error("mapping quality should be an integer scalar");
     }    
-    const int minqual=asInteger(mapq);
+    const int minqual=_mapq[0];
 
-    if (!isLogical(dedup) || LENGTH(dedup)!=1) {
+    Rcpp::LogicalVector _dedup(dedup);
+    if (_dedup.size()!=1) {
         throw std::runtime_error("duplicate removal should be a logical scalar"); 
     }
-    const bool rmdup=asLogical(dedup);
+    const bool rmdup=_dedup[0];
 
-    if (!isLogical(diagnostics) || LENGTH(diagnostics)!=1) { 
+    Rcpp::LogicalVector _diagnostics(diagnostics);
+    if (_diagnostics.size()!=1) {
         throw std::runtime_error("diagnostics specification should be a logical scalar"); 
     }
-    const bool getnames=asLogical(diagnostics);
+    const bool getnames=_diagnostics[0];
 
     // Initializing odds and ends.
     BamFile bf(bam, index);
@@ -234,75 +238,61 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     }    
 
     // Storing all output.
-    SEXP output=PROTECT(allocVector(VECSXP, getnames ? 9 : 2));
-    try {
-        SET_VECTOR_ELT(output, 0, allocVector(VECSXP, 2));
-        SEXP left=VECTOR_ELT(output, 0);
-        store_int_output(left, 0, oc.forward_pos_out);
-        store_int_output(left, 1, oc.forward_len_out);
+    Rcpp::List output(getnames ? 9 : 2);
+    output[0]=Rcpp::List::create(
+        Rcpp::IntegerVector(oc.forward_pos_out.begin(), oc.forward_pos_out.end()),
+        Rcpp::IntegerVector(oc.forward_len_out.begin(), oc.forward_len_out.end())
+    );
+    output[1]=Rcpp::List::create(
+        Rcpp::IntegerVector(oc.reverse_pos_out.begin(), oc.reverse_pos_out.end()),
+        Rcpp::IntegerVector(oc.reverse_len_out.begin(), oc.reverse_len_out.end())
+    ); 
         
-        SET_VECTOR_ELT(output, 1, allocVector(VECSXP, 2));
-        SEXP right=VECTOR_ELT(output, 1);
-        store_int_output(right, 0, oc.reverse_pos_out);
-        store_int_output(right, 1, oc.reverse_len_out);
-    
-        if (getnames) {
-            SET_VECTOR_ELT(output, 2, ScalarInteger(oc.totals));
-            
-            SET_VECTOR_ELT(output, 3, allocVector(VECSXP, 2));
-            SEXP singles=VECTOR_ELT(output, 3);
-            store_int_output(singles, 0, oc.single_pos);
-            store_int_output(singles, 1, oc.single_len);
+    if (getnames) {
+        output[2]=Rcpp::IntegerVector::create(oc.totals);
+        output[3]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.single_pos.begin(), oc.single_pos.end()),
+            Rcpp::IntegerVector(oc.single_len.begin(), oc.single_len.end())
+        );
+        output[4]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.ufirst_pos.begin(), oc.ufirst_pos.end()),
+            Rcpp::IntegerVector(oc.ufirst_len.begin(), oc.ufirst_len.end())
+        );
+        output[5]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.usecond_pos.begin(), oc.usecond_pos.end()),
+            Rcpp::IntegerVector(oc.usecond_len.begin(), oc.usecond_len.end())
+        );
+        output[6]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.onemap_pos.begin(), oc.onemap_pos.end()),
+            Rcpp::IntegerVector(oc.onemap_len.begin(), oc.onemap_len.end())
+        );
+        
+        output[7]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.ifirst_pos.begin(), oc.ifirst_pos.end()),
+            Rcpp::IntegerVector(oc.ifirst_len.begin(), oc.ifirst_len.end()),
+            makeStringVector(oc.interchr_names_1.begin(), oc.interchr_names_1.end())
+        );
+        output[8]=Rcpp::List::create(
+            Rcpp::IntegerVector(oc.isecond_pos.begin(), oc.isecond_pos.end()),
+            Rcpp::IntegerVector(oc.isecond_len.begin(), oc.isecond_len.end()),
+            makeStringVector(oc.interchr_names_2.begin(), oc.interchr_names_2.end())
+        );
+    } 
 
-            SET_VECTOR_ELT(output, 4, allocVector(VECSXP, 2));
-            SEXP first=VECTOR_ELT(output, 4);
-            store_int_output(first, 0, oc.ufirst_pos);
-            store_int_output(first, 1, oc.ufirst_len);
-            
-            SET_VECTOR_ELT(output, 5, allocVector(VECSXP, 2));
-            SEXP second=VECTOR_ELT(output, 5);
-            store_int_output(second, 0, oc.usecond_pos);
-            store_int_output(second, 1, oc.usecond_len);
-
-            SET_VECTOR_ELT(output, 6, allocVector(VECSXP, 2));
-            SEXP onemap=VECTOR_ELT(output, 6);
-            store_int_output(onemap, 0, oc.onemap_pos);
-            store_int_output(onemap, 1, oc.onemap_len);
-
-            SET_VECTOR_ELT(output, 7, allocVector(VECSXP, 3));
-            SEXP interchr1=VECTOR_ELT(output, 7);
-            store_int_output(interchr1, 0, oc.ifirst_pos);
-            store_int_output(interchr1, 1, oc.ifirst_len);
-            store_names(interchr1, 2, oc.interchr_names_1);
-
-            SET_VECTOR_ELT(output, 8, allocVector(VECSXP, 3));
-            SEXP interchr2=VECTOR_ELT(output, 8);
-            store_int_output(interchr2, 0, oc.isecond_pos);
-            store_int_output(interchr2, 1, oc.isecond_len);
-            store_names(interchr2, 2, oc.interchr_names_2);
-        }
-    } catch (std::exception &e) {
-        UNPROTECT(1);
-        throw;
-    }
-
-    UNPROTECT(1);
     return output;
-} catch (std::exception &e) {
-    return mkString(e.what());
 }
 
 /* Getting reads on other unprocessed chromosomes, unmapped reads. */
 
-SEXP get_leftovers (SEXP bam, SEXP index, SEXP processed) try { 
+SEXP get_leftovers (SEXP bam, SEXP index, SEXP processed) { 
     BamFile bf(bam, index);
     BamRead br;
 
-    if (!isString(processed)) { throw std::runtime_error("names of processed chromosomes should be strings"); }
-    const int nchr=LENGTH(processed);
+    Rcpp::StringVector _processed(processed);
+    const int nchr=_processed.size();
     std::set<std::string> already_there;
     for (int i=0; i<nchr; ++i) {
-        already_there.insert(std::string(CHAR(STRING_ELT(processed, i))));        
+        already_there.insert(Rcpp::as<std::string>(_processed[i]));
     }
 
     // Getting the reads mapped to chromosomes we didn't look at due to 'restrict'.
@@ -318,8 +308,6 @@ SEXP get_leftovers (SEXP bam, SEXP index, SEXP processed) try {
     // Also getting the unmapped guys. 
     BamIterator biter(bf);
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){ ++leftovers; }
-    return(ScalarInteger(leftovers));
-} catch (std::exception &e) {
-    return mkString(e.what());
+    return Rcpp::IntegerVector::create(leftovers);
 }
 

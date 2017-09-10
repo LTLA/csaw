@@ -1,6 +1,8 @@
 #ifndef CSAW_H
 #define CSAW_H
 
+#include "Rcpp.h"
+
 #include <set>
 #include <stdexcept>
 #include <deque>
@@ -9,22 +11,6 @@
 #include <string>
 #include <sstream>
 #include <map>
-
-template <class T>
-struct sort_row_index {
-	sort_row_index(const T* p) : ptr(p) {}
-	bool operator() (const int& l, const int& r) const { 
-		if (ptr[l]==ptr[r]) { return (l < r); }
-		else { return (ptr[l] < ptr[r]); }
-	}
-private:
-	const T* ptr;
-};
-
-#include "R.h"
-#include "Rinternals.h"
-#include "R_ext/Rdynload.h"
-#include "R_ext/Visibility.h"
 
 extern "C" {
 
