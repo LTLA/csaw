@@ -1,4 +1,5 @@
 #include "csaw.h"
+#include "utils.h"
 
 SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
     BEGIN_RCPP
@@ -10,22 +11,7 @@ SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
 	if (n!=_by.size() || n!=_weight.size()) {
         throw std::runtime_error("input vector lengths are not equal"); 
     }
-
-	// Checking that the 'by' is sorted, counting the number of elements.
-	int total=0;
-	if (n > 0) {
-		total=1;
-        Rcpp::IntegerVector::iterator bIt=_by.begin(), bIt_next=bIt+1;
-	    while (bIt_next!=_by.end()) {
-			if (*bIt_next < *bIt) {
-                throw std::runtime_error("vector of cluster ids should be sorted"); 
-            } else if (*bIt_next != *bIt) {
-                ++total; 
-            }
-            ++bIt_next;
-            ++bIt;
-		}
-	}
+    int total=checkByVector(_by.begin(), _by.end());
 
 	// Pulling out results.
     Rcpp::NumericVector out_pval(total);

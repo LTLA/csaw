@@ -14,4 +14,24 @@ Rcpp::StringVector makeStringVector(T start, T end) {
     return output;
 }   
 
+template<typename T>
+int checkByVector(T start, T end) {
+    if (start==end) {
+        return 0;
+    }
+    int total=1;
+    T next=start; 
+    ++next;
+    while (next!=end) { 
+        if (*next < *start) {
+            throw std::runtime_error("vector of cluster ids should be sorted");
+        } else if (*next != *start) {
+            ++total;
+        }
+        ++next;
+        ++start;
+    }
+    return total;
+}
+
 #endif

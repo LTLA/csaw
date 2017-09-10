@@ -1,4 +1,5 @@
 #include "csaw.h"
+#include "utils.h"
 
 SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight, SEXP fcthreshold) {
     BEGIN_RCPP
@@ -43,22 +44,7 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 	if (n!=_by.size() || n!=_weight.size()) { 
         throw std::runtime_error("vector lengths are not equal"); 
     }
-
-	// Checking that the 'by' is sorted, counting the number of elements and setting up a vector of [0, n).
-	int total=0;
-	if (n > 0) {
-		total=1;
-        Rcpp::IntegerVector::iterator bIt=_by.begin(), bIt_next=bIt+1;
-        while (bIt_next!=_by.end()) {
-            if (*bIt_next < *bIt) {
-                throw std::runtime_error("vector of cluster ids should be sorted");
-            } else if (*bIt_next != *bIt) {
-                ++total;
-            }
-            ++bIt_next;
-            ++bIt;
-        }
-	}
+    int total=checkByVector(_by.begin(), _by.end());
 
 	// Pulling out results.
     Rcpp::IntegerVector out_nwin(total);
@@ -168,22 +154,7 @@ SEXP get_cluster_weight(SEXP ids, SEXP weight) {
 	if (n!=_weight.size()) { 
         throw std::runtime_error("vector lengths are not equal"); 
     }
-
-    int total=0;
-	if (n > 0) {
-        // Checking that the 'by' is sorted, counting the number of elements.
-        total=1;    
-        Rcpp::IntegerVector::iterator iIt=_ids.begin(), iIt_next=iIt+1;
-        while (iIt_next!=_ids.end()) {
-            if (*iIt_next < *iIt) {
-                throw std::runtime_error("vector of cluster ids should be sorted");
-            } else if (*iIt_next != *iIt) {
-                ++total;
-            }
-            ++iIt_next;
-            ++iIt;
-        }
-    }
+    int total=checkByVector(_ids.begin(), _ids.end());
 
     Rcpp::NumericVector output(total);
     if (total) { 
