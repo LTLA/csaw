@@ -88,6 +88,14 @@ library(inline)
 # to construct each string). My hope is that two separate implementations can't be 
 # wrong, or won't stuff up at the same time.
 
+registerPlugin("stl", function() { list(includes="#include <sstream>
+#include <deque>
+#include <map>
+#include <algorithm>
+#include <R.h>
+#include <Rdefines.h>
+#include <R_ext/Error.h>") })
+
 compiled <- cxxfunction(sig=c(id="integer", name="character", exon="integer", strand="character", 
 		nquery="integer", queries="integer", subjects="integer", distances="integer"), body='
 const int* gids=INTEGER(id);
@@ -160,7 +168,7 @@ while (counter < nqid) {
 
 UNPROTECT(1);
 return output;
-', includes="#include <sstream>\n#include <deque>\n#include <map>\n#include <algorithm>")
+', plugin="stl")
 
 ########################################################################################
 ### Making a comparator function, to check proper string construction.
