@@ -113,27 +113,21 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     typedef std::map<std::pair<int, std::string>, AlignData> Holder;
     std::deque<Holder> all_holders(4); // four holders, one for each strand/first combination; cut down searches.
     std::pair<int, std::string> current;
-    Holder::iterator ith;
-    int curpos, mate_pos;
     AlignData algn_data;
-    bool am_mapped, is_first;
 
-    bool mate_is_in;
     std::set<std::string> identical_pos;
-    std::set<std::string>::iterator itip;
     int last_identipos=-1;
-    uint32_t curflag;
 
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){
-        curflag=(br.read -> core).flag;
+        const uint32_t& curflag=(br.read -> core).flag;
         if ((curflag & BAM_FSECONDARY)!=0 || (curflag & BAM_FSUPPLEMENTARY)!=0) {
             continue; // These guys don't even get counted as reads.
         }
 
         ++oc.totals;
-        curpos = (br.read->core).pos + 1; // Getting 1-indexed position.
+        const int curpos = (br.read->core).pos + 1; // Getting 1-indexed position.
         br.extract_data(algn_data);
-        am_mapped=br.is_well_mapped(minqual, rmdup);
+        const bool am_mapped=br.is_well_mapped(minqual, rmdup);
 
         /* Reasons to not add a read: */
        
@@ -156,7 +150,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
         }
 
         // Or if it's inter-chromosomal.
-        is_first=((curflag & BAM_FREAD1)!=0);
+        const bool is_first=((curflag & BAM_FREAD1)!=0);
         if (is_first==((curflag & BAM_FREAD2)!=0)) { 
             std::stringstream err;
             err << "read '" << bam_get_qname(br.read) << "' must be either first or second in the pair";
@@ -171,8 +165,8 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
         /* Checking the map and adding it if it doesn't exist. */
         
         current.second.assign(bam_get_qname(br.read));
-        mate_pos = (br.read -> core).mpos + 1; // 1-indexed position, again.
-        mate_is_in=false;
+        const int mate_pos = (br.read -> core).mpos + 1; // 1-indexed position, again.
+        bool mate_is_in=false;
         if (mate_pos < curpos) {
             mate_is_in=true;
         } else if (mate_pos == curpos) {
@@ -181,7 +175,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
                 identical_pos.clear();
                 last_identipos=curpos;
             }
-            itip=identical_pos.lower_bound(current.second);
+            std::set<std::string>::iterator itip=identical_pos.lower_bound(current.second);
             if (itip!=identical_pos.end() && !(identical_pos.key_comp()(current.second, *itip))) {
                 mate_is_in=true;
                 identical_pos.erase(itip);
@@ -193,7 +187,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
         if (mate_is_in) {
             current.first = mate_pos;
             Holder& holder=all_holders[int(!is_first) + 2*int(bam_is_mrev(br.read))];
-            ith=holder.find(current);
+            Holder::iterator ith=holder.find(current);
 
             if (ith != holder.end()) { 
                 if (!am_mapped) {
@@ -219,7 +213,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     // Leftovers treated as one_unmapped; marked as paired, but the mate is not in file.
     for (size_t h=0; h<all_holders.size(); ++h) { 
         Holder& holder=all_holders[h];
-        for (ith=holder.begin(); ith!=holder.end(); ++ith) { 
+        for (Holder::iterator ith=holder.begin(); ith!=holder.end(); ++ith) { 
             oc.add_onemapped((ith->first).first, ith->second);
         }
         holder.clear();
