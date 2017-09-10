@@ -9,6 +9,8 @@ int split_cluster(const Rcpp::IntegerVector&, const Rcpp::IntegerVector&, Rcpp::
  */
 
 SEXP merge_windows(SEXP chrs, SEXP start, SEXP end, SEXP sign, SEXP tolerance, SEXP max_size) {
+    BEGIN_RCPP
+
     Rcpp::IntegerVector _chrs(chrs), _start(start), _end(end);
     Rcpp::LogicalVector _sign(sign);
 	const int n = _chrs.size();
@@ -115,6 +117,7 @@ SEXP merge_windows(SEXP chrs, SEXP start, SEXP end, SEXP sign, SEXP tolerance, S
 	}
 	
     return Rcpp::List::create(out_index, out_chr, out_start, out_end);
+    END_RCPP
 }
 
 int split_cluster(const Rcpp::IntegerVector& starts, const Rcpp::IntegerVector& ends, Rcpp::IntegerVector& output, 

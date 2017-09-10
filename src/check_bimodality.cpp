@@ -14,6 +14,8 @@ struct signpost {
 };
 
 SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SEXP invert) {
+    BEGIN_RCPP
+
 	// Setting structures for the data.
     Rcpp::List _all(all);
     const int nlibs=_all.size();
@@ -193,4 +195,5 @@ SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SE
 	}
 
 	return output;
+    END_RCPP
 }

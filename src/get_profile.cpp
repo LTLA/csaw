@@ -3,6 +3,7 @@
 /* This function scans through the track and pulls out local maxima. */
 
 SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP average, SEXP normalize) {
+    BEGIN_RCPP
 
     Rcpp::IntegerVector _starts(starts), _ends(ends), _regstarts(regstarts);
 	const int nfrags=_starts.size();
@@ -147,5 +148,6 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
         }
 	}
     return ave_out;
+    END_RCPP
 }
 

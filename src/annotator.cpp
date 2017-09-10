@@ -9,6 +9,8 @@
  */
 
 SEXP collate_exon_data (SEXP geneid, SEXP strand, SEXP start, SEXP end) {
+    BEGIN_RCPP
+
 	// Checking inputs.
     Rcpp::IntegerVector _geneid(geneid), _start(start), _end(end);
     Rcpp::LogicalVector _strand(strand);
@@ -69,6 +71,7 @@ SEXP collate_exon_data (SEXP geneid, SEXP strand, SEXP start, SEXP end) {
 	}
 
 	return Rcpp::List::create(out_exnum, Rcpp::List::create(out_index, out_start, out_end));
+    END_RCPP
 }
 
 /* This function collapses indices into a string. The overlaps are also assigned
@@ -154,6 +157,7 @@ std::string digest2string (const std::deque<feature_data>& gelements, const Rcpp
 SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, SEXP leftDist,
 		SEXP rightQ, SEXP rightS, SEXP rightDist, 
 		SEXP symbol, SEXP genefeature, SEXP geneid, SEXP genestr) {
+    BEGIN_RCPP
 
     Rcpp::IntegerVector _N(N);
     if (_N.size()!=1) { 
@@ -250,5 +254,7 @@ SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, 
 			*(cur_oIt+curreg) = digest2string(allindices, _symbol, use_dist);
 		} 
 	}
+
     return Rcpp::List::create(out_full, out_left, out_right);
+    END_RCPP
 }

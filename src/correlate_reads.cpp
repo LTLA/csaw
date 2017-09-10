@@ -143,6 +143,8 @@ int fill (int n, std::deque<double>& mu, std::deque<double>& sd,
  */
 
 SEXP correlate_reads (SEXP pos1, SEXP num1, SEXP pos2, SEXP num2, SEXP max_dist, SEXP total_len) {
+    BEGIN_RCPP
+
     // Prepping up the R input data.
     Rcpp::IntegerVector _pos1(pos1), _num1(num1), _pos2(pos2), _num2(num2);
     const int fLen=_pos1.size(), rLen=_pos2.size();
@@ -240,4 +242,5 @@ SEXP correlate_reads (SEXP pos1, SEXP num1, SEXP pos2, SEXP num2, SEXP max_dist,
 	}
     
     return sumOut;
+    END_RCPP
 }

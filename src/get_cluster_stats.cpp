@@ -1,6 +1,8 @@
 #include "csaw.h"
 
 SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight, SEXP fcthreshold) {
+    BEGIN_RCPP
+
 	// Checking indices.
     Rcpp::IntegerVector _fcdex(fcdex), _pvaldex(pvaldex); 
 	if (_pvaldex.size()!=1) { throw std::runtime_error("only one index should be supplied for the p-value column"); }
@@ -140,11 +142,14 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 	}
 	
     return Rcpp::List::create(out_nwin, out_nfc, out_p, out_dir);
+    END_RCPP
 }
 
 /* Computes the total cluster weight in a reasonably fast manner. */
 
 SEXP get_cluster_weight(SEXP ids, SEXP weight) {
+    BEGIN_RCPP
+
     Rcpp::IntegerVector _ids(ids);
     Rcpp::NumericVector _weight(weight);
     const int n=_ids.size();
@@ -182,5 +187,6 @@ SEXP get_cluster_weight(SEXP ids, SEXP weight) {
     }
 
     return output;
+    END_RCPP
 }
 

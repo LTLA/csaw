@@ -29,6 +29,8 @@ typedef std::priority_queue<order_set::iterator, std::deque<order_set::iterator>
 /* This function scans through the track and pulls out local maxima. */
 
 SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
+    BEGIN_RCPP
+
     Rcpp::IntegerVector _chrs(chrs), _starts(starts), _ends(ends);
     Rcpp::NumericVector _metric(metric);
 	const int nlen=_chrs.size();
@@ -132,5 +134,6 @@ SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
 	}
 	
     return output;
+    END_RCPP
 }
 

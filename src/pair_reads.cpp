@@ -97,6 +97,8 @@ struct OutputContainer {
  */
 
 SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEXP mapq, SEXP dedup, SEXP diagnostics) {
+    BEGIN_RCPP
+
     // Checking input values.
     Rcpp::IntegerVector _mapq(mapq);
     if (_mapq.size()!=1) {
@@ -280,11 +282,13 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     } 
 
     return output;
+    END_RCPP
 }
 
 /* Getting reads on other unprocessed chromosomes, unmapped reads. */
 
 SEXP get_leftovers (SEXP bam, SEXP index, SEXP processed) { 
+    BEGIN_RCPP
     BamFile bf(bam, index);
     BamRead br;
 
@@ -309,5 +313,6 @@ SEXP get_leftovers (SEXP bam, SEXP index, SEXP processed) {
     BamIterator biter(bf);
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){ ++leftovers; }
     return Rcpp::IntegerVector::create(leftovers);
+    END_RCPP
 }
 

@@ -42,7 +42,6 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(),
 		
 		# Computing bimodality scores.
 		out <- .Call(cxx_check_bimodality, collected, rstarts[ro], rends[ro], prior.count, invert)
-		if (is.character(out)) { stop(out) }
 		out.scores[chosen][ro] <- out 
 	}
 

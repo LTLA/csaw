@@ -98,7 +98,6 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 		if (!length(starts)) { next }
 
 		cur.profile <- .Call(cxx_get_profile, starts, ends, all.starts, range, average, norm.type) 
-		if (is.character(cur.profile)) { stop(cur.profile) }
 		if (average) { 
 			total.profile <- total.profile + cur.profile
 		} else {

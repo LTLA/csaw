@@ -31,7 +31,6 @@ findMaxima <- function(regions, range, metric, ignore.strand=TRUE)
 	if (!is.integer(range)) { range <- as.integer(range) }
 
 	out <- .Call(cxx_find_maxima, chrs[o], starts[o], ends[o], metric[o], range)
-	if (is.character(out)) { stop(out) }
 	out[o] <- out
 	return(out)
 }

@@ -19,7 +19,6 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 	if (by.pval) { 
 		# Identifying the minimum P-value, and Bonferroni-correcting it.
 		out <- .Call(cxx_best_in_cluster, tab[,pval.col], ids, weight)
-		if (is.character(out)) { stop(out) }
 		pval <- out[[1]]
 		best <- out[[2]]
 
@@ -31,7 +30,6 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 
 		# Identifying the window with the maximum logCPM.
 		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weight)
-		if (is.character(out)) { stop(out) }
 		best <- out[[2]]
 		pval <- tab[best, pval.col]
 	}

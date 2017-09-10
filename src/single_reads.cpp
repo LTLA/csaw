@@ -3,6 +3,7 @@
 
 SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, 
         SEXP mapq, SEXP dedup, SEXP use_forward, SEXP use_first) {
+    BEGIN_RCPP
 
     // Checking input values.
     Rcpp::IntegerVector _mapq(mapq);
@@ -87,5 +88,6 @@ SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end,
     );
  
     return output;
+    END_RCPP
 }
 

@@ -1,6 +1,8 @@
 #include "csaw.h"
 
 SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
+    BEGIN_RCPP
+
     Rcpp::IntegerVector _nr(nr);
     if (_nr.size()!=1) {
         throw std::runtime_error("number of rows must be an integer scalar"); 
@@ -55,4 +57,5 @@ SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
     }
 	
     return output;
+    END_RCPP
 }

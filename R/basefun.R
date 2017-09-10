@@ -24,9 +24,7 @@
     }
 
     out <- .Call(cxx_extract_single_data, bam.file, bam.index, cur.chr,
-            start(where), end(where), param$minq, param$dedup, param$forward, use.first)
-    if (is.character(out)) { stop(out) }
-    
+            start(where), end(where), param$minq, param$dedup, param$forward, use.first) 
     names(out) <- c("forward", "reverse")
     names(out$forward) <- names(out$reverse) <- c("pos", "qwidth")
 
@@ -69,7 +67,6 @@
     bam.index <- paste0(bam.file, ".bai")
     out <- .Call(cxx_extract_pair_data, bam.file, bam.index, cur.chr,
             start(where), end(where), param$minq, param$dedup, diagnostics)
-    if (is.character(out)) { stop(out) }
 
     if (diagnostics) {
         names(out) <- c("forward", "reverse", "total", "single", "ufirst", "usecond", "one.mapped", "ifirst", "isecond")

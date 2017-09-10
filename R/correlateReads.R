@@ -55,7 +55,6 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 
 		# We call the C++ function to compute correlations. 
 		ccfs <- .Call(cxx_correlate_reads, all.f$values, all.f$lengths, all.r$values, all.r$lengths, max.dist, total.len)
-		if (is.character(ccfs)) { stop(ccfs) }
 
 		# Returning some output. Note that the coefficient is weighted according to the number
 		# of reads on each chromosome, as described in as described by Kharchenko et al. (2008).

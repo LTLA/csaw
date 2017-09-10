@@ -1,6 +1,7 @@
 #include "csaw.h"
 
 SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
+    BEGIN_RCPP
     Rcpp::NumericVector _pval(pval);
     Rcpp::IntegerVector _by(by);
     Rcpp::NumericVector _weight(weight);
@@ -68,4 +69,5 @@ SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
 	}
 	
     return Rcpp::List::create(out_pval, out_best);
+    END_RCPP
 }

@@ -146,7 +146,6 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100,
     # We pull out counts at the specified spacing. We do have to keep track of 
     # whether or not we want to use the first point, though.
     out <- .Call(cxx_get_rle_counts, frag.start, frag.end, total.pts, spacing, at.start)
-    if (is.character(out)) { stop(out) }
     return(list(counts=out, totals=length(frag.start), lengths=rlengths))
 }
 

@@ -69,7 +69,6 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
     not.prom <- which(!is.prom)
 	output <- .Call(cxx_collate_exon_data, gene.id[not.prom], gene.str[not.prom], 
                     start(curex)[not.prom], end(curex)[not.prom])
-	if (is.character(output)) { stop(output) }
     ex.num <- integer(length(curex))
     ex.num[not.prom] <- output[[1]]
 
@@ -127,7 +126,6 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 			queryHits(left.lap)-1L, which(flank.only)[subjectHits(left.lap)]-1L, left.dist,
 			queryHits(right.lap)-1L, which(flank.only)[subjectHits(right.lap)]-1L, right.dist,
 			gene.name, ex.num, gene.id, gene.str)
-	if (is.character(all.strs)) { stop(all.strs) }
 	names(all.strs) <- c("overlap", "left", "right")
 	return(all.strs)
 }

@@ -53,11 +53,8 @@ mergeWindows <- function(regions, tol, sign=NULL, max.width=NULL, ignore.strand=
 	tol <- as.integer(tol)
 	max.width <- as.integer(max.width)
 
-	# Running the merge.
+	# Running the merge. Indices correspond with positions in 'clustered'.
 	out <- .Call(cxx_merge_windows, chrs[o], starts[o], ends[o], sign, tol, max.width)
-	if (is.character(out)) { stop(out) }
-	
-	# Reporting. Indices correspond with positions in 'clustered'.
 	out[[1]][o] <- out[[1]]
 	clustered <- GRanges(levels(seqnames(regions))[out[[2]]], IRanges(out[[3]], out[[4]]),
 			seqinfo=Seqinfo(seqlevels(regions), seqlengths(regions)))
