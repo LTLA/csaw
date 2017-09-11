@@ -62,7 +62,7 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 
 		// Computing the total number of windows, and that up/down for each fold change.
         out_nwin[element]=j-i;
-        Rcpp::IntegerMatrix::Row cur_nfc=out_nfc.row(element);
+        auto cur_nfc=out_nfc.row(element);
 		for (int k=0; k<fcn; ++k) { 
 			int& allup=cur_nfc[k*2];
 			int& alldown=cur_nfc[k*2+1];
@@ -85,7 +85,7 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 		std::sort(psorter.begin(), psorter.end());
         double remaining=_weight[psorter.front().second];
 		double& outp=(out_p[element]=psorter.front().first/remaining); 
-        std::deque<std::pair<double, int> >::iterator itps=psorter.begin()+1;
+        auto itps=psorter.begin()+1;
  
         int minx=i;
 		for (int x=i+1; x<j; ++x, ++itps) {
@@ -106,7 +106,7 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
          */
         if (fcn==1) {
             bool has_up=false, has_down=false;
-            std::deque<std::pair<double, int> >::iterator itps=psorter.begin();
+            auto itps=psorter.begin();
             for (int x=i; x<=minx; ++x, ++itps) {
                 const double& curfc=fcs[0][itps->second];
                 if (curfc > 0) { 
@@ -152,7 +152,7 @@ SEXP get_cluster_weight(SEXP ids, SEXP weight) {
 
     Rcpp::NumericVector output(total);
     if (total) { 
-        Rcpp::NumericVector::iterator oIt=output.begin(), wIt=_weight.begin();
+        auto oIt=output.begin(), wIt=_weight.begin();
         *oIt=*wIt;
         ++wIt;
 

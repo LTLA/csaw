@@ -119,7 +119,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     int last_identipos=-1;
 
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){
-        const uint32_t& curflag=(br.read -> core).flag;
+        const auto& curflag=(br.read -> core).flag;
         if ((curflag & BAM_FSECONDARY)!=0 || (curflag & BAM_FSUPPLEMENTARY)!=0) {
             continue; // These guys don't even get counted as reads.
         }
@@ -211,9 +211,8 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     }
 
     // Leftovers treated as one_unmapped; marked as paired, but the mate is not in file.
-    for (size_t h=0; h<all_holders.size(); ++h) { 
-        Holder& holder=all_holders[h];
-        for (Holder::iterator ith=holder.begin(); ith!=holder.end(); ++ith) { 
+    for (auto& holder : all_holders ) {
+        for (auto ith=holder.begin(); ith!=holder.end(); ++ith) { 
             oc.add_onemapped((ith->first).first, ith->second);
         }
         holder.clear();

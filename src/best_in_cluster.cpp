@@ -7,7 +7,7 @@ SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
     Rcpp::IntegerVector _by(by);
     Rcpp::NumericVector _weight(weight);
 
-	const int n=LENGTH(pval);
+    const int n=_pval.size();
 	if (n!=_by.size() || n!=_weight.size()) {
         throw std::runtime_error("input vector lengths are not equal"); 
     }
@@ -16,8 +16,8 @@ SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
 	// Pulling out results.
     Rcpp::NumericVector out_pval(total);
     Rcpp::IntegerVector out_best(total);
-    Rcpp::NumericVector::iterator opIt=out_pval.begin();
-    Rcpp::IntegerVector::iterator obIt=out_best.begin();
+    auto opIt=out_pval.begin();
+    auto obIt=out_best.begin();
 
     int i=0;
     while (i<n) {

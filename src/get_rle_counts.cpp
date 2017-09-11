@@ -9,17 +9,16 @@ SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
     const int usefirst=check_logical_scalar(first, "first point specification"); // yes, "int" type with "logical" check is deliberate!
 	
     Rcpp::IntegerVector _start(start), _end(end);
-	const int n=_start.size();
-	if (n!=LENGTH(end)) { 
+    const int n=_start.size();
+    if (n!=_end.size()) { 
         throw std::runtime_error("start/end vectors must have equal length"); 
     }
 
     // Running through output.
     Rcpp::IntegerVector output(nrows);
-    Rcpp::IntegerVector::iterator sIt=_start.begin(), eIt=_end.begin();
-	for (int i=0; i<n; ++i, ++sIt, ++eIt) {
-        const int& curstart=*sIt;
-        const int& curend=*eIt;
+	for (int i=0; i<n; ++i) {
+        const int& curstart=_start[i];
+        const int& curend=_end[i];
 
 		// Get the zero-index corresponding to the smallest spacing point larger than the current inclusive start/end.
         if (curend < curstart) { 
@@ -37,10 +36,9 @@ SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
 
     // Running and computing the RLE, given the steps at each position.
     int cum=0;
-    Rcpp::IntegerVector::iterator oIt=output.begin();
-    for (int i=0; i<nrows; ++i, ++oIt) { 
-        cum+=*oIt;
-        *oIt=cum;
+    for (auto& o : output) { 
+        cum+=o;
+        o=cum;
     }
 	
     return output;

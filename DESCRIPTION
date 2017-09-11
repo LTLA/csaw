@@ -18,3 +18,4 @@ Description: Detection of differentially bound regions in ChIP-seq data
 License: GPL-3
 NeedsCompilation: yes
 LinkingTo: Rhtslib, zlibbioc, Rcpp
+SystemRequirements: C++11

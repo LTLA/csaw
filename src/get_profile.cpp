@@ -8,11 +8,11 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
 
     Rcpp::IntegerVector _starts(starts), _ends(ends), _regstarts(regstarts);
 	const int nfrags=_starts.size();
-	if (nfrags!=_ends.size()) {
+    if (nfrags!=_ends.size()) {
         throw std::runtime_error("fragment start/end vectors should have same length"); 
     }
-	const int nregs=LENGTH(regstarts);
-	if (nregs==0) { 
+    const int nregs=_regstarts.size();
+    if (nregs==0) { 
         throw std::runtime_error("no regions supplied"); 
     }
 	
@@ -48,14 +48,14 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
 		 * the fragments beforehand; the earlier sort would take more time
 		 * anyway, because it's nfrag*log(nfrag), not nfrag*log(nregs).
 		 */
-        Rcpp::IntegerVector::iterator ptr=std::upper_bound(_regstarts.begin(), _regstarts.end(), curend), ptr_copy=ptr;
+        auto ptr=std::upper_bound(_regstarts.begin(), _regstarts.end(), curend), ptr_copy=ptr;
         int loc=ptr-_regstarts.begin();
 		while (ptr!=_regstarts.end()) {
 			int dist = *ptr - curend;
 			if (dist > maxrange) { 
                 break; 
             }
-            Rcpp::IntegerMatrix::iterator curprof=all_profiles[loc];
+            auto curprof=all_profiles[loc];
 
 			--(*(curprof-dist+1));
 			int dist2 = *ptr - curstart;
@@ -76,7 +76,7 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
 			if (dist > maxrange) { 
                 break; 
             }
-            Rcpp::IntegerMatrix::iterator curprof=all_profiles[loc];
+            auto curprof=all_profiles[loc];
 
 			++(*(curprof+std::max(dist, -maxrange)));
 			int dist2 = curend - *ptr;
@@ -88,7 +88,7 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
 
 	// Compiling profile based on addition/subtraction instructions.
 	for (int r=0; r<nregs; ++r) {
-        Rcpp::IntegerMatrix::iterator curprof=all_profiles[r];
+        auto curprof=all_profiles[r];
 		for (int i=-maxrange+1; i<=maxrange; ++i) {
 		    *(curprof+i)+=*(curprof+i-1);
 		}
@@ -105,30 +105,21 @@ SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP averag
     } else if (norm_type==2) { 
         // Normalizing by the total coverage.
         for (int r=0; r<nregs; ++r) {
-            Rcpp::IntegerMatrix::iterator curprof=all_profiles[r];
-            double& cur_weighting=weightings[r];
-            for (int i=-maxrange; i<=maxrange; ++i) { 
-                cur_weighting+=*(curprof+i);
-            }
+            auto curprof=all_profiles[r];
+            weightings[r]=std::accumulate(curprof-maxrange, curprof+maxrange+1, 0.0);
         }
     } else if (norm_type==3) { 
         // Normalizing by the maximum height.
         for (int r=0; r<nregs; ++r) {
-            Rcpp::IntegerMatrix::iterator curprof=all_profiles[r];
-            double& cur_max=weightings[r];
-            for (int i=-maxrange; i<=maxrange; ++i) { 
-                const int& curcov=*(curprof+i);
-                if (curcov > cur_max) { 
-                    cur_max=curcov; 
-                }
-            }
+            auto curprof=all_profiles[r];
+            weightings[r]=*std::max_element(curprof-maxrange, curprof+maxrange+1);
         }
     }
 
     Rcpp::NumericVector ave_out(totallen);
-    Rcpp::NumericVector::iterator aoIt=ave_out.begin()+maxrange; // 0 is now distance of zero.
+    auto aoIt=ave_out.begin()+maxrange; // 0 is now distance of zero.
 	for (int r=0; r<nregs; ++r) {
-        Rcpp::IntegerMatrix::iterator curprof=all_profiles[r];
+        auto curprof=all_profiles[r];
 		const double& cur_weighting=weightings[r];
 		for (int i=-maxrange; i<=maxrange; ++i) { 
             *(aoIt+i)+=double(*(curprof+i))/cur_weighting; 

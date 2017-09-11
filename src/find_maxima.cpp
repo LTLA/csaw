@@ -113,7 +113,7 @@ SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
 
 		// Checking if we're currently the max (some allowance for exactly tied values).
 		if (incoming.size()) { 
-            order_set::iterator it=incoming.end();
+            auto it=incoming.end();
 			--it;
 			cur_max=it->metric;
 			do {

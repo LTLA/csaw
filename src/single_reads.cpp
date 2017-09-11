@@ -9,7 +9,7 @@ SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end,
     const int minqual=check_integer_scalar(mapq, "minimum mapping quality");
     const bool rmdup=check_logical_scalar(dedup, "duplicate removal specification");
 
-    Rcpp::LogicalVector _use_forward(use_forward);
+    Rcpp::LogicalVector _use_forward(use_forward); // Do NOT replace with check_logical_scalar, need to check for NA!
     if (_use_forward.size()!=1) {    
         throw std::runtime_error("forward usage specification should be a logical scalar"); 
     }
@@ -23,7 +23,7 @@ SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end,
         }
     }
 
-    Rcpp::LogicalVector _use_first(use_first);
+    Rcpp::LogicalVector _use_first(use_first); // Do NOT replace with check_logical_scalar, need to check for NA!
     if (_use_first.size()!=1) {
         throw std::runtime_error("first usage specification should be a logical scalar"); 
     } 

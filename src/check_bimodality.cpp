@@ -19,9 +19,9 @@ SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SE
 	// Setting structures for the data.
     Rcpp::List _all(all);
     const int nlibs=_all.size();
-	std::deque<Rcpp::IntegerVector> left1(nlibs), right1(nlibs), left2(nlibs), right2(nlibs), strand(nlibs);
-	std::deque<int> nums(nlibs), indices(nlibs);
-	std::priority_queue<signpost, std::deque<signpost>, std::greater<signpost> > next;
+    std::vector<Rcpp::IntegerVector> left1(nlibs), right1(nlibs), left2(nlibs), right2(nlibs), strand(nlibs);
+    std::vector<int> nums(nlibs), indices(nlibs);
+    std::priority_queue<signpost, std::deque<signpost>, std::greater<signpost> > next;
 	
 	for (int i=0; i<nlibs; ++i) {
         Rcpp::List current=_all[i];
@@ -169,14 +169,14 @@ SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SE
 //		Rprintf("\t values are Left forward/reverse: %i/%i, right reverse/forward %i/%i\n", left_forward, left_reverse, right_reverse, right_forward);
 //		Rprintf("\t score is %.3f\n", current_score);
 		if (!new_regs.empty()) { 
-			for (size_t itnr=0; itnr<new_regs.size(); ++itnr) { 
-				output[new_regs[itnr]]=current_score; 
-			}
+            for (const auto& nr : new_regs) { 
+                output[nr]=current_score; 
+            }
 			new_regs.clear();
 		}
 		if (modified_stats) { 
-			for (std::set<int>::iterator itcr=current_regs.begin(); itcr!=current_regs.end(); ++itcr) {
-                double& curout=output[*itcr];
+			for (const auto& r : current_regs) { 
+                double& curout=output[r];
  			    if (curout < current_score) { curout=current_score; }
 			}
 		}
