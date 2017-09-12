@@ -41,13 +41,11 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL) {
-	if (missing(lib.sizes)) { 
-		if (is.null(object$totals)) { 
-            stop("missing 'totals' from SummarizedExperiment")
-        } 
-        lib.sizes <- object$totals 
-	}
+setMethod("normOffsets", "SummarizedExperiment", function(object, assay=1, type="scaling", ..., se.out=NULL) {
+    if (is.null(object$totals)) { 
+        stop("missing 'totals' from SummarizedExperiment")
+    } 
+    lib.sizes <- object$totals 
 	
     out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
     
@@ -60,6 +58,9 @@ setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, ass
         if (type!="scaling") {
             stop("alternative output object not supported for loess normalization")
         }
+        if (!identical(se.out$totals, lib.sizes)) {
+            stop("library sizes of 'se.out' and 'object' are not identical")
+        }
         object <- se.out
         se.out <- TRUE
     }
@@ -68,7 +69,6 @@ setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, ass
         return(out)
     } else {
         if (type=="scaling") {
-            object$totals <- lib.sizes
             object$norm.factors <- out
         } else {
             assay(object, "offset") <- out

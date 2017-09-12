@@ -14,15 +14,15 @@
 \S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
     weighted=FALSE, ...)
 
-\S4method{normOffsets}{SummarizedExperiment}(object, lib.sizes, assay=1, type="scaling", 
-    ..., se.out=NULL)
+\S4method{normOffsets}{SummarizedExperiment}(object, assay=1, type="scaling", ..., se.out=NULL)
 
 \S4method{normalize}{SummarizedExperiment}(object, ...)
 }
 
 \arguments{
   \item{object}{A matrix of numeric counts with one column per library and one row per genomic feature (e.g., window).}
-  \item{lib.sizes}{A numeric vector specifying the total number of reads per library.}
+  \item{lib.sizes}{A numeric vector specifying the total number of reads per library.
+This is extracted from \code{object$totals} for SummarizedExperiment inputs, or computed as \code{colSums(object)} for matrices.}
   \item{type}{A character string indicating what type of normalization is to be performed.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
@@ -60,14 +60,14 @@ However, this will be deprecated to avoid clashes with other \code{normalize} me
 }
 
 \section{Additional details for SummarizedExperiment inputs}{
-If \code{type="scaling"} and \code{lib.sizes} is not specified, the library sizes are extracted from the \code{totals} field of \code{mcols(object)}.
-If this is \code{NULL}, a warning is issued and the column sums of the count matrix are used instead.
-Note that the normalization factors \emph{must} always be interpreted with respect to the library sizes used to calculate them.
-As such, the library sizes used in normalization are stored in the \code{totals} field in the returned SummarizedExperiment.
-
 If \code{se.out} is a SummarizedExperiment object and \code{type="scaling"}, 
 the function will calculate the normalization factors from \code{object} but return them in a modified version of \code{se.out}.
 This is useful when \code{se.out} contains counts for windows, but the normalization factors are computed using larger bins in \code{object}.
+
+Note that the normalization factors can only be interpreted with respect to the library sizes used to calculate them.
+As such, the function will throw an error if the library sizes in \code{se.out$totals} are not identical to \code{object$totals}.
+Consistent library sizes can be achieved by using the same \code{\link{readParam}} object in \code{\link{windowCounts}} and related functions.
+
 The use of a SummarizedExperiment object in \code{se.out} with \code{type="loess"} is not yet supported.
 }
 
