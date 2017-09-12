@@ -1,11 +1,11 @@
-setGeneric("normOffsets", function(object, ...) { standardGeneric("normOffsets") })
+setGeneric("normOffsets", function(object, ...) standardGeneric("normOffsets"))
 
 setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scaling", "loess"), weighted=FALSE, ...) 
 # This provides a wrapper to perform TMM normalization with non-standard
 # library sizes (e.g. due to filtering) and weighting turned off.
 # Alternatively, it can do a form a fast loess-like normalization which uses
 # the average count as the covariate, rather than the typical A-value-based
-# shenanigans. This avoids instability at low object.
+# shenanigans. This avoids instability at low abundances.
 #
 # written by Aaron Lun
 # created 19 November 2013
@@ -41,13 +41,27 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL) {
+setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL, alt.se=NULL) {
+    # Checking if we should use alternative count data for scaling normalization.
+    if (!is.null(alt.se)) { 
+        if (is.na(pmatch(type, "scaling"))) {
+            stop("trended normalization with alternative counts is not yet supported")
+        }
+        mat <- assay(alt.se, assay)
+    } else {
+        mat <- assay(object, assay)
+    } 
+
 	if (missing(lib.sizes)) { 
-		if (is.null(object$totals)) { warning("library sizes not found in 'totals', setting to NULL") }
-		lib.sizes <- object$totals 
+		if (is.null(object$totals)) { 
+            warning("library sizes not found in 'totals', computing from count matrix") 
+            lib.sizes <- colSums(mat)
+        } else {
+            lib.sizes <- object$totals 
+        }
 	}
 	
-    out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
+    out <- normOffsets(mat, lib.sizes=lib.sizes, type=type, ...)
     
     if (is.null(se.out)) {
         .Deprecated(old="se.out=NULL", new="se.out=TRUE")
@@ -57,6 +71,7 @@ setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, ass
         return(out)
     } else {
         if (type=="scaling") {
+            out$totals <- lib.sizes
             object$norm.factors <- out
         } else {
             assay(object, "offset") <- out
