@@ -41,37 +41,34 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL, alt.se=NULL) {
-    # Checking if we should use alternative count data for scaling normalization.
-    if (!is.null(alt.se)) { 
-        if (is.na(pmatch(type, "scaling"))) {
-            stop("trended normalization with alternative counts is not yet supported")
-        }
-        mat <- assay(alt.se, assay)
-    } else {
-        mat <- assay(object, assay)
-    } 
-
+setMethod("normOffsets", "SummarizedExperiment", function(object, lib.sizes, assay=1, type="scaling", ..., se.out=NULL) {
 	if (missing(lib.sizes)) { 
 		if (is.null(object$totals)) { 
-            warning("library sizes not found in 'totals', computing from count matrix") 
-            lib.sizes <- colSums(mat)
-        } else {
-            lib.sizes <- object$totals 
-        }
+            stop("missing 'totals' from SummarizedExperiment")
+        } 
+        lib.sizes <- object$totals 
 	}
 	
-    out <- normOffsets(mat, lib.sizes=lib.sizes, type=type, ...)
+    out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
     
     if (is.null(se.out)) {
         .Deprecated(old="se.out=NULL", new="se.out=TRUE")
         se.out <- FALSE 
     }
+    
+    if (!is.logical(se.out)) { 
+        if (type!="scaling") {
+            stop("alternative output object not supported for loess normalization")
+        }
+        object <- se.out
+        se.out <- TRUE
+    }
+
     if (!se.out) {
         return(out)
     } else {
         if (type=="scaling") {
-            out$totals <- lib.sizes
+            object$totals <- lib.sizes
             object$norm.factors <- out
         } else {
             assay(object, "offset") <- out

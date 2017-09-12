@@ -14,8 +14,8 @@
 \S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
     weighted=FALSE, ...)
 
-\S4method{normOffsets}{SummarizedExperiment}(object, lib.sizes, assay=1, type="scaling", ..., 
-    se.out=NULL, alt.se=NULL)
+\S4method{normOffsets}{SummarizedExperiment}(object, lib.sizes, assay=1, type="scaling", 
+    ..., se.out=NULL)
 
 \S4method{normalize}{SummarizedExperiment}(object, ...)
 }
@@ -27,8 +27,8 @@
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
   \item{assay}{An integer scalar or string specifying the assay values to use for normalization.}
-  \item{se.out}{A logical scalar indicating whether or not a SummarizedExperiment object should be returned.}
-  \item{alt.se}{A SummarizedExperiment object for scaling normalization, to be used instead of \code{object}.}
+  \item{se.out}{A logical scalar indicating whether or not a SummarizedExperiment object should be returned.
+Alternatively, a SummarizedExperiment object in which normalization factors are to be stored.}
 }
 
 \details{
@@ -63,14 +63,12 @@ However, this will be deprecated to avoid clashes with other \code{normalize} me
 If \code{type="scaling"} and \code{lib.sizes} is not specified, the library sizes are extracted from the \code{totals} field of \code{mcols(object)}.
 If this is \code{NULL}, a warning is issued and the column sums of the count matrix are used instead.
 Note that the normalization factors \emph{must} always be interpreted with respect to the library sizes used to calculate them.
-As such, the library sizes used are stored in the \code{totals} field in the returned SummarizedExperiment.
+As such, the library sizes used in normalization are stored in the \code{totals} field in the returned SummarizedExperiment.
 
-If \code{alt.se} is a SummarizedExperiment object and \code{type="scaling"}, the supplied \code{alt.se} will be used instead of \code{object} to compute normalization factors.
-All procedures described above for \code{object} (e.g., library size, assay extraction) will instead be applied to \code{alt.se}.
-However, \code{normOffsets,SummarizedExperiment-method} will return the normalization factors in a modified version of \code{object}, not \code{alt.se}.
-This is useful when \code{object} contains counts for windows, but the normalization factors are computed using larger bins in \code{alt.se}.
-
-The use of \code{alt.se} with loess normalization is not yet supported.
+If \code{se.out} is a SummarizedExperiment object and \code{type="scaling"}, 
+the function will calculate the normalization factors from \code{object} but return them in a modified version of \code{se.out}.
+This is useful when \code{se.out} contains counts for windows, but the normalization factors are computed using larger bins in \code{object}.
+The use of a SummarizedExperiment object in \code{se.out} with \code{type="loess"} is not yet supported.
 }
 
 \value{
