@@ -135,15 +135,20 @@ stats <- filterWindows(data, locality, type="local")
 head(stats$filter)
 keep <- stats$filter > log2(3)
 
-# Control-based (pretend "rep.2" is a control library).
-stats <- filterWindows(data[,1], data[,2], type="control", prior.count=5)
+# Control-based, with binning for normalization (pretend rep2.bam is a control).
+binned <- windowCounts(bamFiles, width=10000, bin=TRUE)
+chip.bin <- binned[,1]
+con.bin <- binned[,2]
+scinfo <- scaleControlFilter(chip.bin, con.bin)
+
+chip.data <- data[,1]
+con.data <- data[,2]
+stats <- filterWindows(chip.data, con.data, type="control", 
+    prior.count=5, scale.info=scinfo)
+
 head(stats$filter)
 keep <- stats$filter > log2(3)
 
-# Control-based with binning for normalization.
-binned <- windowCounts(bamFiles, width=10000, bin=TRUE)
-stats <- filterWindows(data[,1], data[,2], type="control", prior.count=5,
-	norm.fac=list(binned[,1], binned[,2]))
 }
 
 \keyword{filtering}
