@@ -75,6 +75,8 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
     }
     
     # Counting the number of overlaps of any type with the known regions.
+    # Unfortunately, we still need to go through the hassle of extracting reads when there are no regions for a chromosome.
+    # This is because we need to obtain a consistent value for the total number of reads.
     if (length(chosen)==0L) { 
         counts <- 0L
     } else {
