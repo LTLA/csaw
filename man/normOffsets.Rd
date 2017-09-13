@@ -96,10 +96,10 @@ normOffsets(counts)
 normOffsets(counts, lib.sizes=rep(400, 4))
 
 # Using loess-based normalization, instead.
-offsets <- normOffsets(counts, type="loess", lib.size=full.lib.size)
+offsets <- normOffsets(counts, type="loess")
 head(offsets)
-offsets <- normOffsets(counts, type="loess", span=0.4, lib.size=full.lib.size)
-offsets <- normOffsets(counts, type="loess", iterations=1, lib.size=full.lib.size)
+offsets <- normOffsets(counts, type="loess", span=0.4)
+offsets <- normOffsets(counts, type="loess", iterations=1)
 
 # Same for SummariedExperiment objects. 
 bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")

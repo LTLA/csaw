@@ -12,7 +12,6 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 # last modified 29 August 2015
 {
 	if (is.null(lib.sizes)) { 
-		warning("library sizes not specified, column sums used instead")
 		lib.sizes <- colSums(object) 
 	}
 

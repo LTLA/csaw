@@ -44,8 +44,8 @@ asDGEList(out)
 consolidateSizes(list(out), list(empty)) # No point testing behaviour on empty lists.
 consolidateSizes(list(out), list(empty), region=GRanges())
 
-normOffsets(out) # 1 is correct, as calcNormFactors() just diverts to that.
-normOffsets(out, type="loess")
+normOffsets(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
+normOffsets(out, type="loess", se.out=FALSE)
 
 scaledAverage(asDGEList(out))
 scaledAverage(asDGEList(out), scale=numeric(0))
@@ -55,6 +55,6 @@ chrs <- Rsamtools::scanBamHeader(bamFile)[[1]]$targets
 seqinfo(rowRanges(out)) <- Seqinfo(names(chrs), chrs)
 filterWindows(out, out, type="global")
 filterWindows(out, out, type="local")
-filterWindows(out, out, type="control", norm.fac=1) # TMM normalization fails for empty DGELists.
+suppressWarnings(filterWindows(out, out, type="control"))
 filterWindows(out, type="proportion")
 

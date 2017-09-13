@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2016-10-17 r71531) -- "Unsuffered Consequences"
-Copyright (C) 2016 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -185,9 +185,9 @@ $table
 <0 rows> (or 0-length row.names)
 
 > 
-> normOffsets(out) # 1 is correct, as calcNormFactors() just diverts to that.
+> normOffsets(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
 [1] 1
-> normOffsets(out, type="loess")
+> normOffsets(out, type="loess", se.out=FALSE)
      [,1]
 > 
 > scaledAverage(asDGEList(out))
@@ -218,7 +218,7 @@ numeric(0)
 $filter
 numeric(0)
 
-> filterWindows(out, out, type="control", norm.fac=1) # TMM normalization fails for empty DGELists.
+> suppressWarnings(filterWindows(out, out, type="control"))
 $abundances
 numeric(0)
 
@@ -239,4 +239,4 @@ numeric(0)
 > 
 > proc.time()
    user  system elapsed 
- 10.200   0.172  10.382 
+ 15.189   0.640  16.646 
