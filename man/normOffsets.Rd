@@ -95,32 +95,6 @@ counts <- matrix(rnbinom(400, mu=10, size=20), ncol=4)
 normOffsets(counts)
 normOffsets(counts, lib.sizes=rep(400, 4))
 
-# Adding undersampling
-n <- 1000L
-mu1 <- rep(10, n)
-mu2 <- mu1
-mu2[1:100] <- 100
-mu2 <- mu2/sum(mu2)*sum(mu1)
-counts <- cbind(rnbinom(n, mu=mu1, size=20), rnbinom(n, mu=mu2, size=20))
-actual.lib.size <- rep(sum(mu1), 2)
-normOffsets(counts, lib.sizes=actual.lib.size)
-normOffsets(counts, logratioTrim=0.4, lib.sizes=actual.lib.size)
-normOffsets(counts, sumTrim=0.3, lib.size=actual.lib.size)
-
-# With and without weighting, for high-abundance spike-ins.
-n <- 100000
-blah <- matrix(rnbinom(2*n, mu=10, size=20), ncol=2)
-tospike <- 10000
-blah[1:tospike,1] <- rnbinom(tospike, mu=1000, size=20)
-blah[1:tospike,2] <- rnbinom(tospike, mu=2000, size=20)
-full.lib.size <- colSums(blah)
-
-normOffsets(blah, weighted=TRUE, lib.sizes=full.lib.size)
-normOffsets(blah, lib.sizes=full.lib.size)
-true.value <- colSums(blah[(tospike+1):n,])/colSums(blah)
-true.value <- true.value/exp(mean(log(true.value)))
-true.value
-
 # Using loess-based normalization, instead.
 offsets <- normOffsets(counts, type="loess", lib.size=full.lib.size)
 head(offsets)
@@ -131,9 +105,14 @@ offsets <- normOffsets(counts, type="loess", iterations=1, lib.size=full.lib.siz
 bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
 data <- windowCounts(bamFiles, width=100, filter=1)
 
-normOffsets(data)
-normOffsets(data, lib.sizes=c(10, 100))
-head(normOffsets(data, type="loess"))
+normOffsets(data, se.out=FALSE)
+normOffsets(data, se.out=TRUE)
+
+another.data <- windowCounts(bamFiles, width=10)
+normOffsets(data, se.out=another.data)
+
+normOffsets(data, type="loess", se.out=TRUE)
+head(normOffsets(data, type="loess", se.out=FALSE))
 }
 
 \seealso{
