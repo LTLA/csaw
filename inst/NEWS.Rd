@@ -5,9 +5,11 @@
 \section{Version 1.11.2}{\itemize{
 \item Removed support for paramList objects. 
 
-\item Added option for normOffsets() to return SummarizedExperiment objects.
+\item Added option for normOffsets() to return SummarizedExperiment objects containing normalization data.
 
 \item Deprecated normalize() to avoid S4 method clashes. 
+
+\item Moved scaling prior to control-based filtering into a new function, scaleControlFilter(), for greater modularity.
 }}
 
 \section{Version 1.10.0}{\itemize{

@@ -155,20 +155,32 @@ suppressWarnings(comp(windowed, countered, type="control", prior.count=5))
 
 # With normalization.
 
-comp(windowed, countered, type="control", norm.fac=1)$filter
-
 binned.chip <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, 1, 1)),
 	rowRanges=GRanges("chrA", IRanges(1, 1000)), colData=DataFrame(totals=1e6, ext=1),
 	metadata=list(final.ext=NA))
 binned.con <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, 1, 1)),
 	rowRanges=GRanges("chrA", IRanges(1, 1000)), colData=DataFrame(totals=1e6, ext=1),
 	metadata=list(final.ext=NA))
-comp(windowed, countered, type="control", norm.fac=list(binned.chip, binned.con))$filter
+
+sc.info <- scaleControlFilter(binned.chip, binned.con)
+stopifnot(isTRUE(all.equal(sc.info$scale, 1)))
+stopifnot(identical(sc.info$data.totals, windowed$totals))
+stopifnot(identical(sc.info$back.totals, countered$totals))
+
+comp(windowed, countered, type="control", scale.info=sc.info)$filter
+
+# More effortful normalization.
 
 assay(countered)[1] <- 5 # assuming undersampling in control.
 assay(binned.con)[1] <- 50
-comp(windowed, countered, type="control", norm.fac=list(binned.chip, binned.con))
-comp(windowed, countered, type="control", norm.fac=list(binned.chip, binned.con), prior.count=5)
+
+sc.info <- scaleControlFilter(binned.chip, binned.con)
+stopifnot(isTRUE(all.equal(sc.info$scale, 50/100)))
+stopifnot(identical(sc.info$data.totals, windowed$totals))
+stopifnot(identical(sc.info$back.totals, countered$totals))
+
+comp(windowed, countered, type="control", scale.info=sc.info)
+comp(windowed, countered, type="control", scale.info=sc.info, prior.count=5)
 
 # Also seeing what happens when the library size of the control changes.
 

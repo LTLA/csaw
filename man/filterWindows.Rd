@@ -1,26 +1,45 @@
 \name{filterWindows}
 \alias{filterWindows}
+\alias{scaleControlFilter}
 
 \title{Filtering methods for RangedSummarizedExperiment objects}
 \description{Convenience function to compute filter statistics for windows, based on proportions or using enrichment over background.}
 
 \usage{
 filterWindows(data, background, type="global", assay.data=1,
-    assay.back=1, prior.count=2, norm.fac=NULL) 
+    assay.back=1, prior.count=2, scale.info=NULL) 
+
+scaleControlFilter(data, background)
 }
 
 \arguments{
-\item{data}{a \code{RangedSummarizedExperiment} object containing window- or bin-level counts}
-\item{background}{another \code{RangedSummarizedExperiment} object, containing counts for background regions when \code{type!="proportion"}}
+\item{data}{A RangedSummarizedExperiment object containing window-level counts for \code{filterWindows}, and bin-level counts for \code{scaleControlFilter}.}
+\item{background}{A RangedSummarizedExperiment object.
+    For \code{filterWindows}, this should contain counts for background regions when \code{type} is not \code{"proportion"}.
+    For \code{scaleControlFilter}, this should contain bin-level counts for negative control samples.
+}
 \item{type}{a character string specifying the type of filtering to perform; can be any of \code{c("global", "local", "control", "proportion")}}
 \item{assay.data}{a string or integer scalar specifying the assay containing window/bin counts in \code{data}}
 \item{assay.back}{a string or integer scalar specifying the assay containing window/bin counts in \code{background}}
 \item{prior.count}{a numeric scalar, specifying the prior count to use in \code{\link{aveLogCPM}}}
-\item{norm.fac}{a numeric scalar representing the normalization factor between ChIP and control samples, or a list of two \code{RangedSummarizedExperiment} objects; only used when \code{type="control"}}
+\item{scale.info}{A list containing the output of \code{scaleControlFilter}, i.e., a normalization factor and library sizes for ChIP and control samples.}
 }
 
 \value{
-A list is returned with \code{abundances}, the average abundance of each entry in \code{data}; \code{filter}, the filter statistic for the given \code{type}; and, for \code{type!="proportion"}, \code{back.abundances}, the average abundance of each entry in \code{background}.
+For \code{filterWindows}, a named list is returned containing:
+\itemize{
+    \item \code{abundances}, a numeric vector containing the average abundance of each row in \code{data}.
+    \item \code{filter}, a numeric vector containing the filter statistic for the given \code{type} for each row.
+    \item \code{back.abundances}, a numeric vector containing the average abundance of each entry in \code{background}.
+        Only reported for \code{type!="proportion"}. 
+}
+
+For \code{scaleControlFilter}, a named list is returned containing:
+\itemize{
+    \item \code{scale}, a numeric scalar containing the scaling factor for multiplying the control counts.
+    \item \code{data.totals}, a numeric vector containing the library sizes for \code{data}.
+    \item \code{back.totals}, anumeric vector containing the library sizes for \code{background}.
+}
 }
 
 \details{
@@ -75,17 +94,16 @@ This may be necessary in \code{type="control"}, where \code{background} contains
 When \code{type=="control"}, ChIP samples will be compared to control samples to compute the filter statistic.
 Composition biases are likely to be present, where increased binding at some loci reduces coverage of other loci in the ChIP samples.
 This incorrectly results in smaller filter statistics for the latter loci, as the fold-change over the input is reduced.
-To correct for this, a normalization factor between ChIP and control samples can be computed from \code{norm.fac}.
+To correct for this, a normalization factor between ChIP and control samples can be computed with \code{scaleControlFilter}.
 
-Users should supply a list containing two \code{RangedSummarizedExperiment} objects, each containing the counts for large (~10 kbp) bins.
-The first and second objects should contain counts for the libraries in \code{data} and \code{background}, respectively.
-The median difference in the average abundance between the two objects is then computed across all bins.
-This is used as a normalization factor to correct the filter statistics for each window.
-
+Users should supply two \code{RangedSummarizedExperiment} objects, each containing the counts for large (~10 kbp) bins in the ChIP and control samples.
+The difference in the average abundance between the two objects is computed for each bin.
+The median of the differences across all bins is used as a normalization factor to correct the filter statistics for each window.
 The idea is that most bins represent background regions, such that a systematic difference in abundance between ChIP and control should represent the composition bias.
-Alternatively, a normalization factor can be specified manually in \code{norm.fac}.
-This should represent the scaling factor for the library sizes of the control samples relative to the ChIP samples, i.e., the \dQuote{average} fold increase in coverage of the control over ChIP for the background regions.
-However, if the value is left as \code{NULL}, a warning will be issued.
+
+\code{scaleControlFilter} will also store the library sizes for each object in its output.
+This is used to check that the \code{data} and \code{background} supplied to \code{filterWindows} have the same library sizes.
+Otherwise, the normalization factor computed with bin-level counts cannot be correctly applied to the window-level counts.
 }
 
 \seealso{

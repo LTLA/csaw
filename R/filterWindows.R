@@ -1,5 +1,5 @@
 filterWindows <- function(data, background, type="global", assay.data=1, assay.back=1,
-                          prior.count=2, norm.fac=NULL)
+                          prior.count=2, scale.info=NULL)
 # This is a function for proportion- or background-based filtering of a
 # RangedSummarizedExperiment object. For the former, it computes the relative
 # ranks that can be used to determine the proportion of highest-abundance
@@ -8,7 +8,7 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 #
 # written by Aaron Lun
 # created 18 February 2015	
-# last modified 15 May 2015
+# last modified 13 September 2017
 {
 	type <- match.arg(type, c("global", "local", "control", "proportion"))
 	abundances <- scaledAverage(asDGEList(data, assay=assay.data), scale=1, prior.count=prior.count)
@@ -31,6 +31,9 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 			return(list(abundances=abundances, filter=filter.stat))
 		} 
 
+        # We don't adjust each abundance for the size of the individual regions, 
+        # as that would be a bit too much like FPKM. We only use the widths to
+        # adjust the background abundances for comparison.
 		bwidth <- getWidths(background)
 		dwidth <- getWidths(data)
 
@@ -59,21 +62,14 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 
 		} else {
 			# Need to account for composition bias between ChIP and control libraries.
-			if (!is.null(norm.fac)) {
-				if (!is.numeric(norm.fac)) { 
-					if (!is.list(norm.fac) || length(norm.fac)!=2L) { 
-						stop("norm.fac list should contain two SummarizedExperiment objects") 
-					}
-					if (!identical(norm.fac[[1]]$totals, data$totals) || 
-							!identical(norm.fac[[2]]$totals, background$totals)) { 
-						stop("norm.fac SE objects should have same totals as 'data' and 'background'")
-					}
-					adjusted <- filterWindows(norm.fac[[1]], norm.fac[[2]], type="control", prior.count=0, norm.fac=1)
-					norm.fac <- 2^-median(adjusted$filter, na.rm=TRUE) # protect against NA's from all-zero bins. 
-				} else if (length(norm.fac)!=1L) { 
-					stop("numeric norm.fac should be a scalar")
-				}
- 				background$totals <- background$totals * norm.fac
+			if (!is.null(scale.info)) {
+                if (!identical(scale.info$data.totals, data$totals)) {
+                    stop("'data$totals' are not the same as those used for scaling")
+                } 
+                if (!identical(scale.info$back.totals, background$totals)) { 
+                    stop("'back$totals' are not the same as those used for scaling")
+                }
+   				background$totals <- background$totals * scale.info$scale 
 			} else {
 				warning("normalization factor not specified for composition bias")
 			}
@@ -115,4 +111,14 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
  	if (prop.seen > 1) { return(median(ab)) }
 	if (prop.seen < 0.5) { return(aveLogCPM(rbind(integer(ncol(data))), lib.size=data$totals, prior.count=prior.count)) }
 	quantile(ab, probs=1 - 0.5/prop.seen) 
+}
+
+scaleControlFilter <- function(data, background) 
+# Computes the normalization factor due to composition bias
+# between the ChIP and background samples.
+{
+	adjusted <- filterWindows(data, background, type="control", prior.count=0, 
+        scale.info=list(scale=1, data.totals=data$totals, back.totals=background$totals))
+	nf <- 2^-median(adjusted$filter, na.rm=TRUE) # protect against NA's from all-zero . 
+    return(list(scale=nf, data.totals=data$totals, back.totals=background$totals))
 }
