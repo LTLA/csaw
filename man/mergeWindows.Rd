@@ -59,7 +59,7 @@ The function is run separately on the entries for each strand, and the results c
 The \code{region} returned in the output will be stranded to reflect the strand of the contributing input regions.
 This may be useful for strand-specific applications.
 
-Note that, in the output, the cluster ID reported in \code{id} corresponds to the index of the cluster coordinates in the input \code{region}.
+Note that, in the output, the cluster ID reported in \code{id} corresponds to the index of the cluster coordinates in \code{region}.
 }
 
 \examples{
