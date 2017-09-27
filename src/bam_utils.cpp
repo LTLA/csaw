@@ -2,20 +2,20 @@
 #include "utils.h"
 
 BamFile::BamFile(SEXP bam, SEXP idx) {
-    const char* path=check_string(bam, "BAM file path");
-    const char* xpath=check_string(idx, "BAM index file path");
+    Rcpp::String path=check_string(bam, "BAM file path");
+    Rcpp::String xpath=check_string(idx, "BAM index file path");
 
-    in = sam_open(path, "rb");
+    in = sam_open(path.get_cstring(), "rb");
     if (in == NULL) {
         std::stringstream err;
-        err << "failed to open BAM file at '" << path << "'";
+        err << "failed to open BAM file at '" << path.get_cstring() << "'";
         throw std::runtime_error(err.str());
     }
     try {
-        index = bam_index_load(xpath); 
+        index = bam_index_load(xpath.get_cstring()); 
         if (index==NULL) { 
             std::stringstream err;
-            err << "failed to open BAM index at '" << xpath << "'";
+            err << "failed to open BAM index at '" << xpath.get_cstring() << "'";
             throw std::runtime_error(err.str());
         }
         try {
@@ -70,15 +70,15 @@ BamIterator::BamIterator(const BamFile& bf) : iter(NULL) {
 
 BamIterator::BamIterator(const BamFile& bf, SEXP Chr, SEXP Start, SEXP End) : iter(NULL) {
     // Checks on inputs. Get start to 0-indexed closed, end to 0-indexed open.
-    const char* chr=check_string(Chr, "chromosome name");
+    Rcpp::String chr=check_string(Chr, "chromosome name");
     int start=check_integer_scalar(Start, "start position")-1;
     int end=check_integer_scalar(End, "end position");
 
     // Pulling out chromsoome name.
-    int cid=bam_name2id(bf.header, chr);
+    int cid=bam_name2id(bf.header, chr.get_cstring());
     if (cid==-1) {
         std::stringstream err;
-        err << "reference sequence '" << chr << "' missing in BAM header";
+        err << "reference sequence '" << chr.get_cstring() << "' missing in BAM header";
         throw std::runtime_error(err.str());
     }
 

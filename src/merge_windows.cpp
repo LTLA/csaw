@@ -130,7 +130,7 @@ int split_cluster(const Rcpp::IntegerVector& starts, const Rcpp::IntegerVector& 
 	   This will always be less than `mult`, so flooring it will give `mult-1`,
 	   i.e., the last index of `instantiated`.
 	 */
-	std::deque<int> instantiated(mult, 0);
+    std::vector<int> instantiated(mult, 0);
 	int output_index=output[xs];
 
 	// Allocating windows into subclusters, based on their midpoints.
