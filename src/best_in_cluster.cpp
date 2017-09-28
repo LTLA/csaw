@@ -3,9 +3,9 @@
 
 SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
     BEGIN_RCPP
-    Rcpp::NumericVector _pval(pval);
-    Rcpp::IntegerVector _by(by);
-    Rcpp::NumericVector _weight(weight);
+    const Rcpp::NumericVector _pval(pval);
+    const Rcpp::IntegerVector _by(by);
+    const Rcpp::NumericVector _weight(weight);
 
     const int n=_pval.size();
 	if (n!=_by.size() || n!=_weight.size()) {

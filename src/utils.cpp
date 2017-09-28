@@ -4,7 +4,7 @@
 
 template<typename T, class V>
 T check_scalar_value (Rcpp::RObject val, const char* type, const char* thing) {
-    V x(val);
+    const V x(val);
     if (x.size()!=1) {
         std::stringstream err;
         err << "expected " << type << " for the " << thing;

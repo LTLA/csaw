@@ -10,8 +10,8 @@ SEXP collate_exon_data (SEXP geneid, SEXP strand, SEXP start, SEXP end) {
     BEGIN_RCPP
 
 	// Checking inputs.
-    Rcpp::IntegerVector _geneid(geneid), _start(start), _end(end);
-    Rcpp::LogicalVector _strand(strand);
+    const Rcpp::IntegerVector _geneid(geneid), _start(start), _end(end);
+    const Rcpp::LogicalVector _strand(strand);
     const int n=_geneid.size();
     if (n!=_start.size() || n!=_end.size() || n!=_strand.size()) {
         throw std::runtime_error("exon data vectors should have the same length");
@@ -160,7 +160,8 @@ SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, 
     const int nin=check_integer_scalar(N, "number of query regions");
 
     // Setting up overlap information.
-    Rcpp::IntegerVector _fullQ(fullQ), _fullS(fullS), _leftQ(leftQ), _leftS(leftS), _leftDist(leftDist),
+    const Rcpp::IntegerVector _fullQ(fullQ), _fullS(fullS), 
+        _leftQ(leftQ), _leftS(leftS), _leftDist(leftDist),
         _rightQ(rightQ), _rightS(rightS), _rightDist(rightDist);
 	const int nfull=_fullQ.size();
 	if (nfull!=_fullS.size()){ 
@@ -176,8 +177,8 @@ SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, 
     }
 
 	// Declaring metafeatures.
-    Rcpp::StringVector _symbol(symbol);
-    Rcpp::IntegerVector _geneid(geneid), _genefeature(genefeature), _genestr(genestr);
+    const Rcpp::StringVector _symbol(symbol);
+    const Rcpp::IntegerVector _geneid(geneid), _genefeature(genefeature), _genestr(genestr);
     const int nsym=_symbol.size();
 	if (nsym!=_geneid.size() || nsym!=_genefeature.size() || nsym!=_genestr.size()) {
 		throw std::runtime_error("gene data vectors should have the same length"); 
@@ -189,9 +190,7 @@ SEXP annotate_overlaps (SEXP N, SEXP fullQ, SEXP fullS, SEXP leftQ, SEXP leftS, 
 	int fullx=0, leftx=0, rightx=0;
     int* curx_p;
     const int* curn_p;
-    Rcpp::IntegerVector::iterator cur_qIt;
-	Rcpp::IntegerVector::iterator cur_sIt;
-	Rcpp::IntegerVector::iterator cur_dIt;
+    Rcpp::IntegerVector::const_iterator cur_qIt, cur_sIt, cur_dIt;
     Rcpp::StringVector::iterator cur_oIt;
     bool use_dist=false;
     std::deque<feature_data> allindices;

@@ -17,20 +17,20 @@ SEXP check_bimodality (SEXP all, SEXP regstart, SEXP regend, SEXP priorcount, SE
     BEGIN_RCPP
 
 	// Setting structures for the data.
-    Rcpp::List _all(all);
+    const Rcpp::List _all(all);
     const int nlibs=_all.size();
     std::vector<Rcpp::IntegerVector> left1(nlibs), right1(nlibs), left2(nlibs), right2(nlibs), strand(nlibs);
     std::vector<int> nums(nlibs), indices(nlibs);
     std::priority_queue<signpost, std::deque<signpost>, std::greater<signpost> > next;
 	
 	for (int i=0; i<nlibs; ++i) {
-        Rcpp::List current=_all[i];
+        const Rcpp::List current=_all[i];
         if (current.size()!=5) { 
 			throw std::runtime_error("fragment data must be supplied as a list of length 5"); 
         }
 		
 		for (int j=0; j<5; ++j) {
-            Rcpp::IntegerVector current_col=current[j];
+            const Rcpp::IntegerVector current_col=current[j];
 			switch (j) {
 				case 0: 
 					left1[i]=current_col;

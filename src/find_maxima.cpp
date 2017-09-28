@@ -31,8 +31,8 @@ typedef std::priority_queue<order_set::iterator, std::deque<order_set::iterator>
 SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
     BEGIN_RCPP
 
-    Rcpp::IntegerVector _chrs(chrs), _starts(starts), _ends(ends);
-    Rcpp::NumericVector _metric(metric);
+    const Rcpp::IntegerVector _chrs(chrs), _starts(starts), _ends(ends);
+    const Rcpp::NumericVector _metric(metric);
 	const int nlen=_chrs.size();
     if (nlen!=_starts.size() || nlen!=_ends.size() || nlen!=_metric.size()) {
 	     throw std::runtime_error("vectors must be of equal length"); 

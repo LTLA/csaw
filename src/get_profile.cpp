@@ -6,7 +6,7 @@
 SEXP get_profile(SEXP starts, SEXP ends, SEXP regstarts, SEXP range, SEXP average, SEXP normalize) {
     BEGIN_RCPP
 
-    Rcpp::IntegerVector _starts(starts), _ends(ends), _regstarts(regstarts);
+    const Rcpp::IntegerVector _starts(starts), _ends(ends), _regstarts(regstarts);
 	const int nfrags=_starts.size();
     if (nfrags!=_ends.size()) {
         throw std::runtime_error("fragment start/end vectors should have same length"); 

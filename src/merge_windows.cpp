@@ -12,15 +12,15 @@ int split_cluster(const Rcpp::IntegerVector&, const Rcpp::IntegerVector&, Rcpp::
 SEXP merge_windows(SEXP chrs, SEXP start, SEXP end, SEXP sign, SEXP tolerance, SEXP max_size) {
     BEGIN_RCPP
 
-    Rcpp::IntegerVector _chrs(chrs), _start(start), _end(end);
-    Rcpp::LogicalVector _sign(sign);
+    const Rcpp::IntegerVector _chrs(chrs), _start(start), _end(end);
+    const Rcpp::LogicalVector _sign(sign);
 	const int n = _chrs.size();
 	if (n!=_start.size() || n!=_end.size() || n!=_sign.size()) { 
         throw std::runtime_error("lengths of vectors are not equal"); 
     }
 
     const int tol=check_integer_scalar(tolerance, "tolerance");
-    Rcpp::IntegerVector _max_size(max_size);
+    const Rcpp::IntegerVector _max_size(max_size);
 	if (_max_size.size() > 1) { 
         throw std::runtime_error("maximum size should be an integer scalar or NULL"); 
     }

@@ -8,7 +8,7 @@ SEXP get_rle_counts(SEXP start, SEXP end, SEXP nr, SEXP space, SEXP first) {
     const int spacing=check_integer_scalar(space, "spacing");
     const int usefirst=check_logical_scalar(first, "first point specification"); // yes, "int" type with "logical" check is deliberate!
 	
-    Rcpp::IntegerVector _start(start), _end(end);
+    const Rcpp::IntegerVector _start(start), _end(end);
     const int n=_start.size();
     if (n!=_end.size()) { 
         throw std::runtime_error("start/end vectors must have equal length"); 

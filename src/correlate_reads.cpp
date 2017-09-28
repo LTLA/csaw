@@ -147,7 +147,7 @@ SEXP correlate_reads (SEXP pos1, SEXP num1, SEXP pos2, SEXP num2, SEXP max_dist,
     BEGIN_RCPP
 
     // Prepping up the R input data.
-    Rcpp::IntegerVector _pos1(pos1), _num1(num1), _pos2(pos2), _num2(num2);
+    const Rcpp::IntegerVector _pos1(pos1), _num1(num1), _pos2(pos2), _num2(num2);
     const int fLen=_pos1.size(), rLen=_pos2.size();
     if (fLen!=_num1.size() || rLen!=_num2.size()) { 
        	throw std::runtime_error("lengths of position vectors do not correspond to frequency vectors"); 

@@ -5,16 +5,16 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
     BEGIN_RCPP
 
 	// Checking indices.
-    Rcpp::IntegerVector _fcdex(fcdex);
+    const Rcpp::IntegerVector _fcdex(fcdex);
 	const int fcn=_fcdex.size();
 	const int pdex=check_integer_scalar(pvaldex, "p-value index");
 
 	// Setting up the p-value column.
-    Rcpp::List _tab(tab);
+    const Rcpp::List _tab(tab);
     if (pdex < 0 || pdex >= _tab.size()) { 
         throw std::runtime_error("p-value index out of range"); 
     }
-    Rcpp::NumericVector pval(_tab[pdex]);
+    const Rcpp::NumericVector pval(_tab[pdex]);
 	const int n=pval.size();
 
 	// Setting up the log-FC columns.
@@ -33,9 +33,9 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 
 	// Setting up the remaining inputs. 
 	const double fcthresh=check_numeric_scalar(fcthreshold, "log fold-change threshold");
-    Rcpp::IntegerVector _by(by);
+    const Rcpp::IntegerVector _by(by);
     int total=checkByVector(_by.begin(), _by.end());
-    Rcpp::NumericVector _weight(weight);
+    const Rcpp::NumericVector _weight(weight);
 	if (n!=_by.size() || n!=_weight.size()) { 
         throw std::runtime_error("vector lengths are not equal"); 
     }
