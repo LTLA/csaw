@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.11.2}{\itemize{
+\section{Version 1.11.4}{\itemize{
 \item Removed support for paramList objects. 
 
 \item Added option for normOffsets() to return SummarizedExperiment objects containing normalization data.
@@ -10,6 +10,8 @@
 \item Deprecated normalize() to avoid S4 method clashes. 
 
 \item Moved scaling prior to control-based filtering into a new function, scaleControlFilter(), for greater modularity.
+
+\item Updated user's guide.
 }}
 
 \section{Version 1.10.0}{\itemize{
