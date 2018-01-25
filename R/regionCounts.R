@@ -9,10 +9,6 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 # last modified 8 August 2016
 {
 	nbam <- length(bam.files)
-    if (is.list(param)) { 
-        .Deprecated(msg="supplying a list of readParam objects is deprecated, using first element only")
-        param <- param[[1]]
-    }
 	extracted.chrs <- .activeChrs(bam.files, param$restrict)
 	ext.data <- .collateExt(nbam, ext) 
 

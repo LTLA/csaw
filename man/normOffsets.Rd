@@ -14,7 +14,7 @@
 \S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
     weighted=FALSE, ...)
 
-\S4method{normOffsets}{SummarizedExperiment}(object, assay=1, type="scaling", ..., se.out=NULL)
+\S4method{normOffsets}{SummarizedExperiment}(object, assay=1, type="scaling", ..., se.out=TRUE)
 
 \S4method{normalize}{SummarizedExperiment}(object, ...)
 }
@@ -51,12 +51,9 @@ The fitted value for each genomic window is used as an offset in a generalized l
 The use of the average count provides more stability than the average log-count when low counts are present for differentially bound regions.
 
 If a SummarizedExperiment object is supplied, the values to be used for normalization will be extracted according to the specified \code{assay} field.
-Furthermore, \code{se.out=TRUE} means that the SummarizedExperiment method will return a modified version of \code{object} containing normalization information.
+If \code{se.out=TRUE}, the SummarizedExperiment method will return a modified version of \code{object} containing normalization information.
 Normalization factors are stored in the \code{"norm.factors"} field in the \code{mcols}, while the offset matrix is stored in the \code{"offset"} field in the \code{assays}.
-\code{se.out=NULL} will soon be deprecated and defaults to \code{FALSE}.
-
-\code{normalize,SummarizedExperiment-method} has the same behaviour as \code{normOffsets} with \code{se.out=TRUE}.
-However, this will be deprecated to avoid clashes with other \code{normalize} methods for SummarizedExperiment objects.
+Otherwise, if \code{se.out=FALSE}, a vector or matrix of normalization factors/offsets is directly returned.
 }
 
 \section{Additional details for SummarizedExperiment inputs}{

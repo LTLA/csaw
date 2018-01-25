@@ -11,10 +11,6 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 {
 	average <- as.logical(average)
 	nbam <- length(bam.files)
-    if (is.list(param)) { 
-        .Deprecated(msg="supplying a list of readParam objects is deprecated, using first element only")
-        param <- param[[1]]
-    }
 
 	# A bit of work for strand-specificity.
 	strand <- match.arg(strand)

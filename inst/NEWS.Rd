@@ -2,7 +2,13 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.11.4}{\itemize{
+\section{Version 1.13.1}{\itemize{
+\item Fully removed support for paramList objects. 
+
+\item Removed support for normalize(), modified default option for se.out= in normOffsert().
+}}
+
+\section{Version 1.12.0}{\itemize{
 \item Removed support for paramList objects. 
 
 \item Added option for normOffsets() to return SummarizedExperiment objects containing normalization data.

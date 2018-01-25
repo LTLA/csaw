@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2016-10-17 r71531) -- "Unsuffered Consequences"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R Under development (unstable) (2017-10-27 r73632) -- "Unsuffered Consequences"
+Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -268,11 +268,32 @@ In .local(object, ...) :
 > normOffsets(assay(data), lib.size=data$totals, method="RLE")
 [1] 1.0037890 0.9962253
 > normOffsets(data)
-[1] 1.001197 0.998804
+class: RangedSummarizedExperiment 
+dim: 71 2 
+metadata(6): spacing width ... param final.ext
+assays(1): counts
+rownames: NULL
+rowData names(0):
+colnames: NULL
+colData names(5): bam.files totals ext rlen norm.factors
 > normOffsets(data, logratioTrim=0.1)
-[1] 1.0026764 0.9973307
+class: RangedSummarizedExperiment 
+dim: 71 2 
+metadata(6): spacing width ... param final.ext
+assays(1): counts
+rownames: NULL
+rowData names(0):
+colnames: NULL
+colData names(5): bam.files totals ext rlen norm.factors
 > normOffsets(data, method="upperquartile")
-[1] 0.9834651 1.0168129
+class: RangedSummarizedExperiment 
+dim: 71 2 
+metadata(6): spacing width ... param final.ext
+assays(1): counts
+rownames: NULL
+rowData names(0):
+colnames: NULL
+colData names(5): bam.files totals ext rlen norm.factors
 > 
 > head(normOffsets(assay(data), lib.size=data$totals, type="loess"))
            [,1]      [,2]
@@ -291,21 +312,23 @@ In .local(object, ...) :
 [5,] -0.3858107 0.3858107
 [6,] -0.3915074 0.3915074
 > head(normOffsets(data, type="loess"))
-           [,1]      [,2]
-[1,] -0.4047876 0.4047876
-[2,] -0.4328410 0.4328410
-[3,] -0.3864553 0.3864553
-[4,] -0.4101296 0.4101296
-[5,] -0.3788945 0.3788945
-[6,] -0.3514597 0.3514597
+class: RangedSummarizedExperiment 
+dim: 6 2 
+metadata(6): spacing width ... param final.ext
+assays(2): counts offset
+rownames: NULL
+rowData names(0):
+colnames: NULL
+colData names(4): bam.files totals ext rlen
 > head(normOffsets(data, type="loess", span=0.5))
-           [,1]      [,2]
-[1,] -0.4120470 0.4120470
-[2,] -0.4350054 0.4350054
-[3,] -0.3740611 0.3740611
-[4,] -0.4122536 0.4122536
-[5,] -0.3722926 0.3722926
-[6,] -0.3835921 0.3835921
+class: RangedSummarizedExperiment 
+dim: 6 2 
+metadata(6): spacing width ... param final.ext
+assays(2): counts offset
+rownames: NULL
+rowData names(0):
+colnames: NULL
+colData names(4): bam.files totals ext rlen
 > 
 > # Assuming someone went around and pulled out some p-values for everybody.
 > set.seed(128145-19238)
@@ -532,4 +555,4 @@ GRanges object with 4 ranges and 0 metadata columns:
 > 
 > proc.time()
    user  system elapsed 
- 14.248   0.228  14.563 
+ 14.644   0.204  14.849 

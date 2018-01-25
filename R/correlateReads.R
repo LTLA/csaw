@@ -10,10 +10,6 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 # last modified 5 August 2016
 {
 	nbam <- length(bam.files)
-    if (is.list(param)) { 
-        .Deprecated(msg="supplying a list of readParam objects is deprecated, using first element only")
-        param <- param[[1]]
-    }
 	extracted.chrs <- .activeChrs(bam.files, param$restrict)
 
 	max.dist <- as.integer(max.dist)

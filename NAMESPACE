@@ -26,7 +26,6 @@ import(GenomicRanges, SummarizedExperiment, Rsamtools,
 importFrom("GenomicFeatures", exonsBy)
 importFrom("AnnotationDbi", select)
 importFrom("limma", loessFit)
-importFrom("BiocGenerics", normalize)
 importFrom("stats", p.adjust, weighted.mean)
 importFrom("Rcpp", sourceCpp)
 
@@ -36,6 +35,6 @@ exportClasses(
 )
 
 exportMethods(
-	show, "$", reform, normOffsets, asDGEList, normalize
+	show, "$", reform, normOffsets, asDGEList
 )
 

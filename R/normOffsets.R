@@ -40,18 +40,13 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, assay=1, type="scaling", ..., se.out=NULL) {
+setMethod("normOffsets", "SummarizedExperiment", function(object, assay=1, type="scaling", ..., se.out=TRUE) {
     if (is.null(object$totals)) { 
         stop("missing 'totals' from SummarizedExperiment")
     } 
     lib.sizes <- object$totals 
 	
     out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
-    
-    if (is.null(se.out)) {
-        .Deprecated(old="se.out=NULL", new="se.out=TRUE")
-        se.out <- FALSE 
-    }
     
     if (!is.logical(se.out)) { 
         if (type!="scaling") {
@@ -74,9 +69,4 @@ setMethod("normOffsets", "SummarizedExperiment", function(object, assay=1, type=
         }
         return(object)
     }
-})
-
-setMethod("normalize", "SummarizedExperiment", function(object, ...) {
-    .Deprecated(old="normalize", new="normOffsets")
-    return(normOffsets(object, ..., se.out=TRUE))
 })
