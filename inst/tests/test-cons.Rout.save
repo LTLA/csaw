@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2016-10-17 r71531) -- "Unsuffered Consequences"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R Under development (unstable) (2017-10-27 r73632) -- "Unsuffered Consequences"
+Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -77,121 +77,121 @@ Type 'q()' to quit R.
 > 
 > compcons(c(100, 50))
 GRanges object with 43 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA   [  49,  610]      *
-   [2]     chrA   [ 741, 3259]      *
-   [3]     chrA   [3370, 4314]      *
-   [4]     chrA   [4440, 6636]      *
-   [5]     chrB   [ 460,  559]      *
-   ...      ...            ...    ...
-  [39]     chrB [16144, 16334]      *
-  [40]     chrB [16540, 16589]      *
-  [41]     chrB [16730, 17078]      *
-  [42]     chrB [17256, 17355]      *
-  [43]     chrB [17635, 17734]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA      49-610      *
+   [2]     chrA    741-3259      *
+   [3]     chrA   3370-4314      *
+   [4]     chrA   4440-6636      *
+   [5]     chrB     460-559      *
+   ...      ...         ...    ...
+  [39]     chrB 16144-16334      *
+  [40]     chrB 16540-16589      *
+  [41]     chrB 16730-17078      *
+  [42]     chrB 17256-17355      *
+  [43]     chrB 17635-17734      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > compcons(c(100, 50), merge.args=list(tol=100, max.width=1000))
 GRanges object with 45 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA   [  29,  950]      *
-   [2]     chrA   [ 903, 1809]      *
-   [3]     chrA   [1792, 2740]      *
-   [4]     chrA   [2825, 3607]      *
-   [5]     chrA   [3628, 4450]      *
-   ...      ...            ...    ...
-  [41]     chrB [13583, 13753]      *
-  [42]     chrB [13889, 14081]      *
-  [43]     chrB [14190, 14239]      *
-  [44]     chrB [14564, 14906]      *
-  [45]     chrB [15052, 15101]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA      29-950      *
+   [2]     chrA    903-1809      *
+   [3]     chrA   1792-2740      *
+   [4]     chrA   2825-3607      *
+   [5]     chrA   3628-4450      *
+   ...      ...         ...    ...
+  [41]     chrB 13583-13753      *
+  [42]     chrB 13889-14081      *
+  [43]     chrB 14190-14239      *
+  [44]     chrB 14564-14906      *
+  [45]     chrB 15052-15101      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > compcons(c(100, 50), merge.args=list(tol=1))
 GRanges object with 106 ranges and 0 metadata columns:
-        seqnames         ranges strand
-           <Rle>      <IRanges>  <Rle>
-    [1]     chrA     [  6, 105]      *
-    [2]     chrA     [124, 260]      *
-    [3]     chrA     [358, 462]      *
-    [4]     chrA     [490, 589]      *
-    [5]     chrA     [625, 955]      *
-    ...      ...            ...    ...
-  [102]     chrB [17469, 17568]      *
-  [103]     chrB [17842, 17891]      *
-  [104]     chrB [17950, 18049]      *
-  [105]     chrB [18442, 18545]      *
-  [106]     chrB [18704, 18753]      *
+        seqnames      ranges strand
+           <Rle>   <IRanges>  <Rle>
+    [1]     chrA       6-105      *
+    [2]     chrA     124-260      *
+    [3]     chrA     358-462      *
+    [4]     chrA     490-589      *
+    [5]     chrA     625-955      *
+    ...      ...         ...    ...
+  [102]     chrB 17469-17568      *
+  [103]     chrB 17842-17891      *
+  [104]     chrB 17950-18049      *
+  [105]     chrB 18442-18545      *
+  [106]     chrB 18704-18753      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > compcons(c(100, 50), combine.args=list(pval.col="PValue", fc.col="logFC"))
 GRanges object with 53 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA   [  30, 1000]      *
-   [2]     chrA   [1129, 1521]      *
-   [3]     chrA   [1627, 2395]      *
-   [4]     chrA   [2511, 5522]      *
-   [5]     chrA   [5635, 5802]      *
-   ...      ...            ...    ...
-  [49]     chrB [18506, 18605]      *
-  [50]     chrB [18989, 19194]      *
-  [51]     chrB [19373, 19472]      *
-  [52]     chrB [19874, 19973]      *
-  [53]     chrB [20217, 20316]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA     30-1000      *
+   [2]     chrA   1129-1521      *
+   [3]     chrA   1627-2395      *
+   [4]     chrA   2511-5522      *
+   [5]     chrA   5635-5802      *
+   ...      ...         ...    ...
+  [49]     chrB 18506-18605      *
+  [50]     chrB 18989-19194      *
+  [51]     chrB 19373-19472      *
+  [52]     chrB 19874-19973      *
+  [53]     chrB 20217-20316      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > 
 > compcons(c(100, 500))
 GRanges object with 10 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA [  184,  7118]      *
-   [2]     chrB [   56,   155]      *
-   [3]     chrB [  565,  1791]      *
-   [4]     chrB [ 1929,  3021]      *
-   [5]     chrB [ 3126,  4018]      *
-   [6]     chrB [ 4214,  9421]      *
-   [7]     chrB [ 9599, 15822]      *
-   [8]     chrB [15926, 18058]      *
-   [9]     chrB [18183, 19181]      *
-  [10]     chrB [19349, 19848]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA    184-7118      *
+   [2]     chrB      56-155      *
+   [3]     chrB    565-1791      *
+   [4]     chrB   1929-3021      *
+   [5]     chrB   3126-4018      *
+   [6]     chrB   4214-9421      *
+   [7]     chrB  9599-15822      *
+   [8]     chrB 15926-18058      *
+   [9]     chrB 18183-19181      *
+  [10]     chrB 19349-19848      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > compcons(c(100, 500), merge.args=list(tol=100, max.width=1000))
 GRanges object with 28 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA   [ 194, 1307]      *
-   [2]     chrA   [ 949, 2247]      *
-   [3]     chrA   [1880, 3081]      *
-   [4]     chrA   [2760, 4186]      *
-   [5]     chrA   [3885, 5117]      *
-   ...      ...            ...    ...
-  [24]     chrB [13689, 14848]      *
-  [25]     chrB [14809, 15751]      *
-  [26]     chrB [15791, 16416]      *
-  [27]     chrB [16484, 17663]      *
-  [28]     chrB [17564, 18498]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA    194-1307      *
+   [2]     chrA    949-2247      *
+   [3]     chrA   1880-3081      *
+   [4]     chrA   2760-4186      *
+   [5]     chrA   3885-5117      *
+   ...      ...         ...    ...
+  [24]     chrB 13689-14848      *
+  [25]     chrB 14809-15751      *
+  [26]     chrB 15791-16416      *
+  [27]     chrB 16484-17663      *
+  [28]     chrB 17564-18498      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > compcons(c(100, 500), merge.args=list(tol=1))
 GRanges object with 15 ranges and 0 metadata columns:
-       seqnames         ranges strand
-          <Rle>      <IRanges>  <Rle>
-   [1]     chrA   [ 149, 6553]      *
-   [2]     chrB   [ 214, 2856]      *
-   [3]     chrB   [2892, 3915]      *
-   [4]     chrB   [3925, 5529]      *
-   [5]     chrB   [5538, 6390]      *
-   ...      ...            ...    ...
-  [11]     chrB [13528, 15139]      *
-  [12]     chrB [15314, 15813]      *
-  [13]     chrB [15864, 17126]      *
-  [14]     chrB [17473, 17572]      *
-  [15]     chrB [17829, 17928]      *
+       seqnames      ranges strand
+          <Rle>   <IRanges>  <Rle>
+   [1]     chrA    149-6553      *
+   [2]     chrB    214-2856      *
+   [3]     chrB   2892-3915      *
+   [4]     chrB   3925-5529      *
+   [5]     chrB   5538-6390      *
+   ...      ...         ...    ...
+  [11]     chrB 13528-15139      *
+  [12]     chrB 15314-15813      *
+  [13]     chrB 15864-17126      *
+  [14]     chrB 17473-17572      *
+  [15]     chrB 17829-17928      *
   -------
   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 > try(compcons(c(100, 50), combine.args=list(weight=1)))
@@ -332,4 +332,4 @@ Error in (function (ids, tab, weight = NULL, pval.col = NULL, fc.col = NULL)  :
 > 
 > proc.time()
    user  system elapsed 
-  8.768   0.096   8.877 
+ 10.784   0.112  10.895 

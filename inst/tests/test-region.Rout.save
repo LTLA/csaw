@@ -1,6 +1,6 @@
 
-R version 3.3.0 Patched (2016-05-03 r70580) -- "Supposedly Educational"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R Under development (unstable) (2017-10-27 r73632) -- "Unsuffered Consequences"
+Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -451,4 +451,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
- 35.639   0.283  35.966 
+ 42.548   0.276  42.828 

@@ -57,19 +57,19 @@ $diagnostics
 [6,]   59  135
 > rowRanges(data)
 GRanges object with 71 ranges and 0 metadata columns:
-       seqnames       ranges strand
-          <Rle>    <IRanges>  <Rle>
-   [1]     chrA   [  1,  50]      *
-   [2]     chrA   [ 51, 100]      *
-   [3]     chrA   [101, 150]      *
-   [4]     chrA   [151, 200]      *
-   [5]     chrA   [201, 250]      *
-   ...      ...          ...    ...
-  [67]     chrC [1101, 1150]      *
-  [68]     chrC [1151, 1200]      *
-  [69]     chrC [1201, 1250]      *
-  [70]     chrC [1251, 1300]      *
-  [71]     chrC [1301, 1345]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-50      *
+   [2]     chrA    51-100      *
+   [3]     chrA   101-150      *
+   [4]     chrA   151-200      *
+   [5]     chrA   201-250      *
+   ...      ...       ...    ...
+  [67]     chrC 1101-1150      *
+  [68]     chrC 1151-1200      *
+  [69]     chrC 1201-1250      *
+  [70]     chrC 1251-1300      *
+  [71]     chrC 1301-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 > data$totals
@@ -86,19 +86,19 @@ GRanges object with 71 ranges and 0 metadata columns:
 [6,]  127  311
 > rowRanges(data)
 GRanges object with 19 ranges and 0 metadata columns:
-       seqnames       ranges strand
-          <Rle>    <IRanges>  <Rle>
-   [1]     chrA  [  1,  500]      *
-   [2]     chrA  [201,  700]      *
-   [3]     chrA  [401,  900]      *
-   [4]     chrA  [601, 1100]      *
-   [5]     chrA  [801, 1298]      *
-   ...      ...          ...    ...
-  [15]     chrC [ 401,  900]      *
-  [16]     chrC [ 601, 1100]      *
-  [17]     chrC [ 801, 1300]      *
-  [18]     chrC [1001, 1345]      *
-  [19]     chrC [1201, 1345]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA     1-500      *
+   [2]     chrA   201-700      *
+   [3]     chrA   401-900      *
+   [4]     chrA  601-1100      *
+   [5]     chrA  801-1298      *
+   ...      ...       ...    ...
+  [15]     chrC   401-900      *
+  [16]     chrC  601-1100      *
+  [17]     chrC  801-1300      *
+  [18]     chrC 1001-1345      *
+  [19]     chrC 1201-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 > data$totals
@@ -131,14 +131,14 @@ GRanges object with 19 ranges and 0 metadata columns:
 [1] 8
 > rowRanges(out)
 GRanges object with 6 ranges and 0 metadata columns:
-      seqnames     ranges strand
-         <Rle>  <IRanges>  <Rle>
-  [1]     chrA [  1, 100]      *
-  [2]     chrA [ 51, 150]      *
-  [3]     chrA [101, 200]      *
-  [4]     chrA [151, 200]      *
-  [5]     chrB [  1, 100]      *
-  [6]     chrB [ 51, 100]      *
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chrA     1-100      *
+  [2]     chrA    51-150      *
+  [3]     chrA   101-200      *
+  [4]     chrA   151-200      *
+  [5]     chrB     1-100      *
+  [6]     chrB    51-100      *
   -------
   seqinfo: 2 sequences from an unspecified genome
 > out <- windowCounts(pe.file, param=readParam(pe="both", max.frag=100), width=100, filter=1L)
@@ -153,13 +153,13 @@ GRanges object with 6 ranges and 0 metadata columns:
 [1] 7
 > rowRanges(out)
 GRanges object with 5 ranges and 0 metadata columns:
-      seqnames     ranges strand
-         <Rle>  <IRanges>  <Rle>
-  [1]     chrA [  1, 100]      *
-  [2]     chrA [ 51, 150]      *
-  [3]     chrA [101, 200]      *
-  [4]     chrB [  1, 100]      *
-  [5]     chrB [ 51, 100]      *
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chrA     1-100      *
+  [2]     chrA    51-150      *
+  [3]     chrA   101-200      *
+  [4]     chrB     1-100      *
+  [5]     chrB    51-100      *
   -------
   seqinfo: 2 sequences from an unspecified genome
 > out <- windowCounts(pe.file, param=readParam(pe="first"), width=100, filter=1L)
@@ -175,14 +175,14 @@ GRanges object with 5 ranges and 0 metadata columns:
 [1] 10
 > rowRanges(out)
 GRanges object with 6 ranges and 0 metadata columns:
-      seqnames     ranges strand
-         <Rle>  <IRanges>  <Rle>
-  [1]     chrA [  1, 100]      *
-  [2]     chrA [ 51, 150]      *
-  [3]     chrA [101, 200]      *
-  [4]     chrA [151, 200]      *
-  [5]     chrB [  1, 100]      *
-  [6]     chrB [ 51, 100]      *
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chrA     1-100      *
+  [2]     chrA    51-150      *
+  [3]     chrA   101-200      *
+  [4]     chrA   151-200      *
+  [5]     chrB     1-100      *
+  [6]     chrB    51-100      *
   -------
   seqinfo: 2 sequences from an unspecified genome
 > 
@@ -344,19 +344,19 @@ $id
 
 $region
 GRanges object with 71 ranges and 0 metadata columns:
-       seqnames       ranges strand
-          <Rle>    <IRanges>  <Rle>
-   [1]     chrA   [  1,  50]      *
-   [2]     chrA   [ 51, 100]      *
-   [3]     chrA   [101, 150]      *
-   [4]     chrA   [151, 200]      *
-   [5]     chrA   [201, 250]      *
-   ...      ...          ...    ...
-  [67]     chrC [1101, 1150]      *
-  [68]     chrC [1151, 1200]      *
-  [69]     chrC [1201, 1250]      *
-  [70]     chrC [1251, 1300]      *
-  [71]     chrC [1301, 1345]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-50      *
+   [2]     chrA    51-100      *
+   [3]     chrA   101-150      *
+   [4]     chrA   151-200      *
+   [5]     chrA   201-250      *
+   ...      ...       ...    ...
+  [67]     chrC 1101-1150      *
+  [68]     chrC 1151-1200      *
+  [69]     chrC 1201-1250      *
+  [70]     chrC 1251-1300      *
+  [71]     chrC 1301-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 
@@ -369,9 +369,9 @@ $region
 GRanges object with 3 ranges and 0 metadata columns:
       seqnames    ranges strand
          <Rle> <IRanges>  <Rle>
-  [1]     chrA [1, 1298]      *
-  [2]     chrB [1,  870]      *
-  [3]     chrC [1, 1345]      *
+  [1]     chrA    1-1298      *
+  [2]     chrB     1-870      *
+  [3]     chrC    1-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 
@@ -382,16 +382,16 @@ $id
 
 $region
 GRanges object with 8 ranges and 0 metadata columns:
-      seqnames      ranges strand
-         <Rle>   <IRanges>  <Rle>
-  [1]     chrA [  1,  450]      *
-  [2]     chrA [451,  850]      *
-  [3]     chrA [851, 1298]      *
-  [4]     chrB [  1,  450]      *
-  [5]     chrB [451,  870]      *
-  [6]     chrC [  1,  450]      *
-  [7]     chrC [451,  900]      *
-  [8]     chrC [901, 1345]      *
+      seqnames    ranges strand
+         <Rle> <IRanges>  <Rle>
+  [1]     chrA     1-450      *
+  [2]     chrA   451-850      *
+  [3]     chrA  851-1298      *
+  [4]     chrB     1-450      *
+  [5]     chrB   451-870      *
+  [6]     chrC     1-450      *
+  [7]     chrC   451-900      *
+  [8]     chrC  901-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 
@@ -404,19 +404,19 @@ $id
 
 $region
 GRanges object with 43 ranges and 0 metadata columns:
-       seqnames       ranges strand
-          <Rle>    <IRanges>  <Rle>
-   [1]     chrA   [  1,  50]      *
-   [2]     chrA   [ 51, 150]      *
-   [3]     chrA   [151, 200]      *
-   [4]     chrA   [201, 350]      *
-   [5]     chrA   [351, 450]      *
-   ...      ...          ...    ...
-  [39]     chrC [1051, 1100]      *
-  [40]     chrC [1101, 1150]      *
-  [41]     chrC [1151, 1250]      *
-  [42]     chrC [1251, 1300]      *
-  [43]     chrC [1301, 1345]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-50      *
+   [2]     chrA    51-150      *
+   [3]     chrA   151-200      *
+   [4]     chrA   201-350      *
+   [5]     chrA   351-450      *
+   ...      ...       ...    ...
+  [39]     chrC 1051-1100      *
+  [40]     chrC 1101-1150      *
+  [41]     chrC 1151-1250      *
+  [42]     chrC 1251-1300      *
+  [43]     chrC 1301-1345      *
   -------
   seqinfo: 3 sequences from an unspecified genome
 
@@ -483,76 +483,76 @@ GRanges object with 43 ranges and 0 metadata columns:
 > # Pulling out some reads. 
 > extractReads(both.files[1], GRanges("chrA", IRanges(100, 500)))
 GRanges object with 143 ranges and 0 metadata columns:
-        seqnames     ranges strand
-           <Rle>  <IRanges>  <Rle>
-    [1]     chrA [ 94, 103]      +
-    [2]     chrA [106, 115]      +
-    [3]     chrA [120, 129]      +
-    [4]     chrA [120, 129]      +
-    [5]     chrA [129, 138]      +
-    ...      ...        ...    ...
-  [139]     chrA [467, 476]      -
-  [140]     chrA [482, 491]      -
-  [141]     chrA [490, 499]      -
-  [142]     chrA [491, 500]      -
-  [143]     chrA [499, 508]      -
+        seqnames    ranges strand
+           <Rle> <IRanges>  <Rle>
+    [1]     chrA    94-103      +
+    [2]     chrA   106-115      +
+    [3]     chrA   120-129      +
+    [4]     chrA   120-129      +
+    [5]     chrA   129-138      +
+    ...      ...       ...    ...
+  [139]     chrA   467-476      -
+  [140]     chrA   482-491      -
+  [141]     chrA   490-499      -
+  [142]     chrA   491-500      -
+  [143]     chrA   499-508      -
   -------
   seqinfo: 1 sequence from an unspecified genome
 > extractReads(both.files[1], GRanges("chrA", IRanges(50, 100)))
 GRanges object with 27 ranges and 0 metadata columns:
        seqnames    ranges strand
           <Rle> <IRanges>  <Rle>
-   [1]     chrA  [43, 52]      +
-   [2]     chrA  [51, 60]      +
-   [3]     chrA  [57, 66]      +
-   [4]     chrA  [62, 71]      +
-   [5]     chrA  [63, 72]      +
+   [1]     chrA     43-52      +
+   [2]     chrA     51-60      +
+   [3]     chrA     57-66      +
+   [4]     chrA     62-71      +
+   [5]     chrA     63-72      +
    ...      ...       ...    ...
-  [23]     chrA [79,  88]      -
-  [24]     chrA [83,  92]      -
-  [25]     chrA [88,  97]      -
-  [26]     chrA [89,  98]      -
-  [27]     chrA [93, 102]      -
+  [23]     chrA     79-88      -
+  [24]     chrA     83-92      -
+  [25]     chrA     88-97      -
+  [26]     chrA     89-98      -
+  [27]     chrA    93-102      -
   -------
   seqinfo: 1 sequence from an unspecified genome
 > extractReads(both.files[1], GRanges("chrA", IRanges(50, 100)), param=readParam(dedup=TRUE))
 GRanges object with 19 ranges and 0 metadata columns:
        seqnames    ranges strand
           <Rle> <IRanges>  <Rle>
-   [1]     chrA  [51, 60]      +
-   [2]     chrA  [57, 66]      +
-   [3]     chrA  [62, 71]      +
-   [4]     chrA  [63, 72]      +
-   [5]     chrA  [76, 85]      +
+   [1]     chrA     51-60      +
+   [2]     chrA     57-66      +
+   [3]     chrA     62-71      +
+   [4]     chrA     63-72      +
+   [5]     chrA     76-85      +
    ...      ...       ...    ...
-  [15]     chrA [79,  88]      -
-  [16]     chrA [79,  88]      -
-  [17]     chrA [88,  97]      -
-  [18]     chrA [89,  98]      -
-  [19]     chrA [93, 102]      -
+  [15]     chrA     79-88      -
+  [16]     chrA     79-88      -
+  [17]     chrA     88-97      -
+  [18]     chrA     89-98      -
+  [19]     chrA    93-102      -
   -------
   seqinfo: 1 sequence from an unspecified genome
 > extractReads(pe.file, GRanges("chrB", IRanges(50, 100)), param=readParam(pe="both"))
 GRanges object with 3 ranges and 0 metadata columns:
       seqnames    ranges strand
          <Rle> <IRanges>  <Rle>
-  [1]     chrB [50,  79]      *
-  [2]     chrB [90,  99]      *
-  [3]     chrB [99, 100]      *
+  [1]     chrB     50-79      *
+  [2]     chrB     90-99      *
+  [3]     chrB    99-100      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > extractReads(pe.file, GRanges("chrB", IRanges(50, 100)), param=readParam(pe="second"))
 GRanges object with 4 ranges and 0 metadata columns:
       seqnames    ranges strand
          <Rle> <IRanges>  <Rle>
-  [1]     chrB [75,  84]      +
-  [2]     chrB [90,  99]      +
-  [3]     chrB [70,  79]      -
-  [4]     chrB [99, 100]      -
+  [1]     chrB     75-84      +
+  [2]     chrB     90-99      +
+  [3]     chrB     70-79      -
+  [4]     chrB    99-100      -
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
 > 
 > proc.time()
    user  system elapsed 
- 14.644   0.204  14.849 
+ 16.004   0.268  16.289 
