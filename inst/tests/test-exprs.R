@@ -1,6 +1,7 @@
 # Various tests for expression-computing functions.
 # library(csaw); library(testthat); source("test-exprs.R")
 
+library(edgeR)
 set.seed(100)
 test_that("scaledAverage works as expected", {
     se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
@@ -31,6 +32,7 @@ test_that("scaledAverage works as expected", {
     expect_equal(ref, out)
 })
 
+set.seed(1001)
 test_that("scaledAverage works correctly with scaling", {
     se <- SummarizedExperiment(list(counts=matrix(rnbinom(100, mu=100, size=10), ncol=1, nrow=100)))
     se$totals <- runif(ncol(se), 1e6, 2e6)
@@ -52,7 +54,7 @@ test_that("scaledAverage works correctly with scaling", {
     # Checking proper behaviour with invalid inputs.
     stopifnot(all(is.na(scaledAverage(se, scale=-1))))
     stopifnot(all(is.infinite(scaledAverage(se, scale=0))))
-    flucscale <- rep(1, nrow(y))
+    flucscale <- rep(1, nrow(se))
     flucscale[1] <- 0
     flucscale[2] <- -1
     
@@ -61,5 +63,75 @@ test_that("scaledAverage works correctly with scaling", {
     expect_true(is.infinite(out[1]))
     expect_true(is.na(out[2]))
     expect_equal(out[-(1:2)], ref[-(1:2)])
+})
+
+set.seed(1002)
+test_that("calculateCPM works correctly with library sizes", {
+    se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
+    se$totals <- runif(ncol(se), 1e6, 2e6)
+    
+    y <- asDGEList(se)
+    ref <- cpm(y, prior.count=2, log=TRUE)
+    out <- calculateCPM(se, prior.count=2, log=TRUE)
+    dimnames(out) <- dimnames(ref) <- NULL
+    expect_equal(ref, out)
+
+    # Without log-transformation.
+    ref1 <- cpm(y, prior.count=2, log=FALSE)
+    out1 <- calculateCPM(se, prior.count=2, log=FALSE)
+    dimnames(ref1) <- dimnames(out1) <- NULL
+    expect_equal(ref1, out1)
+
+    # With normalization factors.
+    se$norm.factors <- runif(ncol(se))
+    y <- asDGEList(se)
+    ref2 <- cpm(y, prior.count=2, log=TRUE)
+    out2 <- calculateCPM(se, prior.count=2, log=TRUE)
+    dimnames(out2) <- dimnames(ref2) <- NULL
+    expect_equal(ref2, out2)
+
+    # Disobey the normalization factors.
+    out3 <- calculateCPM(se, prior.count=2, log=TRUE, use.norm.factors=FALSE)
+    dimnames(out3) <- NULL
+    expect_equal(out, out3)
+    expect_false(isTRUE(all.equal(out2, out3)))
+})
+
+set.seed(1003)
+test_that("calculateCPM works correctly with offsets", {
+    se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
+    se$totals <- runif(ncol(se), 1e6, 2e6)
+    ref <- calculateCPM(se, prior.count=2, log=FALSE, use.offset=FALSE)
+    expect_equivalent(ref, cpm(asDGEList(se)))
+
+    # Responds to the library sizes. 
+    centered.off <- log(se$totals)
+    centered.off <- centered.off - mean(centered.off)
+    assay(se, "offset") <- matrix(centered.off, nrow=nrow(se), ncol=ncol(se), byrow=TRUE)
+    out <- calculateCPM(se, prior.count=2, log=FALSE, use.offset=TRUE)
+    ref <- calculateCPM(se, prior.count=2, log=FALSE, use.offset=FALSE)
+    expect_equal(out, ref)
+
+    # Responds correctly with log-transformation. This involves some
+    # hacks to recover the ACTUAL mean library size after adding the prior count.
+    ref <- calculateCPM(se, prior.count=2, log=TRUE, use.offset=FALSE)
+
+    se0 <- se
+    se0$totals <- se0$totals * 2 * 2 / exp(mean(log(se0$totals))) + se0$totals
+    out <- calculateCPM(se0, prior.count=2, log=TRUE, use.offset=TRUE)
+    expect_equal(out, ref)
+
+    # Responds to _different_ offsets per gene.
+    se1 <- se
+    assay(se1, "offset") <- matrix(runif(ncol(se)), nrow=nrow(se), ncol=ncol(se), byrow=TRUE)
+    se2 <- se
+    assay(se2, "offset") <- matrix(rnorm(ncol(se)), nrow=nrow(se), ncol=ncol(se), byrow=TRUE)
+    out <- calculateCPM(rbind(se1, se2))
+    ref <- rbind(calculateCPM(se1), calculateCPM(se2))
+    expect_equivalent(out, ref)
+
+    # Behaves correctly with no genes.
+    expect_equivalent(calculateCPM(se[0,]), matrix(0,0,ncol(se)))
+    expect_equivalent(calculateCPM(se[,0]), matrix(0,nrow(se),0))
 })
 

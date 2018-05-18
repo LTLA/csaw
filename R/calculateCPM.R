@@ -1,7 +1,11 @@
-calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE, prior.count=1, log=TRUE, assay.id="counts")
+calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE, 
+        log=TRUE, prior.count=1, assay.id="counts")
 # This is a convenience wrapper to compute CPMs, avoiding the
 # need to convert to a DGEList and then call edgeR functions.
 # It also provides a more convenient way to compute offset-adjusted functions.
+#
+# written by Aaron Lun
+# created 18 May 2018
 {
     mat <- assay(object, i=assay.id)
     lib.size <- object$totals
