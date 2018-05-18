@@ -15,62 +15,70 @@ comp <- function(..., tol=1e-8) {
 # Checking that scaledAverage mimics aveLogCPM with prior.count=1.
 
 set.seed(100)
-y <- DGEList(matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100))
+se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
+se$totals <- colSums(assay(se))
+
+y <- asDGEList(se)
+stopifnot(identical(y$samples$lib.size, se$totals))
 ref <- aveLogCPM(y)
-out <- scaledAverage(y, scale=1)
+out <- scaledAverage(se, scale=1)
 stopifnot(length(ref)==length(out))
 stopifnot(all(abs(ref-out) < 1e-10))
 head(out)
 
-y$samples$norm.factors <- runif(10, 0.5, 1.5)
+se$norm.factors <- runif(10, 0.5, 1.5)
+y <- asDGEList(se)
+stopifnot(identical(y$samples$norm.factors, se$norm.factors))
 ref <- aveLogCPM(y)
-out <- scaledAverage(y, scale=1)
+out <- scaledAverage(se, scale=1)
 stopifnot(length(ref)==length(out))
 stopifnot(all(abs(ref-out) < 1e-10))
 head(out)
 
-y$offset <- matrix(rnorm(1000), ncol=10, nrow=100) # Neither function should care about the offset.
+assay(se, "offset") <- matrix(rnorm(1000), ncol=10, nrow=100) # Neither function should care about the offset.
+y <- asDGEList(se)
+stopifnot(!is.null(y$offset))    
 ref <- aveLogCPM(y)
-out <- scaledAverage(y, scale=1)
+out <- scaledAverage(se, scale=1)
 stopifnot(length(ref)==length(out))
 stopifnot(all(abs(ref-out) < 1e-10))
 head(out)
 
-y$common.dispersion <- 0.1
-ref <- aveLogCPM(y)
-out <- scaledAverage(y, scale=1)
+ref <- aveLogCPM(y, dispersion=0.1)
+out <- scaledAverage(se, scale=1, dispersion=0.1)
 stopifnot(length(ref)==length(out))
 stopifnot(all(abs(ref-out) < 1e-10))
 head(out)
 
 # Checking proper behaviour of the scaling.
 
-y <- DGEList(matrix(rnbinom(100, mu=100, size=10), ncol=1, nrow=100))
-ref <- aveLogCPM(y)
-scalar <- runif(nrow(y), 1, 5)
+se <- SummarizedExperiment(list(counts=matrix(rnbinom(100, mu=100, size=10), ncol=1, nrow=100)))
+se$totals <- colSums(assay(se))    
+ref <- scaledAverage(se, scale=1)
 
-y1 <- y
-y1$counts <- y$counts * scalar
-out1 <- scaledAverage(y1, scale=scalar)
-stopifnot(all(abs(ref - out1) < 1e-10))
-head(out1)
-
-y2 <- y
-y2$counts <- y$counts * 2
-out2 <- scaledAverage(y2, scale=2)
+se2 <- se
+assay(se2) <- assay(se) * 2
+out2 <- scaledAverage(se2, scale=2)
 stopifnot(all(abs(ref - out2) < 1e-10))
 head(out2)
 
+scalar <- runif(nrow(se), 1, 5)
+se1 <- se
+assay(se1) <- scalar * assay(se)
+out1 <- scaledAverage(se1, scale=scalar)
+stopifnot(all(abs(ref - out1) < 1e-10))
+head(out1)
+
 # Checking proper behaviour with invalid inputs.
 
-stopifnot(all(is.na(scaledAverage(y, scale=-1))))
-stopifnot(all(is.infinite(scaledAverage(y, scale=0))))
+stopifnot(all(is.na(scaledAverage(se, scale=-1))))
+stopifnot(all(is.infinite(scaledAverage(se, scale=0))))
 flucscale <- rep(1, nrow(y))
 flucscale[1] <- 0
 flucscale[2] <- -1
 
-out <- scaledAverage(y, scale=flucscale)
-ref <- aveLogCPM(y)
+out <- scaledAverage(se, scale=flucscale)
+ref <- aveLogCPM(asDGEList(se))
 stopifnot(is.infinite(out[1]))
 stopifnot(is.na(out[2]))
 stopifnot(all(abs(out-ref)[-c(1,2)] < 1e-10))

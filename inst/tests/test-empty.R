@@ -47,8 +47,8 @@ consolidateSizes(list(out), list(empty), region=GRanges())
 normOffsets(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
 normOffsets(out, type="loess", se.out=FALSE)
 
-scaledAverage(asDGEList(out))
-scaledAverage(asDGEList(out), scale=numeric(0))
+scaledAverage(out)
+scaledAverage(out, scale=numeric(0))
 
 metadata(out)$spacing <- 50 # Converting to a window-based object.
 chrs <- Rsamtools::scanBamHeader(bamFile)[[1]]$targets
