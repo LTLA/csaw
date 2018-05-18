@@ -23,11 +23,11 @@ setMethod("asDGEList", "SummarizedExperiment", function(object, lib.sizes, norm.
 		all.args$norm.factors <- norm.factors 
 	}
 
-    all.args$counts <- assay(object, assay.id=assay, withDimnames=FALSE) 
+    all.args$counts <- assay(object, i=assay.id, withDimnames=FALSE) 
 	y <- do.call(DGEList, all.args)
 
-    offset <- assay(object, i="offset", withDimnames=FALSE)
-    if (!is.null(offset)) {
+    if ("offset" %in% assayNames(object)) {
+        offset <- assay(object, i="offset", withDimnames=FALSE)
         y <- scaleOffset(y, offset)
     }
 	return(y)
