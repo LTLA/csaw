@@ -12,7 +12,7 @@ calculateCPM(object, use.norm.factors=TRUE, use.offsets=FALSE,
 \arguments{
 \item{object}{A SummarizedExperiment object containing a count matrix, as produced by \code{\link{windowCounts}}.}
 \item{use.norm.factors}{A logical scalar indicating whether to use normalization factors, if available.}
-\item{use.offset}{A logical scalar indicating whether to use offsets, if available.}
+\item{use.offsets}{A logical scalar indicating whether to use offsets, if available.}
 \item{log}{A logical scalar indicating whether log2-transformed CPM values should be returned.}
 \item{prior.count}{A numeric scalar specifying the prior count to add when \code{log=TRUE}.}
 \item{assay.id}{A string or integer scalar indicating which assay of \code{y} contains the counts.}
