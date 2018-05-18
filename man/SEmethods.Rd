@@ -7,14 +7,14 @@
 \description{Converting a SummarizedExperiment object to a DGEList object for analysis with \pkg{edgeR}.}
 
 \usage{
-\S4method{asDGEList}{SummarizedExperiment}(object, lib.sizes, norm.factors, assay=1, ...)
+\S4method{asDGEList}{SummarizedExperiment}(object, lib.sizes, norm.factors, assay.id="counts", ...)
 }
 
 \arguments{
   \item{object}{A SummarizedExperiment object or its derived classes, like that produced by \code{\link{windowCounts}}.}
   \item{lib.sizes}{An (optional) integer vector of library sizes.}
   \item{norm.factors}{An (optional) numeric vector of normalization factors.}
-  \item{assay}{A numeric scalar indicating which assay in \code{object} contains the count matrix.}
+  \item{assay.id}{A string or integer scalar indicating which assay in \code{object} contains the count matrix.}
   \item{...}{Other arguments to be passed to \code{\link{DGEList}}.}
 }
 

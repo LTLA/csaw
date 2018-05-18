@@ -5,14 +5,16 @@
 \description{Compute the scaled average abundance for each feature.}
 
 \usage{
-scaledAverage(y, scale=1, prior.count=NULL, dispersion=NULL)
+scaledAverage(y, scale=1, prior.count=NULL, dispersion=NULL, assay.id="counts")
 }
 
 \arguments{
-\item{y}{a \code{DGEList} object}
+\item{y}{A SummarizedExperiment object containing a count matrix.
+Previous versions accepted a \code{DGEList} object, this is now deprecated.}
 \item{scale}{a numeric scalar vector indicating the magnitude with which each abundance is to be downscaled}
 \item{prior.count}{a numeric scalar specifying the prior count to add}
 \item{dispersion}{a numeric scalar or vector specifying the dispersion for GLM fitting.}
+\item{assay.id}{A string or integer scalar indicating which assay of \code{y} contains the counts.}
 }
 
 \details{
@@ -68,21 +70,21 @@ size2 <- 500
 data2 <- windowCounts(bamFiles, width=size2, filter=1)
 
 # Adjusting by `scale`, based on median sizes.
-head(scaledAverage(asDGEList(data1)))
+head(scaledAverage(data1))
 relative <- median(getWidths(data2))/median(getWidths(data1))
-head(scaledAverage(asDGEList(data2), scale=relative))
+head(scaledAverage(data2, scale=relative))
 
 # Need to make sure the same prior is used, if non-default.
 pc <- 5
-head(scaledAverage(asDGEList(data1), prior.count=pc))
-head(scaledAverage(asDGEList(data2), scale=relative, prior.count=pc))
+head(scaledAverage(data1, prior.count=pc))
+head(scaledAverage(data2, scale=relative, prior.count=pc))
 
 # Different way to compute sizes, for 1-to-1 relations.
 data3 <- regionCounts(bamFiles, regions=resize(rowRanges(data1),   
     fix="center", width=size2))
-head(scaledAverage(asDGEList(data1)))
+head(scaledAverage(data1))
 relative.2 <- getWidths(data1)/getWidths(data2)
-head(scaledAverage(asDGEList(data3), scale=relative.2))
+head(scaledAverage(data3), scale=relative.2)
 }
 
 \keyword{filtering}

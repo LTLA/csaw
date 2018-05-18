@@ -6,8 +6,8 @@
 \description{Convenience function to compute filter statistics for windows, based on proportions or using enrichment over background.}
 
 \usage{
-filterWindows(data, background, type="global", assay.data=1,
-    assay.back=1, prior.count=2, scale.info=NULL) 
+filterWindows(data, background, type="global", assay.data="counts",
+    assay.back="counts", prior.count=2, scale.info=NULL) 
 
 scaleControlFilter(data, background)
 }
@@ -19,8 +19,8 @@ scaleControlFilter(data, background)
     For \code{scaleControlFilter}, this should contain bin-level counts for negative control samples.
 }
 \item{type}{a character string specifying the type of filtering to perform; can be any of \code{c("global", "local", "control", "proportion")}}
-\item{assay.data}{a string or integer scalar specifying the assay containing window/bin counts in \code{data}}
-\item{assay.back}{a string or integer scalar specifying the assay containing window/bin counts in \code{background}}
+\item{assay.data}{A string or integer scalar specifying the assay containing window/bin counts in \code{data}.}
+\item{assay.back}{A string or integer scalar specifying the assay containing window/bin counts in \code{background}.}
 \item{prior.count}{a numeric scalar, specifying the prior count to use in \code{\link{aveLogCPM}}}
 \item{scale.info}{A list containing the output of \code{scaleControlFilter}, i.e., a normalization factor and library sizes for ChIP and control samples.}
 }
