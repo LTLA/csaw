@@ -43,10 +43,11 @@ undersamp <- sum(mu1)/sum(mu2)
 mu2 <- mu2*undersamp
 counts <- cbind(rnbinom(n, mu=mu1, size=20), rnbinom(n, mu=mu2, size=20))
 
-actual.lib.size <- c(sum(mu1), sum(mu2))
-normFactors(counts, lib.sizes=actual.lib.size)
-normFactors(counts, logratioTrim=0.4, lib.sizes=actual.lib.size)
-normFactors(counts, sumTrim=0.3, lib.size=actual.lib.size)
+data <- SummarizedExperiment(list(counts=counts))
+data$totals <- c(sum(mu1), sum(mu2))
+normFactors(data)
+normFactors(data, logratioTrim=0.4)
+normFactors(data, sumTrim=0.3)
 sqrt(c(1/undersamp, undersamp)) # True values, looks pretty good.
 
 # Testing what happens with weighting, after adding some high-abundance DB regions. 
@@ -62,8 +63,10 @@ true.value <- 1/full.lib.size
 true.value <- true.value/exp(mean(log(true.value)))
 true.value
 
-normFactors(blah, lib.sizes=full.lib.size)
-normFactors(blah, weighted=TRUE, lib.sizes=full.lib.size) # less accurate.
+data <- SummarizedExperiment(list(counts=blah))
+data$totals <- full.lib.size
+normFactors(data)
+normFactors(data, weighted=TRUE) # less accurate.
 
 ###################################################
 
