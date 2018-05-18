@@ -35,6 +35,6 @@ exportClasses(
 )
 
 exportMethods(
-	show, "$", reform, normOffsets, asDGEList
+	show, "$", reform, normOffsets, normFactors, asDGEList
 )
 

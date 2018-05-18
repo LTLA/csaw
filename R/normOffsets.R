@@ -17,9 +17,8 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 
 	type <- match.arg(type)
 	if (type=="scaling") { 
-		y <- DGEList(object, lib.size=lib.sizes)
-		y <- calcNormFactors(y, doWeighting=weighted, ...)
-		return(y$samples$norm.factors)
+        .Deprecated('type="scaling" is deprecated.\nUse normFactors() instead.')
+		return(normFactors(object, weighted=weighted, ...))
 
 	} else if (type=="loess") { 
 		# Scaled corrections squeeze offsets towards relative log-library sizes.
@@ -40,13 +39,12 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 	}
 })
 
-setMethod("normOffsets", "SummarizedExperiment", function(object, assay=1, type="scaling", ..., se.out=TRUE) {
+setMethod("normOffsets", "SummarizedExperiment", function(object, assay.id="counts", type="scaling", ..., se.out=TRUE) {
     if (is.null(object$totals)) { 
         stop("missing 'totals' from SummarizedExperiment")
     } 
     lib.sizes <- object$totals 
-	
-    out <- normOffsets(assay(object, assay), lib.sizes=lib.sizes, type=type, ...)
+    out <- normOffsets(assay(object, i=assay.id, withDimnames=FALSE), lib.sizes=lib.sizes, type=type, ...)
     
     if (!is.logical(se.out)) { 
         if (type!="scaling") {

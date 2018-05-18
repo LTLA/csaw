@@ -1,10 +1,12 @@
 \name{normOffsets}
+
 \alias{normOffsets}
 \alias{normOffsets,matrix-method}
 \alias{normOffsets,SummarizedExperiment-method}
 
-\alias{normalize}
-\alias{normalize,SummarizedExperiment-method}
+\alias{normFactors}
+\alias{normFactors,matrix-method}
+\alias{normFactors,SummarizedExperiment-method}
 
 \title{Normalize counts between libraries}
 
@@ -14,9 +16,11 @@
 \S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
     weighted=FALSE, ...)
 
-\S4method{normOffsets}{SummarizedExperiment}(object, assay=1, type="scaling", ..., se.out=TRUE)
+\S4method{normOffsets}{SummarizedExperiment}(object, assay.id="counts", type="scaling", ..., se.out=TRUE)
 
-\S4method{normalize}{SummarizedExperiment}(object, ...)
+\S4method{normFactors}{matrix}(object, lib.sizes=NULL, weighted=FALSE, ...)
+
+\S4method{normFactors}{SummarizedExperiment}(object, assay.id="counts", ..., se.out=TRUE)
 }
 
 \arguments{
@@ -32,23 +36,22 @@ Alternatively, a SummarizedExperiment object in which normalization factors are 
 }
 
 \details{
-If \code{type="scaling"}, this function provides a convenience wrapper for the \code{\link{calcNormFactors}} function in the \pkg{edgeR} package.
+The \code{normFactors} function provides a convenience wrapper for the \code{\link{calcNormFactors}} function in the \pkg{edgeR} package.
 Specifically, it uses the trimmed mean of M-values (TMM) method to perform normalization. 
 Precision weighting is turned off by default so as to avoid upweighting high-abundance regions. 
 These are more likely to be bound and thus more likely to be differentially bound. 
 Assigning excessive weight to such regions will defeat the purpose of trimming when normalizing the coverage of background regions.
 
-% We can't min/maximize some quantity with regards to the estimated normalization factors, and then choose a reference
-% from that, as that would bias the resulting estimates (or at least, interact with existing bias unpredictably).
-
 % Large changes in the normalization factor estimates with changes in the prior suggest that the counts are too low i.e. not
 % enough new information in the dataset. This can be overcome by (obviously) increasing the counts. For example, binning
 % can be performed with a larger bin size in \code{windowCounts} to obtain proportionally larger counts.
 
-If \code{type="loess"}, this function performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
+The \code{normOffsets} function with \code{type="loess"} performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
 For each sample, a lowess curve is fitted to the log-counts against the log-average count. 
 The fitted value for each genomic window is used as an offset in a generalized linear model for that feature and sample. 
 The use of the average count provides more stability than the average log-count when low counts are present for differentially bound regions.
+
+\code{normOffsets} with \code{type="scaling"} behaves the same as \code{normFactors}, but is deprecated to avoid confusion when the function returns normalization \emph{factors}. 
 
 If a SummarizedExperiment object is supplied, the values to be used for normalization will be extracted according to the specified \code{assay} field.
 If \code{se.out=TRUE}, the SummarizedExperiment method will return a modified version of \code{object} containing normalization information.
@@ -69,9 +72,9 @@ The use of a SummarizedExperiment object in \code{se.out} with \code{type="loess
 }
 
 \value{
-For \code{type="scaling"}, a numeric vector containing the relative normalization factors for each library is returned.
+For \code{normFactors}, a numeric vector containing the relative normalization factors for each library is returned.
 
-For \code{type="loess"}, a numeric matrix of the same dimensions as \code{counts}, containing the log-based offsets for use in GLM fitting.
+For \code{normOffsets} with \code{type="loess"}, a numeric matrix of the same dimensions as \code{counts}, containing the log-based offsets for use in GLM fitting.
 
 If \code{se.out=TRUE}, a SummarizedExperiment is returned that contains the computed normalization factors/offsets but is otherwise identical to \code{object}.
 }
@@ -79,18 +82,20 @@ If \code{se.out=TRUE}, a SummarizedExperiment is returned that contains the comp
 \author{Aaron Lun}
 
 \references{
-Robinson MD, Oshlack A (2010). A scaling normalization method for differential
-expression analysis of RNA-seq data. \emph{Genome Biology} 11, R25.
+Robinson MD, Oshlack A (2010). 
+A scaling normalization method for differential expression analysis of RNA-seq data. 
+\emph{Genome Biology} 11, R25.
 
-Ballman KV, Grill DE, Oberg AL, Therneau TM (2004). Faster cyclic loess:
-normalizing RNA arrays via linear models. \emph{Bioinformatics} 20, 2778-86.
+Ballman KV, Grill DE, Oberg AL, Therneau TM (2004). 
+Faster cyclic loess: normalizing RNA arrays via linear models. 
+\emph{Bioinformatics} 20, 2778-86.
 }
 
 \examples{
 # A trivial example
 counts <- matrix(rnbinom(400, mu=10, size=20), ncol=4)
-normOffsets(counts)
-normOffsets(counts, lib.sizes=rep(400, 4))
+normFactors(counts)
+normFactors(counts, lib.sizes=rep(400, 4))
 
 # Using loess-based normalization, instead.
 offsets <- normOffsets(counts, type="loess")
@@ -102,11 +107,11 @@ offsets <- normOffsets(counts, type="loess", iterations=1)
 bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
 data <- windowCounts(bamFiles, width=100, filter=1)
 
-normOffsets(data, se.out=FALSE)
-normOffsets(data, se.out=TRUE)
+normFactors(data, se.out=FALSE)
+normFactors(data, se.out=TRUE)
 
 another.data <- windowCounts(bamFiles, width=10)
-normOffsets(data, se.out=another.data)
+normFactors(data, se.out=another.data)
 
 normOffsets(data, type="loess", se.out=TRUE)
 head(normOffsets(data, type="loess", se.out=FALSE))
