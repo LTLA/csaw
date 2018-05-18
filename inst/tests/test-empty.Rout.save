@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2017-10-27 r73632) -- "Unsuffered Consequences"
-Copyright (C) 2017 The R Foundation for Statistical Computing
+R version 3.5.0 Patched (2018-04-30 r74679) -- "Joy in Playing"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -185,14 +185,14 @@ $table
 <0 rows> (or 0-length row.names)
 
 > 
-> normOffsets(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
+> normFactors(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
 [1] 1
 > normOffsets(out, type="loess", se.out=FALSE)
      [,1]
 > 
-> scaledAverage(asDGEList(out))
+> scaledAverage(out)
 numeric(0)
-> scaledAverage(asDGEList(out), scale=numeric(0))
+> scaledAverage(out, scale=numeric(0))
 numeric(0)
 > 
 > metadata(out)$spacing <- 50 # Converting to a window-based object.
@@ -239,4 +239,4 @@ numeric(0)
 > 
 > proc.time()
    user  system elapsed 
- 14.944   0.180  15.216 
+  8.660   0.268   9.384 

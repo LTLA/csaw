@@ -44,7 +44,7 @@ asDGEList(out)
 consolidateSizes(list(out), list(empty)) # No point testing behaviour on empty lists.
 consolidateSizes(list(out), list(empty), region=GRanges())
 
-normOffsets(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
+normFactors(out, se.out=FALSE) # 1 is correct, as calcNormFactors() just diverts to that.
 normOffsets(out, type="loess", se.out=FALSE)
 
 scaledAverage(out)

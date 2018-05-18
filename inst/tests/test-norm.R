@@ -8,15 +8,15 @@ suppressPackageStartupMessages(library(edgeR))
 # First we test for scaling normalization.
 
 set.seed(1000)
-data <- SummarizedExperiment(matrix(rpois(10000, lambda=10), ncol=10))
+data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=10), ncol=10)))
 data$totals <- rpois(10, lambda=10000)
 
-nf <- normOffsets(data, se.out=FALSE)
+nf <- normFactors(data, se.out=FALSE)
 ref <- calcNormFactors(DGEList(assay(data), lib.size=data$totals), doWeighting=FALSE)$samples$norm.factors
 stopifnot(identical(nf, ref))
 ref
 
-data2 <- normOffsets(data, se.out=TRUE)
+data2 <- normFactors(data, se.out=TRUE)
 stopifnot(identical(data2$norm.factors, ref))
 stopifnot(identical(data2$totals, data$totals))
 
@@ -24,12 +24,12 @@ stopifnot(identical(data2$totals, data$totals))
 
 data3 <- data
 assay(data3) <- assay(data3)*runif(nrow(data3))
-data3b <- normOffsets(data, se.out=data3)
+data3b <- normFactors(data, se.out=data3)
 stopifnot(identical(assay(data3b), assay(data3)))
 stopifnot(identical(data3b$norm.factors, ref))
 
 data3$totals <- rpois(10, lambda=10000)
-try(normOffsets(data, se.out=data3)) # should chuck an error.
+try(normFactors(data, se.out=data3)) # should chuck an error.
 
 ###################################################
 
@@ -44,9 +44,9 @@ mu2 <- mu2*undersamp
 counts <- cbind(rnbinom(n, mu=mu1, size=20), rnbinom(n, mu=mu2, size=20))
 
 actual.lib.size <- c(sum(mu1), sum(mu2))
-normOffsets(counts, lib.sizes=actual.lib.size)
-normOffsets(counts, logratioTrim=0.4, lib.sizes=actual.lib.size)
-normOffsets(counts, sumTrim=0.3, lib.size=actual.lib.size)
+normFactors(counts, lib.sizes=actual.lib.size)
+normFactors(counts, logratioTrim=0.4, lib.sizes=actual.lib.size)
+normFactors(counts, sumTrim=0.3, lib.size=actual.lib.size)
 sqrt(c(1/undersamp, undersamp)) # True values, looks pretty good.
 
 # Testing what happens with weighting, after adding some high-abundance DB regions. 
@@ -62,8 +62,8 @@ true.value <- 1/full.lib.size
 true.value <- true.value/exp(mean(log(true.value)))
 true.value
 
-normOffsets(blah, lib.sizes=full.lib.size)
-normOffsets(blah, weighted=TRUE, lib.sizes=full.lib.size) # less accurate.
+normFactors(blah, lib.sizes=full.lib.size)
+normFactors(blah, weighted=TRUE, lib.sizes=full.lib.size) # less accurate.
 
 ###################################################
 
@@ -71,7 +71,7 @@ normOffsets(blah, weighted=TRUE, lib.sizes=full.lib.size) # less accurate.
 
 set.seed(1000)
 means <- 2^runif(1000)
-data <- SummarizedExperiment(matrix(rpois(10000, lambda=means), ncol=10))
+data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=means), ncol=10)))
 data$totals <- rpois(10, lambda=10000)
 
 offs <- normOffsets(data, type="loess", se.out=FALSE)
