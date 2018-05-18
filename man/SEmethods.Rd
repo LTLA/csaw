@@ -41,13 +41,6 @@ data <- windowCounts(bamFiles, width=100, filter=1)
 asDGEList(data)
 asDGEList(data, lib.sizes=c(10, 100))
 asDGEList(data, norm.factors=c(1.11, 2.23), group=c("a", "b"))
-
-norm.data <- normOffsets(data, se.out=TRUE)
-norm.data$norm.factors
-asDGEList(norm.data)$samples$norm.factors
-asDGEList(norm.data, norm.factors=c(1,2))$samples$norm.factors # gets priority
-norm.data <- normOffsets(data, type="loess", se.out=TRUE)
-head(asDGEList(norm.data)$offset)
 }
 
 \seealso{

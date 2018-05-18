@@ -17,7 +17,7 @@ setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scal
 
 	type <- match.arg(type)
 	if (type=="scaling") { 
-        .Deprecated('type="scaling" is deprecated.\nUse normFactors() instead.')
+        .Deprecated(msg='type="scaling" is deprecated.\nUse normFactors() instead.')
 		return(normFactors(object, weighted=weighted, ...))
 
 	} else if (type=="loess") { 

@@ -3,10 +3,7 @@
 \alias{normOffsets}
 \alias{normOffsets,matrix-method}
 \alias{normOffsets,SummarizedExperiment-method}
-
 \alias{normFactors}
-\alias{normFactors,matrix-method}
-\alias{normFactors,SummarizedExperiment-method}
 
 \title{Normalize counts between libraries}
 
@@ -18,9 +15,8 @@
 
 \S4method{normOffsets}{SummarizedExperiment}(object, assay.id="counts", type="scaling", ..., se.out=TRUE)
 
-\S4method{normFactors}{matrix}(object, lib.sizes=NULL, weighted=FALSE, ...)
-
-\S4method{normFactors}{SummarizedExperiment}(object, assay.id="counts", ..., se.out=TRUE)
+normFactors(object, lib.sizes=NULL, weighted=FALSE, ..., 
+    assay.id="counts", se.out=TRUE)
 }
 
 \arguments{
@@ -92,29 +88,19 @@ Faster cyclic loess: normalizing RNA arrays via linear models.
 }
 
 \examples{
-# A trivial example
 counts <- matrix(rnbinom(400, mu=10, size=20), ncol=4)
-normFactors(counts)
-normFactors(counts, lib.sizes=rep(400, 4))
+data <- SummarizedExperiment(list(counts=counts))
+data$totals <- colSums(counts)
+
+# TMM normalization.
+normFactors(data)
+normFactors(data, lib.sizes=rep(400, 4))
 
 # Using loess-based normalization, instead.
-offsets <- normOffsets(counts, type="loess")
+offsets <- normOffsets(data, type="loess")
 head(offsets)
-offsets <- normOffsets(counts, type="loess", span=0.4)
-offsets <- normOffsets(counts, type="loess", iterations=1)
-
-# Same for SummariedExperiment objects. 
-bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
-data <- windowCounts(bamFiles, width=100, filter=1)
-
-normFactors(data, se.out=FALSE)
-normFactors(data, se.out=TRUE)
-
-another.data <- windowCounts(bamFiles, width=10)
-normFactors(data, se.out=another.data)
-
-normOffsets(data, type="loess", se.out=TRUE)
-head(normOffsets(data, type="loess", se.out=FALSE))
+offsets <- normOffsets(data, type="loess", span=0.4)
+offsets <- normOffsets(data, type="loess", iterations=1)
 }
 
 \seealso{
