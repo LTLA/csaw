@@ -1,4 +1,4 @@
-filterWindows <- function(data, background, type="global", assay.data=1, assay.back=1,
+filterWindows <- function(data, background, type="global", assay.data="counts", assay.back="counts",
                           prior.count=2, scale.info=NULL)
 # This is a function for proportion- or background-based filtering of a
 # RangedSummarizedExperiment object. For the former, it computes the relative
@@ -11,7 +11,7 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 # last modified 13 September 2017
 {
 	type <- match.arg(type, c("global", "local", "control", "proportion"))
-	abundances <- scaledAverage(asDGEList(data, assay=assay.data), scale=1, prior.count=prior.count)
+	abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
 
 	if (type=="proportion") {
 		genome.windows <- .getWindowNum(data)
@@ -41,15 +41,17 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 			.checkLibSizes(data, background)
 			relative.width <- median(bwidth)/median(dwidth)
 			if (is.na(relative.width)) { relative.width <- 1 }
-			bg.ab <- scaledAverage(asDGEList(background, assay=assay.back), scale=relative.width, prior.count=prior.count)
+			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
 			filter.stat <- abundances - .getGlobalBg(background, bg.ab, prior.count)
 			
 		} else if (type=="local") {
- 		    if (!identical(nrow(data), nrow(background))) { stop("data and background should be of the same length") }	
+ 		    if (!identical(nrow(data), nrow(background))) { 
+                stop("data and background should be of the same length") 
+            }
 			.checkLibSizes(data, background)
-			relative.width <- (bwidth  - dwidth)/dwidth		
-			bg.y <- asDGEList(background, assay=assay.back)
-			bg.y$counts <- bg.y$counts - assay(data, assay=assay.data)
+
+			relative.width <- (bwidth  - dwidth)/dwidth
+            assay(background, i=assay.back) <- assay(background, i=assay.back, withDimnames=FALSE) - assay(data, assay=assay.data, withDimnames=FALSE)
 
 			# Some protection for negative widths (counts should be zero, so only the prior gets involved in bg.ab).
 			subzero <- relative.width <= 0
@@ -57,7 +59,8 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 				relative.width[subzero] <- 1
 				bg.y$counts[subzero,] <- 0L
 			}	
-			bg.ab <- scaledAverage(bg.y, scale=relative.width, prior.count=prior.count)
+
+			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
 			filter.stat <- abundances - bg.ab
 
 		} else {
@@ -74,10 +77,13 @@ filterWindows <- function(data, background, type="global", assay.data=1, assay.b
 				warning("normalization factor not specified for composition bias")
 			}
 
- 		    if (!identical(nrow(data), nrow(background))) { stop("data and background should be of the same length") }	
+ 		    if (!identical(nrow(data), nrow(background))) { 
+                stop("data and background should be of the same length") 
+            }	
 			relative.width <- bwidth/dwidth
 			lib.adjust <- prior.count * mean(background$totals)/mean(data$totals) # Account for library size differences.
-			bg.ab <- scaledAverage(asDGEList(background, assay=assay.back), scale=relative.width, prior.count=lib.adjust)
+
+			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=lib.adjust)
 			filter.stat <- abundances - bg.ab 
 		}
 
