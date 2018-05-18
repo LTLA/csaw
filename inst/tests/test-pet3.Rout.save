@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2016-10-17 r71531) -- "Unsuffered Consequences"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R version 3.5.0 Patched (2018-04-30 r74679) -- "Joy in Playing"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -130,7 +130,6 @@ Type 'q()' to quit R.
 + 				chr2 <- as.character(seqnames(seconds[[lib]]))
 + 				str2 <- as.logical(strand(seconds[[lib]])=="+")
 + 
-+                 # Removing complete overruns (partial overruns are implicitly truncated when computing 'sizes').
 + 				valid <- chr1==chr2 & str1!=str2 & ifelse(str1, pos1 < pos2 + rlen, pos2 < pos1 + rlen)
 + 		   		pos1[!str1] <- pos1[!str1]+rlen 
 + 				pos2[!str2] <- pos2[!str2]+rlen
@@ -251,19 +250,19 @@ Type 'q()' to quit R.
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2050          1020            24           506           181             0 
 GRanges object with 50 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA   [ 1,  1]      *
-   [2]     chrA   [21, 21]      *
-   [3]     chrA   [41, 41]      *
-   [4]     chrA   [61, 61]      *
-   [5]     chrA   [81, 81]      *
-   ...      ...        ...    ...
-  [46]     chrA [901, 901]      *
-  [47]     chrA [921, 921]      *
-  [48]     chrA [941, 941]      *
-  [49]     chrA [961, 961]      *
-  [50]     chrA [981, 981]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        21      *
+   [3]     chrA        41      *
+   [4]     chrA        61      *
+   [5]     chrA        81      *
+   ...      ...       ...    ...
+  [46]     chrA       901      *
+  [47]     chrA       921      *
+  [48]     chrA       941      *
+  [49]     chrA       961      *
+  [50]     chrA       981      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -277,19 +276,19 @@ GRanges object with 50 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          4000          1978             0          1008           359             0 
 GRanges object with 20 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 51,  51]      *
-   [3]     chrA [101, 101]      *
-   [4]     chrA [151, 151]      *
-   [5]     chrA [201, 201]      *
-   ...      ...        ...    ...
-  [16]     chrA [751, 751]      *
-  [17]     chrA [801, 801]      *
-  [18]     chrA [851, 851]      *
-  [19]     chrA [901, 901]      *
-  [20]     chrA [951, 951]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        51      *
+   [3]     chrA       101      *
+   [4]     chrA       151      *
+   [5]     chrA       201      *
+   ...      ...       ...    ...
+  [16]     chrA       751      *
+  [17]     chrA       801      *
+  [18]     chrA       851      *
+  [19]     chrA       901      *
+  [20]     chrA       951      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -303,19 +302,19 @@ GRanges object with 20 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
         10025          4945            10          2537           866             0 
 GRanges object with 40 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 26,  26]      *
-   [3]     chrA [ 51,  51]      *
-   [4]     chrA [ 76,  76]      *
-   [5]     chrA [101, 101]      *
-   ...      ...        ...    ...
-  [36]     chrA [876, 876]      *
-  [37]     chrA [901, 901]      *
-  [38]     chrA [926, 926]      *
-  [39]     chrA [951, 951]      *
-  [40]     chrA [976, 976]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        26      *
+   [3]     chrA        51      *
+   [4]     chrA        76      *
+   [5]     chrA       101      *
+   ...      ...       ...    ...
+  [36]     chrA       876      *
+  [37]     chrA       901      *
+  [38]     chrA       926      *
+  [39]     chrA       951      *
+  [40]     chrA       976      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -329,19 +328,19 @@ GRanges object with 40 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
         10010          5027             4          2467           949             0 
 GRanges object with 40 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 26,  26]      *
-   [3]     chrA [ 51,  51]      *
-   [4]     chrA [ 76,  76]      *
-   [5]     chrA [101, 101]      *
-   ...      ...        ...    ...
-  [36]     chrA [876, 876]      *
-  [37]     chrA [901, 901]      *
-  [38]     chrA [926, 926]      *
-  [39]     chrA [951, 951]      *
-  [40]     chrA [976, 976]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        26      *
+   [3]     chrA        51      *
+   [4]     chrA        76      *
+   [5]     chrA       101      *
+   ...      ...       ...    ...
+  [36]     chrA       876      *
+  [37]     chrA       901      *
+  [38]     chrA       926      *
+  [39]     chrA       951      *
+  [40]     chrA       976      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -357,19 +356,19 @@ GRanges object with 40 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2010          1016             6           520           179             0 
 GRanges object with 20 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 51,  51]      *
-   [3]     chrA [101, 101]      *
-   [4]     chrA [151, 151]      *
-   [5]     chrA [201, 201]      *
-   ...      ...        ...    ...
-  [16]     chrA [751, 751]      *
-  [17]     chrA [801, 801]      *
-  [18]     chrA [851, 851]      *
-  [19]     chrA [901, 901]      *
-  [20]     chrA [951, 951]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        51      *
+   [3]     chrA       101      *
+   [4]     chrA       151      *
+   [5]     chrA       201      *
+   ...      ...       ...    ...
+  [16]     chrA       751      *
+  [17]     chrA       801      *
+  [18]     chrA       851      *
+  [19]     chrA       901      *
+  [20]     chrA       951      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -383,18 +382,18 @@ GRanges object with 20 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2020           979            15           510           174             0 
 GRanges object with 10 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,  21]      *
-   [2]     chrA [101, 121]      *
-   [3]     chrA [201, 221]      *
-   [4]     chrA [301, 321]      *
-   [5]     chrA [401, 421]      *
-   [6]     chrA [501, 521]      *
-   [7]     chrA [601, 621]      *
-   [8]     chrA [701, 721]      *
-   [9]     chrA [801, 821]      *
-  [10]     chrA [901, 921]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-21      *
+   [2]     chrA   101-121      *
+   [3]     chrA   201-221      *
+   [4]     chrA   301-321      *
+   [5]     chrA   401-421      *
+   [6]     chrA   501-521      *
+   [7]     chrA   601-621      *
+   [8]     chrA   701-721      *
+   [9]     chrA   801-821      *
+  [10]     chrA   901-921      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -408,18 +407,18 @@ GRanges object with 10 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          4050          2000            21          1005           364             0 
 GRanges object with 10 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,  11]      *
-   [2]     chrA [101, 111]      *
-   [3]     chrA [201, 211]      *
-   [4]     chrA [301, 311]      *
-   [5]     chrA [401, 411]      *
-   [6]     chrA [501, 511]      *
-   [7]     chrA [601, 611]      *
-   [8]     chrA [701, 711]      *
-   [9]     chrA [801, 811]      *
-  [10]     chrA [901, 911]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-11      *
+   [2]     chrA   101-111      *
+   [3]     chrA   201-211      *
+   [4]     chrA   301-311      *
+   [5]     chrA   401-411      *
+   [6]     chrA   501-511      *
+   [7]     chrA   601-611      *
+   [8]     chrA   701-711      *
+   [9]     chrA   801-811      *
+  [10]     chrA   901-911      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -435,19 +434,19 @@ GRanges object with 10 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2100          1040            62           476           179             0 
 GRanges object with 34 ranges and 0 metadata columns:
-       seqnames      ranges strand
-          <Rle>   <IRanges>  <Rle>
-   [1]     chrA  [  1, 101]      *
-   [2]     chrA  [ 31, 131]      *
-   [3]     chrA  [ 61, 161]      *
-   [4]     chrA  [ 91, 191]      *
-   [5]     chrA  [121, 221]      *
-   ...      ...         ...    ...
-  [30]     chrA [871,  971]      *
-  [31]     chrA [901, 1000]      *
-  [32]     chrA [931, 1000]      *
-  [33]     chrA [961, 1000]      *
-  [34]     chrA [991, 1000]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA     1-101      *
+   [2]     chrA    31-131      *
+   [3]     chrA    61-161      *
+   [4]     chrA    91-191      *
+   [5]     chrA   121-221      *
+   ...      ...       ...    ...
+  [30]     chrA   871-971      *
+  [31]     chrA  901-1000      *
+  [32]     chrA  931-1000      *
+  [33]     chrA  961-1000      *
+  [34]     chrA  991-1000      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -461,19 +460,19 @@ GRanges object with 34 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2000           985             0           489           188             0 
 GRanges object with 51 ranges and 0 metadata columns:
-       seqnames      ranges strand
-          <Rle>   <IRanges>  <Rle>
-   [1]     chrA    [ 1,  1]      *
-   [2]     chrA    [11, 21]      *
-   [3]     chrA    [31, 41]      *
-   [4]     chrA    [51, 61]      *
-   [5]     chrA    [71, 81]      *
-   ...      ...         ...    ...
-  [47]     chrA [911,  921]      *
-  [48]     chrA [931,  941]      *
-  [49]     chrA [951,  961]      *
-  [50]     chrA [971,  981]      *
-  [51]     chrA [991, 1000]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA     11-21      *
+   [3]     chrA     31-41      *
+   [4]     chrA     51-61      *
+   [5]     chrA     71-81      *
+   ...      ...       ...    ...
+  [47]     chrA   911-921      *
+  [48]     chrA   931-941      *
+  [49]     chrA   951-961      *
+  [50]     chrA   971-981      *
+  [51]     chrA  991-1000      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -487,19 +486,19 @@ GRanges object with 51 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          4050          2058            27          1003           391             0 
 GRanges object with 67 ranges and 0 metadata columns:
-       seqnames      ranges strand
-          <Rle>   <IRanges>  <Rle>
-   [1]     chrA    [ 6, 11]      *
-   [2]     chrA    [21, 26]      *
-   [3]     chrA    [36, 41]      *
-   [4]     chrA    [51, 56]      *
-   [5]     chrA    [66, 71]      *
-   ...      ...         ...    ...
-  [63]     chrA [936,  941]      *
-  [64]     chrA [951,  956]      *
-  [65]     chrA [966,  971]      *
-  [66]     chrA [981,  986]      *
-  [67]     chrA [996, 1000]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      6-11      *
+   [2]     chrA     21-26      *
+   [3]     chrA     36-41      *
+   [4]     chrA     51-56      *
+   [5]     chrA     66-71      *
+   ...      ...       ...    ...
+  [63]     chrA   936-941      *
+  [64]     chrA   951-956      *
+  [65]     chrA   966-971      *
+  [66]     chrA   981-986      *
+  [67]     chrA  996-1000      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -513,19 +512,19 @@ GRanges object with 67 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          4025          2002            13           989           381             0 
 GRanges object with 68 ranges and 0 metadata columns:
-       seqnames      ranges strand
-          <Rle>   <IRanges>  <Rle>
-   [1]     chrA    [ 1, 11]      *
-   [2]     chrA    [ 6, 26]      *
-   [3]     chrA    [21, 41]      *
-   [4]     chrA    [36, 56]      *
-   [5]     chrA    [51, 71]      *
-   ...      ...         ...    ...
-  [64]     chrA [936,  956]      *
-  [65]     chrA [951,  971]      *
-  [66]     chrA [966,  986]      *
-  [67]     chrA [981, 1000]      *
-  [68]     chrA [996, 1000]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA      1-11      *
+   [2]     chrA      6-26      *
+   [3]     chrA     21-41      *
+   [4]     chrA     36-56      *
+   [5]     chrA     51-71      *
+   ...      ...       ...    ...
+  [64]     chrA   936-956      *
+  [65]     chrA   951-971      *
+  [66]     chrA   966-986      *
+  [67]     chrA  981-1000      *
+  [68]     chrA  996-1000      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 	
@@ -541,19 +540,19 @@ GRanges object with 68 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          2000           999             0           513           170             0 
 GRanges object with 50 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA   [ 1,  1]      *
-   [2]     chrA   [21, 21]      *
-   [3]     chrA   [41, 41]      *
-   [4]     chrA   [61, 61]      *
-   [5]     chrA   [81, 81]      *
-   ...      ...        ...    ...
-  [46]     chrA [901, 901]      *
-  [47]     chrA [921, 921]      *
-  [48]     chrA [941, 941]      *
-  [49]     chrA [961, 961]      *
-  [50]     chrA [981, 981]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        21      *
+   [3]     chrA        41      *
+   [4]     chrA        61      *
+   [5]     chrA        81      *
+   ...      ...       ...    ...
+  [46]     chrA       901      *
+  [47]     chrA       921      *
+  [48]     chrA       941      *
+  [49]     chrA       961      *
+  [50]     chrA       981      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -567,19 +566,19 @@ GRanges object with 50 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
          4050          2047            23           982           395             0 
 GRanges object with 20 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 51,  51]      *
-   [3]     chrA [101, 101]      *
-   [4]     chrA [151, 151]      *
-   [5]     chrA [201, 201]      *
-   ...      ...        ...    ...
-  [16]     chrA [751, 751]      *
-  [17]     chrA [801, 801]      *
-  [18]     chrA [851, 851]      *
-  [19]     chrA [901, 901]      *
-  [20]     chrA [951, 951]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        51      *
+   [3]     chrA       101      *
+   [4]     chrA       151      *
+   [5]     chrA       201      *
+   ...      ...       ...    ...
+  [16]     chrA       751      *
+  [17]     chrA       801      *
+  [18]     chrA       851      *
+  [19]     chrA       901      *
+  [20]     chrA       951      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -593,19 +592,19 @@ GRanges object with 20 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
         10010          5055             7          2494           951             0 
 GRanges object with 40 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 26,  26]      *
-   [3]     chrA [ 51,  51]      *
-   [4]     chrA [ 76,  76]      *
-   [5]     chrA [101, 101]      *
-   ...      ...        ...    ...
-  [36]     chrA [876, 876]      *
-  [37]     chrA [901, 901]      *
-  [38]     chrA [926, 926]      *
-  [39]     chrA [951, 951]      *
-  [40]     chrA [976, 976]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        26      *
+   [3]     chrA        51      *
+   [4]     chrA        76      *
+   [5]     chrA       101      *
+   ...      ...       ...    ...
+  [36]     chrA       876      *
+  [37]     chrA       901      *
+  [38]     chrA       926      *
+  [39]     chrA       951      *
+  [40]     chrA       976      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 
@@ -619,19 +618,19 @@ GRanges object with 40 ranges and 0 metadata columns:
   total.reads  mapped.reads        single mate.unmapped    unoriented     inter.chr 
         10020          5014             9          2491           958             0 
 GRanges object with 40 ranges and 0 metadata columns:
-       seqnames     ranges strand
-          <Rle>  <IRanges>  <Rle>
-   [1]     chrA [  1,   1]      *
-   [2]     chrA [ 26,  26]      *
-   [3]     chrA [ 51,  51]      *
-   [4]     chrA [ 76,  76]      *
-   [5]     chrA [101, 101]      *
-   ...      ...        ...    ...
-  [36]     chrA [876, 876]      *
-  [37]     chrA [901, 901]      *
-  [38]     chrA [926, 926]      *
-  [39]     chrA [951, 951]      *
-  [40]     chrA [976, 976]      *
+       seqnames    ranges strand
+          <Rle> <IRanges>  <Rle>
+   [1]     chrA         1      *
+   [2]     chrA        26      *
+   [3]     chrA        51      *
+   [4]     chrA        76      *
+   [5]     chrA       101      *
+   ...      ...       ...    ...
+  [36]     chrA       876      *
+  [37]     chrA       901      *
+  [38]     chrA       926      *
+  [39]     chrA       951      *
+  [40]     chrA       976      *
   -------
   seqinfo: 1 sequence from an unspecified genome
 > 	
@@ -705,4 +704,4 @@ GRanges object with 40 ranges and 0 metadata columns:
 > 
 > proc.time()
    user  system elapsed 
- 46.920   0.372  47.295 
+ 36.742   0.351  37.232 
