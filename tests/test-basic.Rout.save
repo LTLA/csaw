@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2017-10-27 r73632) -- "Unsuffered Consequences"
-Copyright (C) 2017 The R Foundation for Statistical Computing
+R version 3.5.0 Patched (2018-04-30 r74679) -- "Joy in Playing"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -261,13 +261,7 @@ In .local(object, ...) :
 > # Running some basic normalization.
 > data <- windowCounts(both.files, ext=100, param=readParam(minq=100, dedup=TRUE))
 > 
-> normOffsets(assay(data), lib.size=data$totals)
-[1] 1.001197 0.998804
-> normOffsets(assay(data), lib.size=data$totals, logratioTrim=.2)
-[1] 1.003816 0.996199
-> normOffsets(assay(data), lib.size=data$totals, method="RLE")
-[1] 1.0037890 0.9962253
-> normOffsets(data)
+> normFactors(data)
 class: RangedSummarizedExperiment 
 dim: 71 2 
 metadata(6): spacing width ... param final.ext
@@ -276,7 +270,7 @@ rownames: NULL
 rowData names(0):
 colnames: NULL
 colData names(5): bam.files totals ext rlen norm.factors
-> normOffsets(data, logratioTrim=0.1)
+> normFactors(data, logratioTrim=0.1)
 class: RangedSummarizedExperiment 
 dim: 71 2 
 metadata(6): spacing width ... param final.ext
@@ -285,7 +279,7 @@ rownames: NULL
 rowData names(0):
 colnames: NULL
 colData names(5): bam.files totals ext rlen norm.factors
-> normOffsets(data, method="upperquartile")
+> normFactors(data, method="upperquartile")
 class: RangedSummarizedExperiment 
 dim: 71 2 
 metadata(6): spacing width ... param final.ext
@@ -295,22 +289,6 @@ rowData names(0):
 colnames: NULL
 colData names(5): bam.files totals ext rlen norm.factors
 > 
-> head(normOffsets(assay(data), lib.size=data$totals, type="loess"))
-           [,1]      [,2]
-[1,] -0.4047876 0.4047876
-[2,] -0.4328410 0.4328410
-[3,] -0.3864553 0.3864553
-[4,] -0.4101296 0.4101296
-[5,] -0.3788945 0.3788945
-[6,] -0.3514597 0.3514597
-> head(normOffsets(assay(data), lib.size=data$totals, type="loess", span=0.7))
-           [,1]      [,2]
-[1,] -0.4297765 0.4297765
-[2,] -0.4391936 0.4391936
-[3,] -0.3867962 0.3867962
-[4,] -0.4215479 0.4215479
-[5,] -0.3858107 0.3858107
-[6,] -0.3915074 0.3915074
 > head(normOffsets(data, type="loess"))
 class: RangedSummarizedExperiment 
 dim: 6 2 
@@ -555,4 +533,4 @@ GRanges object with 4 ranges and 0 metadata columns:
 > 
 > proc.time()
    user  system elapsed 
- 16.004   0.268  16.289 
+ 10.334   0.291  10.602 

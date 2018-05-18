@@ -59,15 +59,10 @@ asDGEList(temp) # Should spit out a warning.
 # Running some basic normalization.
 data <- windowCounts(both.files, ext=100, param=readParam(minq=100, dedup=TRUE))
 
-normOffsets(assay(data), lib.size=data$totals)
-normOffsets(assay(data), lib.size=data$totals, logratioTrim=.2)
-normOffsets(assay(data), lib.size=data$totals, method="RLE")
-normOffsets(data)
-normOffsets(data, logratioTrim=0.1)
-normOffsets(data, method="upperquartile")
+normFactors(data)
+normFactors(data, logratioTrim=0.1)
+normFactors(data, method="upperquartile")
 
-head(normOffsets(assay(data), lib.size=data$totals, type="loess"))
-head(normOffsets(assay(data), lib.size=data$totals, type="loess", span=0.7))
 head(normOffsets(data, type="loess"))
 head(normOffsets(data, type="loess", span=0.5))
 
