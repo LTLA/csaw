@@ -30,7 +30,7 @@ This is extracted from \code{object$totals} for SummarizedExperiment inputs, or 
   \item{type}{A character string indicating what type of normalization is to be performed.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
-  \item{assay}{An integer scalar or string specifying the assay values to use for normalization.}
+  \item{assay.id}{An integer scalar or string specifying the assay values to use for normalization.}
   \item{se.out}{A logical scalar indicating whether or not a SummarizedExperiment object should be returned.
 Alternatively, a SummarizedExperiment object in which normalization factors are to be stored.}
 }
