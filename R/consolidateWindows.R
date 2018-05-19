@@ -84,7 +84,9 @@ consolidateSizes <- function(data.list, result.list, equiweight=TRUE,
         tabcom <- consolidateTests(id.list=out$id, result.list=result.list,
             weight.list=out$weight, ...) 
     }
-    
-	return(list(id=final.ids, region=merged$region, table=tabcom))
+   
+    out$table <- tabcom
+    out$weight <- NULL
+    return(out)
 }
 

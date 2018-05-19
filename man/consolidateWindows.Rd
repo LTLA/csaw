@@ -3,15 +3,15 @@
 \alias{consolidateSizes}
 
 \title{Consolidate window sizes}
-\description{Consolidate DB results from multiple window sizes.}
+\description{Consolidate windows of different sizes into a common set of clusters.}
 
 \usage{
-consolidateWindows(data.list, result.list, equiweight=TRUE, merge.args=list(),
-    combine.args=list(), region=NULL, overlap.args=list()) 
+consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
+    region=NULL, overlap.args=list()) 
 
 # Deprecated, use consolidateTests or consolidateOverlaps instead!
 consolidateSizes(data.list, result.list, equiweight=TRUE, merge.args=list(),
-    combine.args=list(), region=NULL, overlap.args=list(), ...)
+    region=NULL, overlap.args=list(), ...)
 }
 
 \arguments{
@@ -78,19 +78,17 @@ med <- windowCounts(bamFiles, width=100, filter=1)
 high <- windowCounts(bamFiles, width=500, filter=1)
 
 # Consolidating.
-cons <- consolidateSizes(list(low, med, high), list(dbl, dbm, dbh),
-	merge.args=list(tol=100, max.width=300))
+cons <- consolidateWindows(list(low, med, high), merge.args=list(tol=100))
+str(cons$id)
+str(cons$weights)
 cons$region
-cons$id
-cons$weights
 
 # Trying with a custom region.
 of.interest <- GRanges(c('chrA', 'chrA', 'chrB', 'chrC'), 
     IRanges(c(1, 500, 100, 1000), c(200, 1000, 700, 1500)))
-cons <- consolidateSizes(list(low, med, high), list(dbl, dbm, dbh),
-    region=of.interest)
-cons$table
-cons$id
+cons <- consolidateWindows(list(low, med, high), region=of.interest)
+str(cons$id)
+str(cons$weights)
 }
 
 \keyword{clustering}
