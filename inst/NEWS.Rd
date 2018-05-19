@@ -8,6 +8,9 @@
 \item Deprecated type="scaling" option in normOffsets().
 
 \item Added calculateCPM() function for convenient calculation of (log-)CPMs.
+
+\item Split up consolidateSizes() function into consolidateWindows(), consolidateTests() and consolidateOverlaps().
+Deprecated consolidateSizes() itself.
 }}
 
 \section{Version 1.14.0}{\itemize{
