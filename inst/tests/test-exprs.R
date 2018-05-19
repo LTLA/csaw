@@ -136,7 +136,7 @@ test_that("calculateCPM works correctly with library sizes", {
 set.seed(1003)
 test_that("calculateCPM works correctly with offsets", {
     se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
-    se$totals <- runif(ncol(se), 1e6, 2e6)
+    se$totals <- runif(ncol(se), 100, 200)
     ref <- calculateCPM(se, prior.count=2, log=FALSE, use.offset=FALSE)
     expect_equivalent(ref, cpm(asDGEList(se)))
 
@@ -148,13 +148,9 @@ test_that("calculateCPM works correctly with offsets", {
     ref <- calculateCPM(se, prior.count=2, log=FALSE, use.offset=FALSE)
     expect_equal(out, ref)
 
-    # Responds correctly with log-transformation. This involves some
-    # hacks to recover the ACTUAL mean library size after adding the prior count.
+    # Responds correctly with log-transformation. 
     ref <- calculateCPM(se, prior.count=2, log=TRUE, use.offset=FALSE)
-
-    se0 <- se
-    se0$totals <- se0$totals * 2 * 2 / exp(mean(log(se0$totals))) + se0$totals
-    out <- calculateCPM(se0, prior.count=2, log=TRUE, use.offset=TRUE)
+    out <- calculateCPM(se, prior.count=2, log=TRUE, use.offset=TRUE)
     expect_equal(out, ref)
 
     # Responds to _different_ offsets per gene.

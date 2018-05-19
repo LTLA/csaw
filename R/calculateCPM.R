@@ -24,14 +24,12 @@ calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE,
 
     # Computing a offset-adjusted CPM matrix.
     off.mat <- assay(object, i="offset", withDimnames=FALSE)
+    new.offset <- scaleOffset(lib.size, off.mat)
     if (!log) {
-        new.offset <- scaleOffset(lib.size, off.mat)
-        cpm.out <- mat/exp(new.offset - log(1e6))
-        
+        cpm.out <- mat/exp(new.offset) * 1e6
     } else {
-        ap <- addPriorCount(mat, offset=off.mat, prior.count=prior.count)
-        new.offset <- scaleOffset(lib.size, as.matrix(ap$offset))/log(2)
-        cpm.out <- log2(ap$y) - new.offset + log2(1e6)
+        ap <- addPriorCount(mat, offset=new.offset, prior.count=prior.count)
+        cpm.out <- log2(ap$y) - as.matrix(ap$offset)/log(2) + log2(1e6)
     }
 
     dimnames(cpm.out) <- dimnames(mat)
