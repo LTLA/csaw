@@ -2,27 +2,57 @@
 # library(csaw); library(testthat); source("test-exprs.R")
 
 library(edgeR)
+
 set.seed(100)
+test_that("asDGEList works as expected", {
+    se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
+    se$totals <- runif(ncol(se), 1e6, 2e6)
+
+    y <- asDGEList(se)
+    expect_equivalent(y$counts, assay(se))
+    expect_identical(y$samples$lib.size, se$totals)
+    expect_identical(y$samples$norm.factors, rep(1, ncol(se)))
+    expect_identical(y$offset, NULL)
+
+    se$norm.factors <- runif(10, 0.5, 1.5)
+    y <- asDGEList(se)
+    expect_equivalent(y$counts, assay(se))
+    expect_identical(y$samples$lib.size, se$totals)
+    expect_identical(y$samples$norm.factors, se$norm.factors)
+    expect_identical(y$offset, NULL)
+
+    assay(se, "offset") <- matrix(rnorm(1000), ncol=10, nrow=100) 
+    y <- asDGEList(se)
+    expect_equivalent(y$counts, assay(se))
+    expect_identical(y$samples$lib.size, se$totals)
+    expect_identical(y$samples$norm.factors, se$norm.factors)
+    expect_equivalent(y$offset, scaleOffset(y, assay(se, "offset"))$offset)
+
+    # Works on an empty DGEList.
+    emp <- SummarizedExperiment(list(counts=matrix(0,0,10)))
+    emp$totals <- 1
+    y2 <- asDGEList(emp)
+    expect_identical(nrow(y2), 0L)
+})
+
+set.seed(1000)
 test_that("scaledAverage works as expected", {
     se <- SummarizedExperiment(list(counts=matrix(rnbinom(1000, mu=100, size=10), ncol=10, nrow=100)))
     se$totals <- runif(ncol(se), 1e6, 2e6)
 
     y <- asDGEList(se)
-    stopifnot(identical(y$samples$lib.size, se$totals))
     ref <- aveLogCPM(y)
     out <- scaledAverage(se, scale=1)
     expect_equal(ref, out)
 
     se$norm.factors <- runif(10, 0.5, 1.5)
     y <- asDGEList(se)
-    stopifnot(identical(y$samples$norm.factors, se$norm.factors))
     ref <- aveLogCPM(y)
     out <- scaledAverage(se, scale=1)
     expect_equal(ref, out)
     
     assay(se, "offset") <- matrix(rnorm(1000), ncol=10, nrow=100) # Neither function should care about the offset.
     y <- asDGEList(se)
-    stopifnot(!is.null(y$offset))    
     ref <- aveLogCPM(y)
     out <- scaledAverage(se, scale=1)
     expect_equal(ref, out)
@@ -30,6 +60,12 @@ test_that("scaledAverage works as expected", {
     ref <- aveLogCPM(y, dispersion=0.1)
     out <- scaledAverage(se, scale=1, dispersion=0.1)
     expect_equal(ref, out)
+
+    # Trying with empty inputs.
+    emp <- SummarizedExperiment(list(counts=matrix(0,0,10)))
+    emp$totals <- 10
+    expect_identical(scaledAverage(emp), numeric(0))
+    expect_identical(scaledAverage(emp, scale=numeric(0)), numeric(0))
 })
 
 set.seed(1001)
