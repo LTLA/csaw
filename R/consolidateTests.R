@@ -1,4 +1,4 @@
-consolidateTests <- function(id.list, result.list, weight.list=NULL, FUN=combineTests, ...) 
+consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests, ...) 
 # Consolidate results from multiple window widths.
 # 
 # written by Aaron Lun
@@ -12,7 +12,10 @@ consolidateTests <- function(id.list, result.list, weight.list=NULL, FUN=combine
         stop("length of each ID vector and nrows of each result table should match")
     }
 
-    if (!is.null(weight.list)) {
+    if (missing(weight.list)) {
+        warning("'weight.list' should be specified or NULL")
+        weight.list <- NULL
+    } else if (!is.null(weight.list)) { 
         if (length(id.list)!=length(weight.list)) {
             stop("lengths of 'id.list' and 'weight.list' should be the same")
         }
@@ -44,7 +47,10 @@ consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=co
         stop("'olap.list' subject set has different length to elements of 'result.list'")
     }
 
-    if (!is.null(weight.list)) {
+    if (missing(weight.list)) {
+        warning("'weight.list' should be specified or NULL")
+        weight.list <- NULL
+    } else if (!is.null(weight.list)) { 
         if (length(olap.list)!=length(weight.list)) {
             stop("lengths of 'olap.list' and 'weight.list' should be the same")
         }

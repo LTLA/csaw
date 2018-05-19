@@ -35,7 +35,8 @@ This will yield a single combined p-value for each cluster or region.
 Users can obtain the best windows in each cluster/region by setting \code{FUN=getBestTest} or \code{FUN=getBestOverlaps} instead.
 
 If \code{weight.list} is not specified, it is set to \code{NULL} and a warning is raised.
-Users should pass the weights produced by \code{\link{consolidateWindows}} with \code{equiweight=TRUE} to ensure that all window sizes contribute equally to the final result.
+Users should generally pass the weights produced by \code{\link{consolidateWindows}} with \code{equiweight=TRUE},
+to ensure that all window sizes contribute equally to the final result.
 }
 
 \seealso{

@@ -156,6 +156,9 @@ test_that("consolidateTests works correctly", {
     cons <- consolidateTests(id.list, result.list, weight.list=NULL)
     expect_identical(cons, combineTests(combo.id, combo.res))
 
+    expect_warning(cons2 <- consolidateTests(id.list, result.list), "should be specified")
+    expect_identical(cons2, cons)
+
     # Alternative function works.
     cons <- consolidateTests(id.list, result.list, weight.list=weight.list, FUN=getBestTest)
     expect_identical(cons, getBestTest(combo.id, combo.res, weight=combo.weight))
@@ -206,6 +209,9 @@ test_that("consolidateOverlaps works correctly", {
 
     cons <- consolidateOverlaps(olap.list, result.list, weight.list=NULL)
     expect_identical(cons, combineOverlaps(combo.olap, combo.res))
+
+    expect_warning(cons2 <- consolidateOverlaps(olap.list, result.list), "should be specified")
+    expect_identical(cons2, cons)
 
     # Alternative function works.
     cons <- consolidateOverlaps(olap.list, result.list, weight.list=weight.list, FUN=getBestOverlaps)
