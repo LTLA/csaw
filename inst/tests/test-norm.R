@@ -41,6 +41,7 @@ test_that("testing what happens with undersampling", {
     expect_true(all(abs(normFactors(data)$norm.factors - truth) < 0.05))
 
     # Testing what happens with weighting, after adding some high-abundance DB regions. 
+    # The errors should be larger than the unweighted version.
     n <- 100000
     blah <- matrix(rnbinom(2*n, mu=10, size=20), ncol=2)
     tospike <- 10000
