@@ -7,17 +7,14 @@
 \description{Calculate normalization factors or offsets using count data from multiple libraries.}
 
 \usage{
-normOffsets(object, lib.sizes=NULL, type=c("scaling", "loess"), ..., 
-    assay.id="counts", se.out=TRUE)
+normOffsets(object, type=c("scaling", "loess"), ..., assay.id="counts", 
+    se.out=TRUE)
 
-normFactors(object, lib.sizes=NULL, weighted=FALSE, ..., 
-    assay.id="counts", se.out=TRUE)
+normFactors(object, weighted=FALSE, ..., assay.id="counts", se.out=TRUE)
 }
 
 \arguments{
   \item{object}{A SummarizedExperiment object containing a count matrix.}
-  \item{lib.sizes}{A numeric vector specifying the total number of reads per library.
-This is extracted from \code{object$totals} if no value is supplied.}
   \item{type}{A character string indicating what type of normalization is to be performed.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
@@ -47,7 +44,7 @@ The use of the average count provides more stability than the average log-count 
 
 Both functions expect SummarizedExperiment objects as input.
 The count matrix to be used for normalization will be extracted according to the specified \code{assay.id} field.
-Library sizes are extracted from \code{object$totals} unless they are overriden with the \code{lib.sizes} argument.
+Library sizes are extracted from \code{object$totals}.
 }
 
 \section{Different SummarizedExperiment outputs}{
