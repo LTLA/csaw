@@ -65,6 +65,14 @@ test_that("global filtering works correctly", {
     out2 <- filterWindows(win2, type="global")
     expect_equivalent(out2$filter, 0)
     expect_equivalent(out2$abundances, out$abundances)
+
+    # Works correctly on empty inputs.
+    emp <- filterWindows(zeroed[0,], type="global")
+    expect_equal(emp$filter, numeric(0))
+    emp <- filterWindows(zeroed[0,], binned, type="global")
+    expect_equal(emp$filter, numeric(0))
+    emp <- filterWindows(zeroed, binned[0,], type="global")
+    expect_equal(emp$filter, 0)
 })
 
 test_that("local filtering works correctly", {
@@ -105,6 +113,11 @@ test_that("local filtering works correctly", {
     	metadata=list(final.ext=1))
     out <- filterWindows(windowed, binned, type="local")
     expect_equivalent(out$filter, 0)
+
+    # Works correctly on empty inputs.
+    emp <- filterWindows(windowed[0,], binned[0,], type="local")
+    expect_equal(emp$filter, numeric(0))
+    expect_error(filterWindows(windowed, binned[0,], type="local"), "same length")
 })
 
 test_that("control-based filtering works correctly", {
@@ -160,17 +173,22 @@ test_that("control-based filtering works correctly", {
     countered2 <- SummarizedExperiment(assays=SimpleList(counts=matrix(20, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 200)), colData=DataFrame(totals=1e6, ext=1),
     	metadata=list(final.ext=NA))
-    out <- filterWindows(windowed, countered2, type="control")
+    expect_warning(out <- filterWindows(windowed, countered2, type="control"))
     expect_equal(out$filter, 0)
+
+    # Works correctly on empty inputs.
+    expect_warning(emp <- filterWindows(windowed[0,], countered[0,], type="control"))
+    expect_equal(emp$filter, numeric(0))
+    expect_error(filterWindows(windowed, countered[0,], type="control"), "same length")
 })
 
 test_that("proportional filtering works as expected", {
-    multi.win <- summarizedexperiment(assays=simplelist(counts=matrix(11:20, 10, 1)),
-    	rowranges=granges("chra", iranges(1:10, 1:10), seqinfo=seqinfo("chra", 1000)), 
-    	coldata=dataframe(totals=1e6, ext=100), metadata=list(final.ext=na, spacing=1))
+    multi.win <- SummarizedExperiment(assays=list(counts=matrix(11:20, 10, 1)),
+    	rowRanges=GRanges("chrA", IRanges(1:10, 1:10), seqinfo=Seqinfo("chrA", 1000)), 
+    	colData=DataFrame(totals=1e6, ext=100), metadata=list(final.ext=NA, spacing=1))
 
     # works if not all windows are available, assuming the lost windows are lower abundance.
-    out <- filterwindows(multi.win, type="proportion")$filter
+    out <- filterWindows(multi.win, type="proportion")$filter
     expect_equal(tail(out,1), 1)
     expect_true(all(diff(out) > 0))
     expect_true(all(out > 0.99))
@@ -180,4 +198,8 @@ test_that("proportional filtering works as expected", {
     out <- filterWindows(multi.win, type="proportion")$filter
     expect_equal(out, 1:10/10)
     expect_true(all(diff(out) > 0))
+
+    # Works correctly on empty inputs.
+    emp <- filterWindows(multi.win[0,], type="global")
+    expect_equal(emp$filter, numeric(0))
 })
