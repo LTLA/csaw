@@ -21,9 +21,18 @@ test_that("testing scaling normalization", {
     data3b <- normFactors(data, se.out=data3)
     expect_identical(assay(data3b), assay(data3))
     expect_identical(data3b$norm.factors, ref)
-    
+
+    # Throwing an error when the library sizes are different.
     data3$totals <- rpois(10, lambda=10000)
     expect_error(normFactors(data, se.out=data3), "library sizes")
+
+    # Checking other errors.
+    expect_error(normFactors(data, type="loess", se.out=data[,1]), "number of libraries")
+
+    # Behaves when empty.
+    # 1 is correct, as calcNormFactors() just diverts to that.
+    expect_identical(normFactors(data[0,], se.out=FALSE), rep(1, 10)) 
+    expect_identical(normFactors(data[,0], se.out=FALSE), numeric(0))
 })
 
 test_that("testing what happens with undersampling", {
@@ -66,10 +75,13 @@ test_that("testing what happens with loess normalization", {
     
     offs <- normOffsets(data, type="loess", se.out=FALSE)
     data <- normOffsets(data, type="loess", se.out=TRUE)
-    expect_identical(dim(offs), dim(assay(data, "offset")))
-    expect_true(all(abs(offs-assay(data, "offset")) < 1e-8))
-    
-    expect_error(normOffsets(data, type="loess", se.out=data), "not supported")
+    expect_equal(offs, assay(data, "offset", withDimnames=FALSE))
+   
+    # Checking that overwriting se.out works.
+    shuffler <- sample(nrow(data))
+    data2 <- data[shuffler,]
+    data2 <- normOffsets(data, type="loess", se.out=data2)
+    expect_equal(assay(data2, "offset"), assay(data, "offset")[shuffler,])
     
     # Reference calculation, after subtracting the reference 'ab' from the observed values.
     lib.sizes <- data$totals
@@ -87,4 +99,13 @@ test_that("testing what happens with loess normalization", {
     ref <- ref-rowMeans(ref)
     
     expect_equal(ref, offs)
+
+    # Breaks when the library sizes are different.
+    data3 <- data
+    data3$totals <- rpois(10, lambda=10000)
+    expect_error(normOffsets(data, type="loess", se.out=data3), "library sizes")
+    expect_error(normOffsets(data, type="loess", se.out=data[,1]), "number of libraries")
+
+    # Behaves when empty.
+    expect_identical(dim(normOffsets(data[0,], type="loess", se.out=FALSE)), c(0L, 10L))
 })
