@@ -1,70 +1,81 @@
-setGeneric("normOffsets", function(object, ...) standardGeneric("normOffsets"))
-
-setMethod("normOffsets", "matrix", function(object, lib.sizes=NULL, type=c("scaling", "loess"), weighted=FALSE, ...) 
-# This provides a wrapper to perform TMM normalization with non-standard
-# library sizes (e.g. due to filtering) and weighting turned off.
-# Alternatively, it can do a form a fast loess-like normalization which uses
-# the average count as the covariate, rather than the typical A-value-based
-# shenanigans. This avoids instability at low abundances.
+#' @importFrom limma loessFit
+#' @importFrom stats spline
+#' @importFrom edgeR aveLogCPM
+#' @importFrom methods is
+#' @importFrom SummarizedExperiment assay assay<-
+normOffsets <- function(object, lib.sizes=NULL, type=c("scaling", "loess"), ..., assay.id="counts", se.out=TRUE) 
+# Perform a fast loess normalization which uses the average count as the covariate, 
+# rather than the typical A-value-based methods to avoid instability at low abundances.
 #
 # written by Aaron Lun
 # created 19 November 2013
-# last modified 29 August 2015
 {
-	if (is.null(lib.sizes)) { 
-		lib.sizes <- colSums(object) 
-	}
-
 	type <- match.arg(type)
 	if (type=="scaling") { 
         .Deprecated(msg='type="scaling" is deprecated.\nUse normFactors() instead.')
-		return(normFactors(object, weighted=weighted, ...))
+		return(normFactors(object, lib.size=lib.size, ..., assay.id=assay.id, se.out=se.out))
+	} 
 
-	} else if (type=="loess") { 
-		# Scaled corrections squeeze offsets towards relative log-library sizes.
-		# Constant value of `cont.cor' would squeeze them towards zero.
-		cont.cor <- 0.5
-		cont.cor.scaled <- cont.cor * lib.sizes/mean(lib.sizes)
+    mat <- assay(object, i=assay.id, withDimnames=FALSE)
+    if (is.null(lib.sizes)) {
+        lib.sizes <- object$totals
+        if (is.null(lib.sizes)) {
+            stop("library sizes not present in 'object$totals'")
+        }
+    }
+    nlibs <- length(lib.sizes)
+    nwin <- nrow(mat)
+
+    # Scaled corrections squeeze offsets towards relative log-library sizes.
+    # Constant value of `cont.cor' would squeeze them towards zero, which could be misleading.
+    cont.cor <- 0.5
+    cont.cor.scaled <- cont.cor * lib.sizes/mean(lib.sizes)
 		
-		# Using it as a prior.count for abundance ensures linearity with log-object.
-		ab <- aveLogCPM(object, lib.size=lib.sizes, prior.count=cont.cor)/log2(exp(1))
+    # Using it as a prior.count for abundance ensures linearity with log-counts
+    ab <- aveLogCPM(mat, lib.size=lib.sizes, prior.count=cont.cor)/log2(exp(1))
 
-		offs <- matrix(0, nrow(object), ncol(object), byrow=TRUE)
-		for (x in seq_len(ncol(object))) {
-			fit <- loessFit(log(object[,x]+cont.cor.scaled[x]), ab, ...)
-			offs[,x] <- fit$fitted 
-		}
-		offs <- offs-rowMeans(offs)
-		return(offs)
-	}
-})
-
-setMethod("normOffsets", "SummarizedExperiment", function(object, assay.id="counts", type="scaling", ..., se.out=TRUE) {
-    if (is.null(object$totals)) { 
-        stop("missing 'totals' from SummarizedExperiment")
-    } 
-    lib.sizes <- object$totals 
-    out <- normOffsets(assay(object, i=assay.id, withDimnames=FALSE), lib.sizes=lib.sizes, type=type, ...)
-    
-    if (!is.logical(se.out)) { 
-        if (type!="scaling") {
-            stop("alternative output object not supported for loess normalization")
-        }
-        if (!identical(se.out$totals, lib.sizes)) {
-            stop("library sizes of 'se.out' and 'object' are not identical")
-        }
+    # Computing the output mean.
+    mean.out <- NULL
+    if (is(se.out, "SummarizedExperiment")) { 
         object <- se.out
         se.out <- TRUE
-    }
-
-    if (!se.out) {
-        return(out)
-    } else {
-        if (type=="scaling") {
-            object$norm.factors <- out
-        } else {
-            assay(object, "offset") <- out
+        
+        nwin <- nrow(object)
+        if (ncol(object)!=nlibs) {
+            stop("number of libraries differs between 'se.out' and 'object'")
         }
+
+        se.lib.sizes <- object$totals
+        if (is.null(se.lib.sizes)) {
+            stop("library sizes not present in 'se.out$totals'")
+        }
+        if (!identical(se.lib.sizes, lib.sizes)) {
+            stop("library sizes should be identical between 'se.out' and 'object'")
+        }
+
+        mat2 <- assay(object, i=assay.id, withDimnames=FALSE)
+        mean.out <- aveLogCPM(mat2, lib.size=lib.sizes, prior.count=cont.cor)/log2(exp(1))
+    }
+    
+    # Computing the offsets as log-differences from the average (implicit if the same average is used across libraries).
+    offs <- matrix(0, nwin, nlibs, byrow=TRUE)
+    for (x in seq_len(nlibs)) {
+    	fit <- loessFit(log(mat[,x]+cont.cor.scaled[x]), ab, ...)
+
+        if (is.null(mean.out)) {
+            offs[,x] <- fit$fitted 
+        } else {
+            offs[,x] <- spline(x=ab, y=fit$fitted, xout=mean.out)$y
+        }
+    }
+    offs <- offs - rowMeans(offs)
+
+    # Deciding what to return.
+    if (!se.out) { 
+        return(offs)
+    } else {
+        assay(object, "offset") <- offs
         return(object)
     }
-})
+}
+

@@ -1,28 +1,23 @@
 \name{normOffsets}
-
 \alias{normOffsets}
-\alias{normOffsets,matrix-method}
-\alias{normOffsets,SummarizedExperiment-method}
 \alias{normFactors}
 
-\title{Normalize counts between libraries}
+\title{Normalize counts across libraries}
 
 \description{Calculate normalization factors or offsets using count data from multiple libraries.}
 
 \usage{
-\S4method{normOffsets}{matrix}(object, lib.sizes=NULL, type=c("scaling", "loess"), 
-    weighted=FALSE, ...)
-
-\S4method{normOffsets}{SummarizedExperiment}(object, assay.id="counts", type="scaling", ..., se.out=TRUE)
+normOffsets(object, lib.sizes=NULL, type=c("scaling", "loess"), ..., 
+    assay.id="counts", se.out=TRUE)
 
 normFactors(object, lib.sizes=NULL, weighted=FALSE, ..., 
     assay.id="counts", se.out=TRUE)
 }
 
 \arguments{
-  \item{object}{A matrix of numeric counts with one column per library and one row per genomic feature (e.g., window).}
+  \item{object}{A SummarizedExperiment object containing a count matrix.}
   \item{lib.sizes}{A numeric vector specifying the total number of reads per library.
-This is extracted from \code{object$totals} for SummarizedExperiment inputs, or computed as \code{colSums(object)} for matrices.}
+This is extracted from \code{object$totals} if no value is supplied.}
   \item{type}{A character string indicating what type of normalization is to be performed.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
@@ -33,7 +28,7 @@ Alternatively, a SummarizedExperiment object in which normalization factors are 
 
 \details{
 The \code{normFactors} function provides a convenience wrapper for the \code{\link{calcNormFactors}} function in the \pkg{edgeR} package.
-Specifically, it uses the trimmed mean of M-values (TMM) method to perform normalization. 
+This uses the trimmed mean of M-values (TMM) method to remove composition biases, typically in background regions of the genome.
 Precision weighting is turned off by default so as to avoid upweighting high-abundance regions. 
 These are more likely to be bound and thus more likely to be differentially bound. 
 Assigning excessive weight to such regions will defeat the purpose of trimming when normalizing the coverage of background regions.
@@ -43,36 +38,41 @@ Assigning excessive weight to such regions will defeat the purpose of trimming w
 % can be performed with a larger bin size in \code{windowCounts} to obtain proportionally larger counts.
 
 The \code{normOffsets} function with \code{type="loess"} performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
+This aims to account for mean dependencies in the efficiency biases between libraries.
 For each sample, a lowess curve is fitted to the log-counts against the log-average count. 
 The fitted value for each genomic window is used as an offset in a generalized linear model for that feature and sample. 
 The use of the average count provides more stability than the average log-count when low counts are present for differentially bound regions.
 
 \code{normOffsets} with \code{type="scaling"} behaves the same as \code{normFactors}, but is deprecated to avoid confusion when the function returns normalization \emph{factors}. 
 
-If a SummarizedExperiment object is supplied, the values to be used for normalization will be extracted according to the specified \code{assay} field.
-If \code{se.out=TRUE}, the SummarizedExperiment method will return a modified version of \code{object} containing normalization information.
-Normalization factors are stored in the \code{"norm.factors"} field in the \code{mcols}, while the offset matrix is stored in the \code{"offset"} field in the \code{assays}.
-Otherwise, if \code{se.out=FALSE}, a vector or matrix of normalization factors/offsets is directly returned.
+Both functions expect SummarizedExperiment objects as input.
+The count matrix to be used for normalization will be extracted according to the specified \code{assay.id} field.
+Library sizes are extracted from \code{object$totals} unless they are overriden with the \code{lib.sizes} argument.
 }
 
-\section{Additional details for SummarizedExperiment inputs}{
-If \code{se.out} is a SummarizedExperiment object and \code{type="scaling"}, 
-the function will calculate the normalization factors from \code{object} but return them in a modified version of \code{se.out}.
+\section{Different SummarizedExperiment outputs}{
+For \code{normFactors}, the normalization factors are always computed from \code{object}.
+However, if \code{se.out} is a (different) SummarizedExperiment object, these factors are stored and returned in \code{se.out}.
 This is useful when \code{se.out} contains counts for windows, but the normalization factors are computed using larger bins in \code{object}.
 
-Note that the normalization factors can only be interpreted with respect to the library sizes used to calculate them.
-As such, the function will throw an error if the library sizes in \code{se.out$totals} are not identical to \code{object$totals}.
-Consistent library sizes can be achieved by using the same \code{\link{readParam}} object in \code{\link{windowCounts}} and related functions.
+For \code{normOffsets} with \code{type="loess"}, the trend fits are always computed from \code{object}.
+However, if \code{se.out} is a (different) SummarizedExperiment object, the trend fits will be used to compute offsets for each entry in \code{se.out} using spline interpolation.
+This is useful when \code{se.out} contains counts for windows in an endogenous genome, but the trend fits are computed using spike-in chromatin regions.
 
-The use of a SummarizedExperiment object in \code{se.out} with \code{type="loess"} is not yet supported.
+In both functions, an error is raised if the library sizes in \code{se.out$totals} are not identical to \code{object$totals}.
+This is because the normalization factors (for \code{normFactors}) and average abundances (for \code{normOffsets}) are only comparable when the library sizes are the same.
+Consistent library sizes can be achieved by using the same \code{\link{readParam}} object in \code{\link{windowCounts}} and related functions.
 }
 
 \value{
-For \code{normFactors}, a numeric vector containing the relative normalization factors for each library is returned.
+For \code{normFactors}, a numeric vector containing the relative normalization factors for each library is computed.
+This is returned directly if \code{se.out=FALSE}, otherwise it is stored in the \code{norm.factors} field of the \code{mcols} of the output object.
 
-For \code{normOffsets} with \code{type="loess"}, a numeric matrix of the same dimensions as \code{counts}, containing the log-based offsets for use in GLM fitting.
+For \code{normOffsets} with \code{type="loess"}, a numeric matrix of the same dimensions as \code{counts} is computed, containing the log-based offsets for use in GLM fitting.
+This is returned directly if \code{se.out=FALSE}, otherwise it is stored in the \code{offsets} assay of the output object.
 
 If \code{se.out=TRUE}, a SummarizedExperiment is returned that contains the computed normalization factors/offsets but is otherwise identical to \code{object}.
+If \code{se.out} is a SummarizedExperiment object, the normalization factors and offsets will be stored in an object that is otherwise identical to \code{se.out}.
 }
 
 \author{Aaron Lun}
