@@ -1,3 +1,4 @@
+#' @export
 #' @importFrom limma loessFit
 #' @importFrom stats spline
 #' @importFrom edgeR aveLogCPM

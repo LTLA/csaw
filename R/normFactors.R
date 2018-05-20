@@ -1,3 +1,6 @@
+#' @export
+#' @importFrom edgeR calcNormFactors
+#' @importFrom SummarizedExperiment assay
 normFactors <- function(object, weighted=FALSE, ..., assay.id="counts", se.out=TRUE) 
 # This provides a wrapper to perform TMM normalization with non-standard
 # library sizes (e.g. due to filtering) and weighting turned off.

@@ -1,3 +1,4 @@
+#' @export
 consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests, ...) 
 # Consolidate results from multiple window widths.
 # 
@@ -27,6 +28,8 @@ consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests
     FUN(unlist(id.list), do.call(rbind, result.list), weight=unlist(weight.list), ...)
 }
 
+#' @export
+#' @importFrom S4Vectors nRnode nLnode queryHits subjectHits Hits
 consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=combineOverlaps, ...)
 # Consolidate results from multiple overlap objects.
 # 

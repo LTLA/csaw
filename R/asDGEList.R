@@ -1,12 +1,16 @@
+#' @export
 setGeneric("asDGEList", function(object, ...) { standardGeneric("asDGEList") })
 
+#' @export
+#' @importFrom edgeR DGEList scaleOffset
+#' @importFrom SummarizedExperiment assay assayNames
+#' @importClassesFrom SummarizedExperiment SummarizedExperiment
 setMethod("asDGEList", "SummarizedExperiment", function(object, lib.sizes, norm.factors, assay.id="counts", ...) 
 # This defines a wrapper function to convert a SummarizedExperiment class
 # object into a DGEList object for input into edgeR.
 #
 # written by Aaron Lun
 # created 2 September 2014
-# last modified 3 March 2017
 {
 	all.args <- list(...)
 	if (missing(lib.sizes)) { 

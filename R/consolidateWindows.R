@@ -1,3 +1,6 @@
+#' @export
+#' @importFrom IRanges findOverlaps
+#' @importFrom S4Vectors queryHits
 consolidateWindows <- function(data.list, equiweight=TRUE, 
     merge.args=list(), region=NULL, overlap.args=list()) 
 # Consolidates results for multiple window sizes into a result for the

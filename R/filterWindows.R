@@ -1,3 +1,4 @@
+#' @export
 filterWindows <- function(data, background, type="global", assay.data="counts", assay.back="counts",
                           prior.count=2, scale.info=NULL)
 # This is a function for proportion- or background-based filtering of a
@@ -8,7 +9,6 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 #
 # written by Aaron Lun
 # created 18 February 2015	
-# last modified 13 September 2017
 {
 	type <- match.arg(type, c("global", "local", "control", "proportion"))
 	abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
@@ -98,6 +98,9 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 	return(NULL)
 }
 
+#' @importFrom GenomeInfoDb seqlengths
+#' @importFrom SummarizedExperiment rowRanges
+#' @importFrom S4Vectors metadata
 .getWindowNum <- function(data) 
 # Get the total number of windows, to account for those not 
 # reported in windowCounts (for empty windows/those lost by filter > 1).
@@ -107,6 +110,8 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 	sum(ceiling(seqlengths(rowRanges(data))/spacing)) 
 }
 
+#' @importFrom edgeR aveLogCPM
+#' @importFrom stats quantile
 .getGlobalBg <- function(data, ab, prior.count)
 # Getting the quantile of those windows that were seen, corresponding to 
 # the median of all windows in the genome. Assumes that all lost windows
@@ -119,6 +124,7 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 	quantile(ab, probs=1 - 0.5/prop.seen) 
 }
 
+#' @importFrom stats median
 scaleControlFilter <- function(data, background) 
 # Computes the normalization factor due to composition bias
 # between the ChIP and background samples.

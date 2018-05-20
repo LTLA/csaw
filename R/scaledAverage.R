@@ -1,3 +1,8 @@
+#' @export
+#' @importFrom methods is
+#' @importClassesFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom SummarizedExperiment assay
+#' @importFrom edgeR aveLogCPM aveLogCPM.DGEList addPriorCount mglmOneGroup
 scaledAverage <- function(y, scale=1, prior.count=NULL, dispersion=NULL, assay.id="counts")
 # This computes the scaled average abundance, with some finesse to deal with
 # the interaction between scaling and the prior count. The `scale` factor
@@ -6,7 +11,6 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, dispersion=NULL, assay.i
 #
 # written by Aaron Lun
 # created 5 November 2014
-# last modified 3 March 2017
 {
     if (is(y, "DGEList")) {
         .Deprecated(msg="DGEList inputs to scaledAverage are deprecated.\nUse SummarizedExperiment inputs instead.")
@@ -60,6 +64,10 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, dispersion=NULL, assay.i
     return(ave)
 }
 
+#' @export
+#' @importFrom BiocGenerics width
+#' @importFrom S4Vectors metadata
+#' @importFrom SummarizedExperiment rowRanges
 getWidths <- function(data) 
 # This computes the effective width of the data in the
 # RangedSummarizedExperiment object. This is done by accounting for the effect
@@ -67,7 +75,6 @@ getWidths <- function(data)
 #
 # written by Aaron Lun
 # created 5 November 2014
-# last modified 17 December 2015
 {
 	flen <- metadata(data)$final.ext
 
