@@ -28,7 +28,7 @@ import(GenomicRanges, SummarizedExperiment, Rsamtools,
 importFrom("GenomicFeatures", exonsBy)
 importFrom("AnnotationDbi", select)
 importFrom("limma", loessFit)
-importFrom("stats", p.adjust, weighted.mean)
+importFrom("stats", p.adjust, weighted.mean, spline)
 importFrom("Rcpp", sourceCpp)
 
 #  Exporting classes and methods

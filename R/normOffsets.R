@@ -13,7 +13,7 @@ normOffsets <- function(object, type=c("scaling", "loess"), ..., assay.id="count
 	type <- match.arg(type)
 	if (type=="scaling") { 
         .Deprecated(msg='type="scaling" is deprecated.\nUse normFactors() instead.')
-		return(normFactors(object, lib.size=lib.size, ..., assay.id=assay.id, se.out=se.out))
+		return(normFactors(object, lib.size=lib.sizes, ..., assay.id=assay.id, se.out=se.out))
 	} 
 
     mat <- assay(object, i=assay.id, withDimnames=FALSE)
