@@ -95,13 +95,14 @@ test_that("getBestTest handles edge cases correctly", {
         ids <- test$id
      
         invalid <- sample(length(ids), length(ids) * prop)
+        na.ids <- ids
         na.ids[invalid] <- NA_integer_
         out.na <- getBestTest(na.ids, tab)
         out.ref <- getBestTest(na.ids[-invalid], tab[-invalid,])
     
         expect_equal(out.na$PValue, out.ref$PValue)
         expect_identical(rownames(out.na), rownames(out.ref))
-        expect_identical(out.na$best, which(!invalid)[out.ref$best]) 
+        expect_identical(out.na$best, setdiff(seq_len(nrow(tab)), invalid)[out.ref$best]) 
     }
 
     # Checking for sane behaviour when no IDs are supplied.
