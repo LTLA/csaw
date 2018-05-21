@@ -10,75 +10,70 @@ autogen <- function(nids, alpha, beta) {
 
 set.seed(40000)
 test_that("getBestTest works as expected on vanilla input", {
-    test <- autogen(100, 1, 1)
-    tab <- test$table
-    ids <- test$id
-	best <- getBestTest(ids, tab)
-
-    # Checking we get the same result after Bonferroni correction.
-	ref <- aggregate(tab$PValue ~ ids, FUN=function(x) { min(1, x*length(x)) }, data=NULL)	
-	xref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.min(tab$PValue[x])] }, data=NULL)	
-    expect_equal(best$PValue, ref[,2])
-    expect_equal(best$best, xref[,2])
-    expect_identical(rownames(best), as.character(sort(unique(ids))))
-
-    # After shuffling things around, to check that internal re-orderings have no effect.
-    re.o <- rev(seq_along(ids))
-    out2 <- getBestTest(ids[re.o], tab[re.o,])
-    expect_equal(best$PValue, out2$PValue)
-    expect_identical(rownames(best), rownames(out2))
-    expect_identical(out2$best, nrow(tab) - best$best + 1L) # because the ordering of 'tab' changes.
-
-    # Testing what happens with a character vector as input.
-    out3 <- getBestTest(as.character(ids), tab)
-    expect_identical(sort(rownames(best)), sort(rownames(out3)))
-    expect_identical(best, out3[rownames(best),])
+    for (nids in c(10, 100, 1000)) {
+        for (beta in c(1, 2, 10)) {
+            test <- autogen(nids, 1, beta)
+            tab <- test$table
+            ids <- test$id
+        	best <- getBestTest(ids, tab)
+        
+            # Checking we get the same result after Bonferroni correction.
+        	ref <- aggregate(tab$PValue ~ ids, FUN=function(x) { min(1, x*length(x)) }, data=NULL)	
+        	xref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.min(tab$PValue[x])] }, data=NULL)	
+            expect_equal(best$PValue, ref[,2])
+            expect_equal(best$best, xref[,2])
+            expect_identical(rownames(best), as.character(sort(unique(ids))))
+        
+            # Testing what happens with a character vector as input.
+            new.names <- paste0("Window", ids)
+            out3 <- getBestTest(new.names, tab)
+            modbest <- best
+            rownames(modbest) <- paste0("Window", rownames(modbest))
+            expect_identical(out3[order(rownames(out3)),], modbest[order(rownames(modbest)),])
+        }
+    }
 })
 
 set.seed(40001)
 test_that("getBestTest works with alternative options", {
-    test <- autogen(100, 1, 10)
-    tab <- test$table
-    ids <- test$id
+    for (nids in c(10, 100, 1000)) {
+        for (beta in c(1, 2, 10)) {
+            test <- autogen(nids, 1, beta)
+            tab <- test$table
+            ids <- test$id
 
-	# Effectively frequency weights.
-	w <- runif(length(ids), 1, 10)
-	best <- getBestTest(ids, tab, weight=w)
-	ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { min(1, tab$PValue[x]/w[x]*sum(w[x])) }, data=NULL)	
-	xref <- aggregate(seq_along(ids)~ ids, FUN=function(x) { x[which.min(tab$PValue[x]/w[x])] }, data=NULL)	
-    expect_equal(best$PValue, ref[,2])
-    expect_equal(best$best, xref[,2])
+            # Effectively frequency weights.
+            w <- runif(length(ids), 1, 10)
+            best <- getBestTest(ids, tab, weight=w)
+            ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { min(1, tab$PValue[x]/w[x]*sum(w[x])) }, data=NULL)	
+            xref <- aggregate(seq_along(ids)~ ids, FUN=function(x) { x[which.min(tab$PValue[x]/w[x])] }, data=NULL)	
+            expect_equal(best$PValue, ref[,2])
+            expect_equal(best$best, xref[,2])
 
-    # Weights also respond to re-ordering.
-    re.o <- rev(seq_along(ids))
-    out2 <- getBestTest(ids[re.o], tab[re.o,], weight=w[re.o])
-    expect_equal(best$PValue, out2$PValue)
-    expect_identical(rownames(best), rownames(out2))
-    expect_identical(out2$best, nrow(tab) - best$best + 1L) # because the ordering of 'tab' changes.
+            # Now, searching for the max log-CPM.
+            mostab <- getBestTest(ids, tab, by.pval=FALSE)
+            ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.max(tab$logCPM[x])] }, data=NULL)
+            expect_identical(ref[,2], mostab$best)
 
-	# Now, searching for the max log-CPM.
-	mostab <- getBestTest(ids, tab, by.pval=FALSE)
-    ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.max(tab$logCPM[x])] }, data=NULL)
-    expect_identical(ref[,2], mostab$best)
+            # Changing the column headings.
+            ref <- getBestTest(ids, tab)
+            retab <- tab
+            colnames(retab) <- c("whee", "blah", "yay")
+            expect_error(getBestTest(ids, retab), "failed to find")
 
-    # Changing the column headings.
-    ref <- getBestTest(ids, tab)
-    retab <- tab
-    colnames(retab) <- c("whee", "blah", "yay")
-    expect_error(getBestTest(ids, retab), "failed to find")
+            out <- getBestTest(ids, retab, pval.col="yay")
+            expect_equal(out$yay, ref$PValue)
+            expect_identical(out$best, ref$best)
 
-    out <- getBestTest(ids, retab, pval.col="yay")
-    expect_equal(out$yay, ref$PValue)
-    expect_identical(out$best, ref$best)
+            out2 <- getBestTest(ids, retab, pval.col=3)
+            expect_equal(out2, out)
 
-    out2 <- getBestTest(ids, retab, pval.col=3)
-    expect_equal(out2, out)
-
-    expect_error(getBestTest(ids, retab, pval.col=c("yay", "yay")), "multiple")
+            expect_error(getBestTest(ids, retab, pval.col=c("yay", "yay")), "multiple")
+        }
+    }
 })
 
-
-set.seed(40001)
+set.seed(40002)
 test_that("getBestTest handles edge cases correctly", {
     # Checking that unsaturation does not compromise the results.
     test <- autogen(2000, 1, 2)
@@ -93,18 +88,21 @@ test_that("getBestTest handles edge cases correctly", {
     rownames(out) <- rownames(out2)
     expect_equal(out, out2)
 
-    # Checking what happens if the first id becomes NA.
-    test <- autogen(20, 1, 1)
-    tab <- test$table
-    ids <- test$id
- 
-    na.ids <- ids 
-    na.ids[1] <- NA_integer_
-    out.na <- getBestTest(na.ids, tab, weight=w)
-    out.ref <- getBestTest(na.ids[-1], tab[-1,], weight=w[-1])
-    expect_equal(out.na$PValue, out.ref$PValue)
-    expect_identical(rownames(out.na), rownames(out.ref))
-    expect_identical(out.na$best, out.ref$best + 1L)  # because of the missing first row.
+    # Checking what happens if some proportion of the IDs become NA.
+    for (prop in c(0.2, 0.5, 0.8)) { 
+        test <- autogen(20, 1, 1)
+        tab <- test$table
+        ids <- test$id
+     
+        invalid <- sample(length(ids), length(ids) * prop)
+        na.ids[invalid] <- NA_integer_
+        out.na <- getBestTest(na.ids, tab)
+        out.ref <- getBestTest(na.ids[-invalid], tab[-invalid,])
+    
+        expect_equal(out.na$PValue, out.ref$PValue)
+        expect_identical(rownames(out.na), rownames(out.ref))
+        expect_identical(out.na$best, which(!invalid)[out.ref$best]) 
+    }
 
     # Checking for sane behaviour when no IDs are supplied.
     emp <- getBestTest(ids[0], tab[0,])
