@@ -2,9 +2,9 @@
 #define BAM_UTILS_H
 
 #include "csaw.h"
-#include "sam.h"
-#include "hts.h"
-#include "bgzf.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
+#include "htslib/bgzf.h"
 
 struct BamFile {
     BamFile(SEXP, SEXP);
