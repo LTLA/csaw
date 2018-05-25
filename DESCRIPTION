@@ -15,5 +15,5 @@ Description: Detection of differentially bound regions in ChIP-seq data
         FDR control.
 License: GPL-3
 NeedsCompilation: yes
-LinkingTo: Rhtslib, zlibbioc, Rcpp
+LinkingTo: Rhtslib (>= 1.13.1), zlibbioc, Rcpp
 SystemRequirements: C++11
