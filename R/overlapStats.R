@@ -1,3 +1,4 @@
+#' @importFrom S4Vectors queryLength queryHits subjectHits
 .overlapStats <- function(olap, tab, o.weight=NULL, i.weight=NULL, 
                           type=c("combine", "best", "empirical", "mixed"), ...) {
 	region.dex <- queryHits(olap)
@@ -41,6 +42,7 @@
 	return(tab)
 }
 
+#' @export
 combineOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
 # Wrapper around combineTests for Hits from findOverlaps,
 # when windows are overlapped with regions.
@@ -52,6 +54,7 @@ combineOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="combine", ...)
 }
 
+#' @export
 getBestOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
 # Wrapper around getBestTest for Hits from findOverlaps,
 # when windows are overlapped with regions.
@@ -63,6 +66,7 @@ getBestOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="best", ...)
 }
 
+#' @export
 empiricalOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
 # Wrapper around empiricalFDR for Hits from findOverlaps,
 # when windows are overlapped with regions
@@ -73,6 +77,7 @@ empiricalOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
     .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="empirical", ...)
 }
 
+#' @export
 mixedOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
 # Wrapper around mixedClusters for Hits from findOverlaps,
 # when windows are overlapped with regions
@@ -83,6 +88,8 @@ mixedOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
     .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="mixed", ...)
 }
 
+#' @export
+#' @importFrom S4Vectors queryHits subjectHits 
 summitOverlaps <- function(olap, region.best, o.summit=NULL, i.summit=NULL)
 # Wrapper around upweightSummits for Hits from findOverlaps.
 #
