@@ -1,3 +1,6 @@
+#' @export
+#' @importFrom edgeR scaleOffset cpm addPriorCount
+#' @importFrom SummarizedExperiment assay
 calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE, 
         log=TRUE, prior.count=1, assay.id="counts")
 # This is a convenience wrapper to compute CPMs, avoiding the
