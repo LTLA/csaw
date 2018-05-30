@@ -165,12 +165,21 @@ test_that("consolidateTests works correctly", {
         expect_warning(cons2 <- consolidateTests(id.list, result.list), "should be specified")
         expect_identical(cons2, cons)
 
-        # Alternative function works.
+        # Alternative function works, with proper re-indexing if necessary.
+        ref <- getBestTest(combo.id, combo.res, weight=combo.weight)
+        cons <- consolidateTests(id.list, result.list, weight.list=weight.list, FUN=getBestTest, reindex=NULL)
+        expect_identical(ref, cons)
+
         cons <- consolidateTests(id.list, result.list, weight.list=weight.list, FUN=getBestTest)
-        expect_identical(cons, getBestTest(combo.id, combo.res, weight=combo.weight))
+        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+        cons$best <- ref$best <- NULL
+        expect_identical(ref, cons)
 
         cons <- consolidateTests(id.list, result.list, weight.list=NULL, FUN=getBestTest)
-        expect_identical(cons, getBestTest(combo.id, combo.res))
+        ref <- getBestTest(combo.id, combo.res)
+        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+        cons$best <- ref$best <- NULL
+        expect_identical(ref, cons)
 
         # Argument specification works.
         cons <- consolidateTests(id.list, result.list, weight.list=NULL, fc.col="logCPM")
@@ -220,12 +229,21 @@ test_that("consolidateOverlaps works correctly", {
             expect_warning(cons2 <- consolidateOverlaps(olap.list, result.list), "should be specified")
             expect_identical(cons2, cons)
 
-            # Alternative function works.
+            # Alternative function works, with proper re-indexing if necessary.
+            ref <- getBestOverlaps(combo.olap, combo.res, o.weight=combo.weight)
+            cons <- consolidateOverlaps(olap.list, result.list, weight.list=weight.list, FUN=getBestOverlaps, reindex=NULL)
+            expect_identical(ref, cons)
+            
             cons <- consolidateOverlaps(olap.list, result.list, weight.list=weight.list, FUN=getBestOverlaps)
-            expect_identical(cons, getBestOverlaps(combo.olap, combo.res, o.weight=combo.weight))
-
+            expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+            cons$best <- ref$best <- NULL
+            expect_identical(ref, cons)
+            
+            ref <- getBestOverlaps(combo.olap, combo.res)
             cons <- consolidateOverlaps(olap.list, result.list, weight.list=NULL, FUN=getBestOverlaps)
-            expect_identical(cons, getBestOverlaps(combo.olap, combo.res))
+            expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+            cons$best <- ref$best <- NULL
+            expect_identical(ref, cons)
 
             # Argument specification works.
             cons <- consolidateOverlaps(olap.list, result.list, weight.list=NULL, fc.col="logCPM")

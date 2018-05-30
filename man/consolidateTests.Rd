@@ -7,10 +7,10 @@
 
 \usage{
 consolidateTests(id.list, result.list, weight.list, 
-    FUN=combineTests, ...)
+    FUN=combineTests, reindex="best", ...)
 
 consolidateOverlaps(olap.list, result.list, weight.list, 
-    FUN=combineOverlaps, ...)
+    FUN=combineOverlaps, reindex="best", ...)
 }
 
 \arguments{
@@ -20,12 +20,13 @@ Typically produced by \code{\link{consolidateWindows}} with \code{region=NULL}.}
 Typically produced by \code{\link{consolidateWindows}} with \code{region!=NULL}.}
 \item{result.list}{A list of data.frames containing the DB test results for each analysis.}
 \item{weight.list}{A list of numeric vectors specifying the weight of each window in \code{id.list} or overlapping window in \code{olap.list}.}
-\item{FUN}{A function specifying how the statistics should be consolidated.}
+\item{FUN}{A function specifying how the statistics should be consolidated, returning a DataFrame with one row per cluster/region.}
+\item{reindex}{A character vector indicating which fields of the DataFrame returned by \code{FUN} should be reindexed.}
 \item{...}{Further arguments to pass to \code{FUN}.}
 }
 
 \value{
-A data.frame of results depending on \code{FUN}, see \code{\link{combineTests}} and \code{\link{getBestTest}} for examples.
+A DataFrame of results computed by \code{FUN}, see \code{\link{combineTests}} and \code{\link{getBestTest}} for examples.
 Each row corresponds to a cluster for \code{consolidateTests} or to a pre-defined region for \code{consolidateOverlaps}.
 }
 
@@ -37,6 +38,16 @@ Users can obtain the best windows in each cluster/region by setting \code{FUN=ge
 If \code{weight.list} is not specified, it is set to \code{NULL} and a warning is raised.
 Users should generally pass the weights produced by \code{\link{consolidateWindows}} with \code{equiweight=TRUE},
 to ensure that all window sizes contribute equally to the final result.
+}
+
+\section{Reindexing}{
+Reindexing is necessary for any fields returned by \code{FUN} that contain an index for the result table.
+For example, \code{"best"} from \code{\link{getBestTest}} refers to the row index with the lowest p-value.
+This is not sensible when there are multiple result tables, as in \code{result.list}.
+
+If \code{reindex} is specified, the consolidation functions will convert the indices into a DataFrame with \code{"origin"} and \code{"row"} fields.
+The former specifies the table in \code{result.list} and the latter specifies the row of that table that contains the selected window.
+This DataFrame is stored as a nested DataFrame within the output DataFrame that was originally returned by \code{FUN}.
 }
 
 \seealso{
