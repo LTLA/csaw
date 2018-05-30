@@ -1,74 +1,72 @@
 #include "csaw.h"
 #include "utils.h"
 
-SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight, SEXP fcthreshold) {
+SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold) {
     BEGIN_RCPP
 
 	// Checking indices.
-    const Rcpp::IntegerVector _fcdex(fcdex);
-	const int fcn=_fcdex.size();
-	const int pdex=check_integer_scalar(pvaldex, "p-value index");
-
-	// Setting up the p-value column.
-    const Rcpp::List _tab(tab);
-    if (pdex < 0 || pdex >= _tab.size()) { 
-        throw std::runtime_error("p-value index out of range"); 
-    }
-    const Rcpp::NumericVector pval(_tab[pdex]);
-	const int n=pval.size();
+    const Rcpp::List fclist(fcs);
+	const size_t fcn=fclist.size();
+    const Rcpp::NumericVector pval(pvals);
+	const size_t nwin=pval.size();
 
 	// Setting up the log-FC columns.
     std::vector<Rcpp::NumericVector> fcs(fcn);
-    for (int i=0; i<fcn; ++i) { 
-        const int& curfcdex=_fcdex[i];
-        if (curfcdex < 0 || curfcdex >= _tab.size()) { 
-            throw std::runtime_error("log-FC index out of range"); 
+    for (size_t i=0; i<fcn; ++i) { 
+        const Rcpp::NumericVector current=fclist[i];
+		if (nwin!=current.size()) { 
+            throw std::runtime_error("log-FC and p-value vectors have different lengths");
         }
-
-		fcs[i]=Rcpp::NumericVector(_tab[curfcdex]);
-		if (n!=fcs[i].size()) { 
-            throw std::runtime_error("vector lengths are not equal"); 
-        }
+		fcs[i]=current;
 	}
 
 	// Setting up the remaining inputs. 
 	const double fcthresh=check_numeric_scalar(fcthreshold, "log fold-change threshold");
-    const Rcpp::IntegerVector _by(by);
-    int total=checkByVector(_by.begin(), _by.end());
-    const Rcpp::NumericVector _weight(weight);
-	if (n!=_by.size() || n!=_weight.size()) { 
-        throw std::runtime_error("vector lengths are not equal"); 
+
+    const Rcpp::IntegerVector clustid(by);
+    size_t nclust=check_By_vector(clustid.begin(), clustid.end());
+    if (clustid.size()!=nwin) {
+        throw std::runtime_error("cluster ID and p-value vectors have different lengths");
     }
 
-	// Pulling out results.
-    Rcpp::IntegerVector out_nwin(total);
-    Rcpp::IntegerMatrix out_nfc(total, fcn*2);
-    Rcpp::NumericVector out_p(total);
-    Rcpp::IntegerVector out_dir(fcn==1 ? total : 0);
-    int element=0;
+    const Rcpp::NumericVector winweight(weight);
+	if (nwin!=winweight.size()) { 
+        throw std::runtime_error("weight and p-value vectors have different lengths");
+    }
+
+	// Creating output objects to hold the results.
+    Rcpp::IntegerVector out_nwin(nclust);
+    std::vector<Rcpp::IntegerVector> out_nfc(fcn*2);
+    for (size_t idx=0; idx<out_nfc.size(); ++idx) {
+        out_nfc[idx]=Rcpp::IntegerVector(nclust); // avoid shallow copies.
+    }
+    
+    Rcpp::NumericVector out_p(nclust);
+    Rcpp::IntegerVector out_dir(fcn==1 ? nclust : 0);
 
     // Various temporary values.
-    int i=0;
+    size_t curclust=0;
+    size_t run_start=0;
     std::deque<std::pair<double, int> > psorter;
-    while (i<n) {
-        psorter.push_back(std::make_pair(pval[i], i));
-        int j=i+1;
-        double subweight=_weight[i];
-		while (j < n && _by[i]==_by[j]) { 
-			subweight+=_weight[j];
-            psorter.push_back(std::make_pair(pval[j], j));
-			++j; 
+
+    while (run_start < nwin) {
+        psorter.push_back(std::make_pair(pval[run_start], run_start));
+        size_t run_end=run_start + 1;
+        double subweight=winweight[run_start];
+		while (run_end < nwin && clustid[run_start]==clustid[run_end]) { 
+			subweight+=winweight[run_end];
+            psorter.push_back(std::make_pair(pval[run_end], run_end));
+			++run_end; 
 		}
 
-		// Computing the total number of windows, and that up/down for each fold change.
-        out_nwin[element]=j-i;
-        auto cur_nfc=out_nfc.row(element);
-		for (int k=0; k<fcn; ++k) { 
-			int& allup=cur_nfc[k*2];
-			int& alldown=cur_nfc[k*2+1];
+		// Computing the nclust number of windows, and that up/down for each fold change.
+        out_nwin[curclust]=run_end - run_start;
+		for (size_t fc=0; fc<fcn; ++fc) { 
+			int& allup=out_nfc[fc*2][curclust];
+			int& alldown=out_nfc[fc*2+1][curclust];
 
-			for (int x=i; x<j; ++x) {  
-                const double& curfc=fcs[k][x];
+			for (size_t curwin=run_start; curwin<run_end; ++curwin) {  
+                const double& curfc=fcs[fc][curwin];
 				if (curfc > fcthresh) { 
                     ++allup; 
                 } else if (curfc < -fcthresh) { 
@@ -83,19 +81,20 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
 		 * expanding it in-place in the sorted vector of p-values).
 		 */
 		std::sort(psorter.begin(), psorter.end());
-        double remaining=_weight[psorter.front().second];
-		double& outp=(out_p[element]=psorter.front().first/remaining); 
+        double remaining=winweight[psorter.front().second];
+		double& outp=(out_p[curclust]=psorter.front().first/remaining); 
         auto itps=psorter.begin()+1;
- 
-        int minx=i;
-		for (int x=i+1; x<j; ++x, ++itps) {
-	    	const int& current=itps->second;
-			remaining+=_weight[current];
+        auto minit=psorter.begin();
+
+        while (itps!=psorter.end()) {
+	    	const int& curwin=itps->second;
+			remaining+=winweight[curwin];
 			const double more_temp=(itps->first)/remaining;
 			if (more_temp < outp) { 
                 outp=more_temp; 
-                minx=x;
+                minit=itps;
             }
+            ++itps;
 		}
 		outp*=subweight;
 
@@ -106,66 +105,34 @@ SEXP get_cluster_stats (SEXP fcdex, SEXP pvaldex, SEXP tab, SEXP by, SEXP weight
          */
         if (fcn==1) {
             bool has_up=false, has_down=false;
-            auto itps=psorter.begin();
-            for (int x=i; x<=minx; ++x, ++itps) {
+            ++minit;
+
+            for (auto itps=psorter.begin(); itps!=minit; ++itps) {
                 const double& curfc=fcs[0][itps->second];
                 if (curfc > 0) { 
                     has_up=true; 
                 } else if (curfc < 0) {
                     has_down=true;
                 }
-                if (has_up & has_down) { 
+                if (has_up && has_down) { 
                     break; 
                 }
             }
 
-            int& current_dir=out_dir[element];
-            if (has_up & !has_down) { 
-                current_dir=1; 
-            } else if (has_down & !has_up) { 
-                current_dir=2; 
+            if (has_up && !has_down) { 
+                out_dir[curclust]=1; 
+            } else if (has_down && !has_up) { 
+                out_dir[curclust]=2; 
             }
         }
 
 		// Setting it up for the next round.
         psorter.clear();
-		++element;
-        i=j;
+		++curclust;
+        run_start=run_end;
 	}
-	
+
+    Rcpp::List out_nfc_list(out_nfc.begin(), out_nfc.end());
     return Rcpp::List::create(out_nwin, out_nfc, out_p, out_dir);
     END_RCPP
 }
-
-/* Computes the total cluster weight in a reasonably fast manner. */
-
-SEXP get_cluster_weight(SEXP ids, SEXP weight) {
-    BEGIN_RCPP
-
-    Rcpp::IntegerVector _ids(ids);
-    Rcpp::NumericVector _weight(weight);
-    const int n=_ids.size();
-	if (n!=_weight.size()) { 
-        throw std::runtime_error("vector lengths are not equal"); 
-    }
-    int total=checkByVector(_ids.begin(), _ids.end());
-
-    Rcpp::NumericVector output(total);
-    if (total) { 
-        auto oIt=output.begin(), wIt=_weight.begin();
-        *oIt=*wIt;
-        ++wIt;
-
-        for (int i=1; i<n; ++i) {
-            if (_ids[i]!=_ids[i-1]) { 
-                ++oIt;
-            }
-            (*oIt)+=*wIt;
-            ++wIt;
-        }
-    }
-
-    return output;
-    END_RCPP
-}
-
