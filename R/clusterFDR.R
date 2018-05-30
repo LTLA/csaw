@@ -23,7 +23,7 @@ clusterFDR <- function(ids, threshold, weight=NULL)
     }
 
 	num.fp <- sum(weight) * threshold
-	cluster.sizes <- .Call(cxx_get_cluster_weight, ids, weight) 
+	cluster.sizes <- tapply(weight, INDEX=ids, FUN=sum)
 	num.fp.cluster <- sum(cumsum(sort(cluster.sizes)) <= num.fp)
 
     if (length(cluster.sizes)) { 
