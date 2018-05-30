@@ -42,7 +42,7 @@ The BH method in \code{\link{combineTests}} is more statistically rigorous and s
 }
 
 \value{
-A data frame containing one row per cluster, with various fields:
+A DataFrame containing one row per cluster, with various fields:
 \itemize{
 \item A numeric field containing the one-sided p-value for each cluster in the right direction.
 This field is named \code{PValue} if \code{pval.col=NULL}, otherwise its name is set to \code{colnames(tab[,pval.col]}.

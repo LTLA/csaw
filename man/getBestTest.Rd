@@ -19,9 +19,11 @@ getBestTest(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.col=NULL)
 }
 
 \value{
-A dataframe with one row per cluster and the numeric fields \code{best}, the index for the best test in the cluster; \code{PValue}, the (possibly adjusted) p-value for that test; and \code{FDR}, the q-value corresponding to the adjusted p-value.
+A DataFrame with one row per cluster and the numeric fields \code{best}, the index for the best test in the cluster; 
+\code{PValue}, the (possibly adjusted) p-value for that test; 
+and \code{FDR}, the q-value corresponding to the adjusted p-value.
 Note that the p-value column may be named differently if \code{pval.col} is specified.
-Other fields in \code{tab} corresponding to the best test inthe cluster are also returned.
+Other fields in \code{tab} corresponding to the best test in the cluster are also returned.
 Cluster IDs are stored as the row names.
 }
 

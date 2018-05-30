@@ -18,7 +18,7 @@ combineTests(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 }
 
 \value{
-A dataframe with one row per cluster and various fields:
+A DataFrame with one row per cluster and various fields:
 \itemize{
 \item An integer field \code{nWindows}, specifying the total number of windows in each cluster.
 \item Two integer fields \code{*.up} and \code{*.down} for each log-FC column in \code{tab}, containing the number of windows with log-FCs above 0.5 or below -0.5, respectively.

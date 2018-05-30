@@ -18,7 +18,7 @@ mixedClusters(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 }
 
 \value{
-A data frame containing one row per cluster, with various fields:
+A DataFrame containing one row per cluster, with various fields:
 \itemize{
 \item A numeric field containing the IUT p-value for each cluster.
 This field is named \code{PValue} if \code{pval.col=NULL}, otherwise its name is set to \code{colnames(tab[,pval.col]}.
