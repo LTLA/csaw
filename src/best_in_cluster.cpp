@@ -3,29 +3,29 @@
 
 SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
     BEGIN_RCPP
-    const Rcpp::NumericVector _pval(pval);
-    const Rcpp::IntegerVector _by(by);
-    const Rcpp::NumericVector _weight(weight);
+    const Rcpp::NumericVector winp(pval);
+    const Rcpp::IntegerVector clustids(by);
+    const Rcpp::NumericVector winweight(weight);
 
-    const int n=_pval.size();
-	if (n!=_by.size() || n!=_weight.size()) {
+    const size_t nwin=winp.size();
+	if (nwin!=clustids.size() || nwin!=winweight.size()) {
         throw std::runtime_error("input vector lengths are not equal"); 
     }
-    int total=checkByVector(_by.begin(), _by.end());
+    size_t nclust=check_By_vector(clustids.begin(), clustids.end());
 
 	// Pulling out results.
-    Rcpp::NumericVector out_pval(total);
-    Rcpp::IntegerVector out_best(total);
+    Rcpp::NumericVector out_pval(nclust);
+    Rcpp::IntegerVector out_best(nclust);
     auto opIt=out_pval.begin();
     auto obIt=out_best.begin();
 
-    int i=0;
-    while (i<n) {
-        int j=i+1;
-        double subweight=_weight[i];
-        while (j < n && _by[i]==_by[j]) { 
-            subweight+=_weight[j];
-            ++j; 
+    size_t run_start=0;
+    while (run_start < nwin) {
+        size_t run_end=run_start+1;
+        double subweight=winweight[run_start];
+        while (run_end < nwin && clustids[run_start]==clustids[run_end]) { 
+            subweight+=winweight[run_end];
+            ++run_end; 
         }
 
 		/* Computing the Holm p-value for the best window (basically Bonferroni, if we're taking the minimum).
@@ -34,24 +34,24 @@ SEXP best_in_cluster(SEXP pval, SEXP by, SEXP weight) {
 		 * i.e. the total number of tests is rescaled relative to the weight of the current test (so, [10,1] 
 		 * weights would consider there to be 1.1 tests for the first one and 11 tests for the second one).
 		 */
-		int& outi=(*obIt=i);
-		double& outp=(*opIt=_pval[i]/_weight[i]);
-		double tempp=0;
-		for (int x=i+1; x<j; ++x) {
-			tempp=_pval[x]/_weight[x];
+        size_t best=run_start;
+		double& outp=(*opIt=winp[run_start]/winweight[run_start]);
+		for (size_t curwin=run_start+1; curwin<run_end; ++curwin) {
+			const double tempp=winp[curwin]/winweight[curwin];
 			if (tempp < outp) { 
-				outi=x;
+				best=curwin;
 				outp=tempp;
 			}
 		}
-		outp*=subweight;
+
+        outp*=subweight;
 	    if (outp > 1) { outp=1; }	
-		++outi; // For 1-based indexing in R.
+	    *obIt=int(best+1); // For 1-based indexing in R.
 
 		// Setting it up for the next round.
         ++obIt;
         ++opIt;
-		i=j;
+		run_start=run_end;
 	}
 	
     return Rcpp::List::create(out_pval, out_best);
