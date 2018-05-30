@@ -1,5 +1,5 @@
 #' @export
-consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests, ...) 
+consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests, reindex="best", ...) 
 # Consolidate results from multiple window widths.
 # 
 # written by Aaron Lun
@@ -25,12 +25,32 @@ consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests
         }
     }
 
-    FUN(unlist(id.list), do.call(rbind, result.list), weight=unlist(weight.list), ...)
+    output <- FUN(unlist(id.list), do.call(rbind, result.list), weight=unlist(weight.list), ...)
+    output <- .reindex_entries(result.list, output, reindex=reindex)
+    return(output)
+}
+
+#' @importFrom S4Vectors DataFrame
+.reindex_entries <- function(result.list, output, reindex) 
+# Reindexing to indicate the entry of 'result.list' of origin for 
+# indices that refer to the 'rbinded' data.frame.
+{
+    if (any(reindex %in% colnames(output))) {
+        per.hit <- c(0L, vapply(result.list, nrow, FUN.VALUE=0L))
+        endpoint <- cumsum(per.hit)
+
+        for (rdx in intersect(colnames(output), reindex)) {
+            current <- output[[rdx]] 
+            origin <- findInterval(current, endpoint, rightmost.closed=TRUE)
+            output[[rdx]] <- DataFrame(origin=origin, row=current - per.hit[origin])
+        }
+    }
+    return(output)
 }
 
 #' @export
 #' @importFrom S4Vectors nRnode nLnode queryHits subjectHits Hits
-consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=combineOverlaps, ...)
+consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=combineOverlaps, reindex="best", ...)
 # Consolidate results from multiple overlap objects.
 # 
 # written by Aaron Lun
@@ -70,7 +90,8 @@ consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=co
         last <- last + nRnodes[x]
     }
 
-    olap <- Hits(unlist(query.list), unlist(subject.list), 
-        nLnode=nLnodes[1], nRnode=last, sort.by.query=TRUE)
-    FUN(olap, do.call(rbind, result.list), o.weight=unlist(weight.list), ...)
+    olap <- Hits(unlist(query.list), unlist(subject.list), nLnode=nLnodes[1], nRnode=last, sort.by.query=TRUE)
+    output <- FUN(olap, do.call(rbind, result.list), o.weight=unlist(weight.list), ...)
+    output <- .reindex_entries(result.list, output, reindex=reindex)
+    return(output)
 }
