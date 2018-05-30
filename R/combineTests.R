@@ -1,3 +1,6 @@
+#' @export
+#' @importFrom S4Vectors DataFrame
+#' @importFrom stats p.adjust
 combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 # Computes a combined FDR by assembling their group numbers and computing the
 # average log-FC, average log-CPM and Simes' p-value for each cluster. The idea 
@@ -7,7 +10,6 @@ combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 # 
 # written by Aaron Lun
 # created 30 July 2013
-# last modified 9 January 2017
 {
     input <- .check_test_inputs(ids, tab, weight)
     ids <- input$ids
@@ -18,12 +20,11 @@ combineTests <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
 	# Running the clustering procedure.
     fc.col <- .parseFCcol(fc.col, tab) 
     is.pval <- .getPValCol(pval.col, tab)
-	out <- .Call(cxx_get_cluster_stats, fc.col - 1L, is.pval - 1L, tab, ids, weight, 0.5)
+	out <- .Call(cxx_get_cluster_stats, as.list(tab[fc.col]), tab[[is.pval]], ids, weight, 0.5)
 
-	combined <- data.frame(out[[1]], out[[2]], out[[3]], p.adjust(out[[3]], method="BH"), row.names=groups)
-	colnames(combined) <- c("nWindows", 
-			sprintf("%s.%s", rep(colnames(tab)[fc.col], each=2), c("up", "down")), 
-			colnames(tab)[is.pval], "FDR")
+	combined <- DataFrame(out[[1]], out[[2]], out[[3]], p.adjust(out[[3]], method="BH"), row.names=groups)
+	colnames(combined) <- c("nWindows", sprintf("%s.%s", rep(colnames(tab)[fc.col], each=2), c("up", "down")), 
+        colnames(tab)[is.pval], "FDR")
 
     # Adding direction.
     if (length(fc.col)==1L) {
