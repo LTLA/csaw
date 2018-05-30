@@ -15,13 +15,15 @@ Rcpp::StringVector makeStringVector(T start, T end) {
 }   
 
 template<typename T>
-int checkByVector(T start, T end) {
+size_t check_By_vector(T start, T end) {
     if (start==end) {
         return 0;
     }
-    int total=1;
+
+    size_t total=1;
     T next=start; 
     ++next;
+
     while (next!=end) { 
         if (*next < *start) {
             throw std::runtime_error("vector of cluster ids should be sorted");
