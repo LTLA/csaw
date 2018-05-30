@@ -33,13 +33,15 @@
 }
 
 .expandNA <- function(tab, N) {
-	expand.vec <- rep(NA, N)
-	row.dex <- as.integer(rownames(tab))
-	if (any(N <= 0L | row.dex > N)) { stop("cluster IDs are not within [1, nregions]") }
-	expand.vec[row.dex] <- seq_len(nrow(tab))
-	tab <- tab[expand.vec,]
-	rownames(tab) <- as.character(seq_len(N))
-	return(tab)
+    expand.vec <- rep(NA_integer_, N)
+    row.dex <- as.integer(rownames(tab))
+    if (any(N <= 0L | row.dex > N)) { 
+        stop("cluster IDs are not within [1, nregions]") 
+    }
+    expand.vec[row.dex] <- seq_along(row.dex)
+    tab <- tab[expand.vec,,drop=FALSE]
+    rownames(tab) <- as.character(seq_len(N))
+    return(tab)
 }
 
 #' @export
