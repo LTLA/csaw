@@ -176,6 +176,12 @@ test_that("combineTests handles edge cases correctly", {
         expect_equal(out.na, out.ref) 
     }
 
+    # Checking for sane behaviour when no log-fold changes are supplied.
+    out3 <- combineTests(ids, tab, fc.col=integer(0))
+    ref <- combineTests(ids, tab)
+    ref$logFC.up <- ref$logFC.down <- ref$direction <- NULL
+    expect_identical(ref, out3)
+
     # Checking for sane behaviour when no IDs are supplied.
     emp <- combineTests(ids[0], tab[0,])
     expect_identical(nrow(emp), 0L)

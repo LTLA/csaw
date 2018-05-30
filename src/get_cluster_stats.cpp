@@ -132,7 +132,17 @@ SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthres
         run_start=run_end;
 	}
 
-    Rcpp::List out_nfc_list(out_nfc.begin(), out_nfc.end());
-    return Rcpp::List::create(out_nwin, out_nfc, out_p, out_dir);
+    // Ensuring we return _something_ that can be put into a DataFrame with nclust rows,
+    // even if there are no log-fold changes to report.
+    Rcpp::RObject out_nfc_value, out_dir_value;
+    if (fcn) {
+        out_nfc_value=Rcpp::List(out_nfc.begin(), out_nfc.end());
+        out_dir_value=out_dir;
+    } else {
+        out_nfc_value=Rcpp::IntegerMatrix(nclust, 0);
+        out_dir_value=Rcpp::IntegerMatrix(nclust, 0);
+    }
+
+    return Rcpp::List::create(out_nwin, out_nfc_value, out_p, out_dir_value);
     END_RCPP
 }
