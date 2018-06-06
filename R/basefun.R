@@ -14,7 +14,7 @@
     bam.file <- path.expand(bam.file)
     bam.index <- paste0(bam.file, ".bai")
 
-	if (length(param$forward)==0L) { stop("read strand extraction must be specified") }
+    if (length(param$forward)==0L) { stop("read strand extraction must be specified") }
     if (param$pe=="first") {
         use.first <- TRUE
     } else if (param$pe=="second") { 
@@ -28,7 +28,7 @@
     names(out) <- c("forward", "reverse")
     names(out$forward) <- names(out$reverse) <- c("pos", "qwidth")
 
-	# Filtering by discard regions. Using alignment width so long reads can escape repeats.
+    # Filtering by discard regions. Using alignment width so long reads can escape repeats.
     for (i in names(out)) { 
         current <- out[[i]]
         keep <- .discardReads(cur.chr, current[[1]], current[[2]], param$discard)
@@ -44,7 +44,7 @@
     }
     relevant <- seqnames(discard)==chr
     if (any(relevant)) { 
-		keep <- !overlapsAny(IRanges(pos, pos+alen-1L), ranges(discard)[relevant], type="within")
+        keep <- !overlapsAny(IRanges(pos, pos+alen-1L), ranges(discard)[relevant], type="within")
     } else {
         keep <- !logical(length(pos))
     }
@@ -90,10 +90,10 @@
     keep <- dkeep & fkeep
     output <- list(pos=left.pos[keep], size=all.sizes[keep])
     if (with.reads) {
-		output$forward <- list(pos=left.pos[keep], qwidth=left.len[keep])
-		output$reverse <- list(pos=right.pos[keep], qwidth=right.len[keep])
+        output$forward <- list(pos=left.pos[keep], qwidth=left.len[keep])
+        output$reverse <- list(pos=right.pos[keep], qwidth=right.len[keep])
     }
-	return(output)
+    return(output)
 }
 
 # Aliases, for convenience.
@@ -111,25 +111,23 @@
 # written by Aaron Lun
 # created 12 December 2014
 { 
-	originals <- NULL
-	for (bam in bam.files) {
-		chrs <- scanBamHeader(bam)[[1]][[1]]
-		chrs <- chrs[order(names(chrs))]
-		if (is.null(originals)) { originals <- chrs } 
-		else if (!identical(originals, chrs)) { 
-			warning("chromosomes are not identical between BAM files")
-			pairing <- match(names(originals), names(chrs))
-			originals <- pmin(originals[!is.na(pairing)], chrs[pairing[!is.na(pairing)]])
-		}
-	}
-    if (length(restrict)) { originals <- originals[names(originals) %in% restrict] }
-	return(originals)
-}
+    originals <- NULL
+    for (bam in bam.files) {
+        chrs <- scanBamHeader(bam)[[1]][[1]]
+        chrs <- chrs[order(names(chrs))]
 
-.boundIntervals <- function(x, chrlen) {
-    x[x<1L] <- 1L
-    x[x>chrlen] <- chrlen
-    return(x)
+        if (is.null(originals)) { 
+            originals <- chrs 
+        } else if (!identical(originals, chrs)) { 
+            warning("chromosomes are not identical between BAM files")
+            pairing <- match(names(originals), names(chrs))
+            originals <- pmin(originals[!is.na(pairing)], chrs[pairing[!is.na(pairing)]])
+        }
+    }
+    if (length(restrict)) { 
+        originals <- originals[names(originals) %in% restrict] 
+    }
+    return(originals)
 }
 
 .coerceFragments <- function(starts, ends, final, chrlen) 
@@ -139,18 +137,19 @@
 #
 # written by Aaron Lun
 # created 13 February 2014
-# last modified 21 December 2015
 {
-	if (!is.na(final)) { 
-		remainders <- as.integer((ends - starts + 1L - final)/2)
-		if (any(remainders!=0L)) { 
-			starts <- starts + remainders
-			ends <- ends - remainders
-		} 
-	}
-    starts <- .boundIntervals(starts, chrlen)
-    ends <- .boundIntervals(ends, chrlen)
-	return(list(start=starts, end=ends)) 
+    if (!is.na(final)) { 
+        remainders <- as.integer(ends - starts + 1L - final)
+        if (any(remainders!=0L)) { 
+            starts <- starts + as.integer(floor(remainders/2))
+            ends <- ends - as.integer(ceiling(remainders/2))
+        } 
+    }
+
+    chrlen <- as.integer(chrlen)
+    starts <- pmin(pmax(1L, starts), chrlen)
+    ends <- pmin(pmax(1L, ends), chrlen)
+    return(list(start=starts, end=ends)) 
 }
 
 ############################################################
@@ -170,22 +169,22 @@
         if (length(ext)!=1L) {
             stop("'ext' must be an integer scalar")
         }
-		ext <- rep(ext, length.out=nbam)
+        ext <- rep(ext, length.out=nbam)
         final.ext <- NA_integer_
     }
 
-	ext <- as.integer(round(ext))
+    ext <- as.integer(round(ext))
     if (length(ext)!=nbam) {
         stop("length of extension vector is not consistent with number of libraries")
     } 
-	if (any(!is.na(ext) & ext <= 0L)) { stop("extension length must be NA or a positive integer") }
+    if (any(!is.na(ext) & ext <= 0L)) { stop("extension length must be NA or a positive integer") }
 
     final.ext <- as.integer(round(final.ext))
     if (length(final.ext)!=1L || (!is.na(final.ext) && final.ext <= 0L)) { 
         stop("final extension length must be a positive integer or NA") 
     }
 
-	list(ext=ext, final=final.ext)
+    list(ext=ext, final=final.ext)
 }
 
 .extendSEdir <- function(reads, ext, final, chrlen, forward=TRUE) {
@@ -201,7 +200,7 @@
             start <- end - ext + 1L
         }
     }
-	out <- .coerceFragments(start, end, final=final, chrlen=chrlen)
+    out <- .coerceFragments(start, end, final=final, chrlen=chrlen)
     return(out)
 }
 
@@ -225,10 +224,10 @@
 # Decides what strand we should assign to the output GRanges in the
 # SummarizedExperiment object, after counting.
 {
-	getfs <- param$forward
+    getfs <- param$forward
     if (length(getfs)==0L) { 
-		stop("unspecified strandedness")
-	} else if (is.na(getfs)) { 
+        stop("unspecified strandedness")
+    } else if (is.na(getfs)) { 
         return("*") 
     } else if (getfs) { 
         return("+") 
