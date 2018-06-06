@@ -171,4 +171,56 @@ test_that(".extractSE works correctly with only first or second reads", {
 })
 
 ######################################################################
+# Chromosome length and end coercion checks.
+
+set.seed(1003)
+test_that(".activeChrs works correctly", {
+    chromos <- c(chrA=1000L, chrB=3000L)
+    obam1 <- regenSE(100, chromos, outfname=tempfile())
+    obam2 <- regenPE(100, chromos, outfname=tempfile())
+    obam3 <- regenPE(100, c(chromos, chrC=200), outfname=tempfile())
+    obam4 <- regenPE(100, chromos * 2, outfname=tempfile())
+
+    # In the simplest case... 
+    expect_identical(csaw:::.activeChrs(obam1, NULL), chromos)
+    expect_identical(csaw:::.activeChrs(c(obam1, obam2), NULL), chromos)
+    expect_identical(csaw:::.activeChrs(c(obam1, obam2), "chrA"), chromos["chrA"])
+    expect_identical(csaw:::.activeChrs(c(obam1, obam2), "chrB"), chromos["chrB"])
+    expect_identical(csaw:::.activeChrs(c(obam1, obam2), names(chromos)), chromos)
+
+    # Triggering various warnings.
+    expect_warning(out <- csaw:::.activeChrs(c(obam1, obam3), NULL), "not identical")
+    expect_identical(out, chromos)
+    expect_warning(out <- csaw:::.activeChrs(c(obam1, obam4), NULL), "not identical")
+    expect_identical(out, chromos)
+})
+
+set.seed(1004)
+test_that(".coerceFragments works correctly", {
+    starts <- as.integer(round(runif(100, 1, 1000)))
+    widths <- as.integer(round(runif(100, 1, 100)))
+    ends <- starts + widths
+
+    # Chrlen and positivity are enforced.
+    out <- csaw:::.coerceFragments(starts, ends, final=NA, chrlen=1000)
+    expect_identical(out$end, pmin(ends, 1000L))
+    expect_identical(out$start, starts)
+
+    out <- csaw:::.coerceFragments(-starts, ends, final=NA, chrlen=1e5)
+    expect_true(all(out$start==1L))
+    expect_identical(out$end, ends)
+
+    # Final width is enforced.    
+    out <- csaw:::.coerceFragments(starts, ends, final=50, chrlen=1e6)
+    ref <- resize(IRanges(starts, ends), width=50, fix="center")
+    expect_identical(out$start, pmax(1L, start(ref)))
+    expect_identical(out$end, end(ref))
+
+    out <- csaw:::.coerceFragments(starts, ends, final=20, chrlen=500)
+    ref <- resize(IRanges(starts, ends), width=20, fix="center")
+    expect_identical(out$start, pmin(pmax(1L, start(ref)), 500L))
+    expect_identical(out$end, pmin(end(ref), 500L))
+})
+
+######################################################################
 
