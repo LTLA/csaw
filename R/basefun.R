@@ -175,9 +175,11 @@
 
     ext <- as.integer(round(ext))
     if (length(ext)!=nbam) {
-        stop("length of extension vector is not consistent with number of libraries")
+        stop("length of extension vector is not consistent with the number of libraries")
     } 
-    if (any(!is.na(ext) & ext <= 0L)) { stop("extension length must be NA or a positive integer") }
+    if (any(!is.na(ext) & ext <= 0L)) { 
+        stop("extension length must be NA or a positive integer") 
+    }
 
     final.ext <- as.integer(round(final.ext))
     if (length(final.ext)!=1L || (!is.na(final.ext) && final.ext <= 0L)) { 
