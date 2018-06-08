@@ -238,16 +238,9 @@
     }
 }
 
-.runningWM <- function(store, x)
-# Computes the weighted mean.
+.formatColData <- function(bam.files, totals, ext.data, all.extras, param) 
+# Formats the column data in the output SummarizedExperiment after counting.
 {
-    if (!length(store)) { store <- c(0, 0) }
-    store[1] <- weighted.mean(c(mean(x), store[1]), c(length(x), store[2]))
-    store[2] <- store[2] + length(x)
-    return(store)
-}
-
-.formatColData <- function(bam.files, totals, ext.data, all.extras, param) {
     nbam <- length(bam.files)
     store.ext <- ext.data$ext
     store.rlen <- rep(NA_integer_, nbam)
@@ -258,13 +251,15 @@
         store.extras[bf] <- weighted.mean(current.extras[,1], current.extras[,2])
     }
     store.extras <- as.integer(round(store.extras))
-    if (param$pe=="both") { store.ext <- store.extras }
-    else { store.rlen <- store.extras }
+
+    if (param$pe=="both") { 
+        store.ext <- store.extras 
+    } else { 
+        store.rlen <- store.extras 
+    }
 
     DataFrame(bam.files=bam.files, totals=totals, ext=store.ext, rlen=store.rlen)
 }
-
-############################################################
 
 .toGRanges <- function(x) 
 # Converts the input to a GRanges, if it wasn't before.
