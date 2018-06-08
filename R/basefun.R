@@ -1,3 +1,4 @@
+#' @importFrom GenomeInfoDb seqnames
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
 # duplicate and poorly mapped/non-unique reads. We also discard reads in the
@@ -8,7 +9,6 @@
 #
 # written by Aaron Lun
 # created 8 December 2013
-# last modified 20 December 2015
 {
     cur.chr <- as.character(seqnames(where)) 
     bam.file <- path.expand(bam.file)
@@ -38,6 +38,8 @@
     return(out)
 }
 
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom IRanges IRanges overlapsAny ranges
 .discardReads <- function(chr, pos, alen, discard) {
     if (!length(pos)) { 
         return(logical(0)) 
@@ -51,6 +53,7 @@
     return(keep)
 }
 
+#' @importFrom GenomeInfoDb seqnames
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
 # A function to extract PE data for a particular chromosome. Synchronisation
 # is expected.  We avoid sorting by name  as it'd mean we have to process the
@@ -60,7 +63,6 @@
 # 
 # written by Aaron Lun
 # created 8 December 2013
-# last modified 18 March 2017
 {
     cur.chr <- as.character(seqnames(where)) 
     bam.file <- path.expand(bam.file)
@@ -104,6 +106,7 @@
 
 ###########################################################
 
+#' @importFrom Rsamtools scanBamHeader
 .activeChrs <- function(bam.files, restrict) 
 # Processes the incoming data; checks that bam headers are all correct,
 # truncates the list according to 'restrict'.
@@ -213,7 +216,6 @@
 #
 # written by Aaron Lun
 # created 12 December 2014
-# last modified 21 December 2015
 {
     fout <- .extendSEdir(reads$forward, ext, final, chrlen, forward=TRUE)
     rout <- .extendSEdir(reads$reverse, ext, final, chrlen, forward=FALSE)
@@ -238,6 +240,8 @@
     }
 }
 
+#' @importFrom stats weighted.mean
+#' @importFrom S4Vectors DataFrame
 .formatColData <- function(bam.files, totals, ext.data, all.extras, param) 
 # Formats the column data in the output SummarizedExperiment after counting.
 {
@@ -261,6 +265,9 @@
     DataFrame(bam.files=bam.files, totals=totals, ext=store.ext, rlen=store.rlen)
 }
 
+#' @importClassesFrom SummarizedExperiment RangedSummarizedExperiment
+#' @importClassesFrom GenomicRanges GenomicRanges
+#' @importFrom methods is
 .toGRanges <- function(x) 
 # Converts the input to a GRanges, if it wasn't before.
 {
