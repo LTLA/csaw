@@ -19,7 +19,7 @@ simsam <- function(f.out, chr, pos, strands, chromosomes, mapq=199, is.dup=NULL,
     qual <- strrep(".", len)
 
     if (is.null(names)) { 
-        names <- paste0("x", seq_along(pos))
+        names <- sprintf("x%i", seq_along(pos))
     }
 
     flags<-ifelse(strands, 0, 16)  
@@ -27,8 +27,8 @@ simsam <- function(f.out, chr, pos, strands, chromosomes, mapq=199, is.dup=NULL,
         flags <- flags + ifelse(is.dup, 1024, 0) 
     }
 
-    mapq <- rep(mapq, length.out=length(names))
-    stuff <- data.frame(QNAME=names, FLAG=flags, CHR=chr, POS=pos, MAPQ=mapq, CIGAR=cigar, stringsAsFactors=FALSE)
+    .expander <- function(x)  rep(x, length.out=length(names)) 
+    stuff <- data.frame(QNAME=names, FLAG=flags, CHR=chr, POS=pos, MAPQ=.expander(mapq), CIGAR=.expander(cigar), stringsAsFactors=FALSE)
 
     # Setting a whole host of paired end information in the relevant fields.
     if (is.paired) {
@@ -62,10 +62,10 @@ simsam <- function(f.out, chr, pos, strands, chromosomes, mapq=199, is.dup=NULL,
         stuff$FLAG <- reflags
         stuff <- cbind(stuff, data.frame(MATECHR=mate.chr, MATEPOS=mate.pos, ISIZE=isize))
     } else {
-        stuff <- cbind(stuff, data.frame(MATECHR="*", MATEPOS=0, ISIZE=0))
+        stuff <- cbind(stuff, data.frame(MATECHR=.expander("*"), MATEPOS=.expander(0), ISIZE=.expander(0)))
     }
 
-    stuff <- cbind(stuff, data.frame(SEQ=seq, QUAL=qual))
+    stuff <- cbind(stuff, data.frame(SEQ=.expander(seq), QUAL=.expander(qual), stringsAsFactors=FALSE))
     write.table(file=out, stuff, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
     close(out)
 
@@ -99,18 +99,20 @@ regenSE <- function(nreads, chromos, outfname, ...)
     len <- 20
     left.clip <- round(runif(nreads, 0, len/4))
     right.clip <- round(runif(nreads, 0, len/4))
-    cigar <- paste0(len - left.clip - right.clip, "M")
-    cigar[right.clip > 0] <- paste0(cigar[right.clip > 0], right.clip[right.clip > 0], "S")
-    cigar[left.clip > 0] <- paste0(left.clip[left.clip > 0], "S", cigar[left.clip > 0])
+    cigar <- sprintf("%iM", len - left.clip - right.clip)
+    cigar[right.clip > 0] <- sprintf("%s%sS", cigar[right.clip > 0], right.clip[right.clip > 0])
+    cigar[left.clip > 0] <- sprintf("%sS%s", left.clip[left.clip > 0], cigar[left.clip > 0])
 
     simsam(outfname, names(chromos)[chr], pos, str, chromos, is.dup=isdup, mapq=mapq, cigar=cigar, len=len, ...)
 }
 
 regenPE <- function(npairs, chromos, outfname) 
 # Convenient paired-end simulations, auto-filling read positions and alignment statistics.
-# The number of reads is simply double the number of pairs involved.
+# The number of reads is simply double the number of pairs involved. Note the use of seq_len
+# to provide consistent behaviour when npairs = 0.
 {
-    qnames <- paste0("READ", c(sample(npairs), sample(npairs)))
+
+    qnames <- sprintf("READ%i", c(sample(seq_len(npairs)), sample(seq_len(npairs))))
     regenSE(npairs * 2L, chromos, outfname, is.paired=TRUE, names=qnames)
 }
 

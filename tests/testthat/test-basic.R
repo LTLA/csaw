@@ -71,6 +71,17 @@ test_that(".extractSE works correctly in the single-end case", {
             }
         }
     }
+
+    # Testing what happens with no reads.
+    obam <- regenSE(0L, chromos, outfname=tempfile())
+    for (idx in seq_along(genome)) {
+        element <- genome[idx]
+        out <- csaw:::.extractSE(obam, element, readParam())
+        expect_identical(out$forward$pos, integer(0))
+        expect_identical(out$forward$qwidth, integer(0))
+        expect_identical(out$reverse$pos, integer(0))
+        expect_identical(out$reverse$qwidth, integer(0))
+    }
 })
 
 ######################################################################
@@ -139,6 +150,15 @@ test_that(".extractPE works correctly in the paired-end case", {
                 expect_identical(out$size[o1], ref.size[o2])
             }
         }
+    }
+
+    # Testing what happens with no reads.
+    obam <- regenPE(0L, chromos, outfname=tempfile())
+    for (idx in seq_along(genome)) {
+        element <- genome[idx]
+        out <- csaw:::.extractPE(obam, element, readParam())
+        expect_identical(out$pos, integer(0))
+        expect_identical(out$size, integer(0))
     }
 })
 
@@ -224,6 +244,15 @@ test_that(".coerceFragments works correctly", {
     ref <- resize(IRanges(starts, ends), width=final, fix="center")
     expect_identical(out$start, pmin(pmax(1L, start(ref)), chrlen))
     expect_identical(out$end, pmin(end(ref), chrlen))
+
+    # Works correcty on empty inputs.
+    out <- csaw:::.coerceFragments(integer(0), integer(0), final=NA, chrlen=1e6)
+    expect_identical(out$start, integer(0))
+    expect_identical(out$end, integer(0))
+
+    out <- csaw:::.coerceFragments(integer(0), integer(0), final=50L, chrlen=1e6)
+    expect_identical(out$start, integer(0))
+    expect_identical(out$end, integer(0))
 })
 
 ######################################################################
