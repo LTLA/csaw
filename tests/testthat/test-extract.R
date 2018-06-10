@@ -118,7 +118,7 @@ test_that("extractReads works correctly in the paired-end case", {
 })
 
 set.seed(2003)
-test_that("extractReads works correctly to return the reads themselves", {
+test_that("extractReads works correctly to return the reads themselves in PE mode", {
     chromos <- c(chrA=1000, chrB=3000, chrC=2000)
     discarder <- makeDiscard(10, 100, chromos)
     genome <- GRanges(names(chromos), IRanges(1L, chromos))
@@ -145,4 +145,27 @@ test_that("extractReads works correctly to return the reads themselves", {
         combined <- c(out1, out2)
         expect_identical(sort(ref), sort(combined))
     }
+})
+
+set.seed(2004)
+test_that("extractReads correctly raises errors", {
+    chromos <- c(chrA=1000, chrB=3000, chrC=2000)
+    genome <- GRanges(names(chromos), IRanges(1L, chromos))
+    rparam <- readParam(pe="both")
+
+    obam <- regenSE(100L, chromos, outfname=tempfile())
+    extractor <- generateWindows(chromos, 2, 500)
+    expect_error(extractReads(obam, extractor), "exactly one range")
+
+    test <- extractor[1]
+    strand(test) <- "+"
+    expect_warning(out.f <- extractReads(obam, test), "ignored")
+    strand(test) <- "-"
+    expect_warning(out.r <- extractReads(obam, test), "ignored")
+    expect_identical(out.f, out.r)
+
+    test <- GRanges("chrA", IRanges(1, 1000))
+    expect_warning(extractReads(obam, test, param=readParam(restrict="chrC")), "not in restricted subset")
+    test <- GRanges("chrD", IRanges(1, 1000))
+    expect_error(extractReads(obam, test, param=readParam(restrict="chrC")), "cannot find current chromosome")
 })
