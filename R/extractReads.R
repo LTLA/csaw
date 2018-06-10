@@ -5,7 +5,7 @@
 #' @importFrom GenomeInfoDb Seqinfo seqnames
 #' @importFrom Rsamtools scanBamHeader
 #' @importFrom S4Vectors Rle
-#' @importFrom BiocGenerics strand
+#' @importFrom BiocGenerics strand strand<-
 extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=FALSE)
 # Exactly as specified. Takes a region and plots it in bimodal mode, with
 # options for duplicate removal, mapping quality enhancement, colorization,
@@ -19,6 +19,7 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
     }
     if (as.logical(strand(region)!="*")) {
         warning("strandedness of region will be ignored, use param$forward instead")
+        strand(region) <- "*"
     }
     ext.data <- .collateExt(1, ext)
 
