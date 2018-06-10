@@ -1,3 +1,11 @@
+#' @export
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#' @importFrom BiocParallel bpmapply
+#' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom S4Vectors SimpleList
+#' @importFrom BiocGenerics strand<-
 regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 # This just counts reads over regions. The only reason I'm using this and not
 # some other package, is because (a) I want to avoid loading in more packages
@@ -6,7 +14,6 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 #
 # written by Aaron Lun
 # created 14 May 2014
-# last modified 8 August 2016
 {
 	nbam <- length(bam.files)
 	extracted.chrs <- .activeChrs(bam.files, param$restrict)
@@ -50,6 +57,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 		metadata=list(final.ext=ext.data$final, param=param)))
 }
 
+#' @importFrom IRanges countOverlaps
 .region_counts <- function(bam.file, where, param, 
                            init.ext, final.ext, outlen, 
                            regions, chosen) {
