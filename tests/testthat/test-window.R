@@ -4,35 +4,35 @@
 source("simsam.R")
 
 expected_ranges <- function(width, shift, spacing, bam.files, param) {
-	spacing <- as.integer(spacing)
-	width <- as.integer(width)
-	shift <- as.integer(shift)
+    spacing <- as.integer(spacing)
+    width <- as.integer(width)
+    shift <- as.integer(shift)
 
-	chrs <- scanBamHeader(bam.files[1])[[1]][[1]]
-	if (length(param$restrict)) { 
+    chrs <- scanBamHeader(bam.files[1])[[1]][[1]]
+    if (length(param$restrict)) { 
         chrs <- chrs[names(chrs) %in% param$restrict] 
     }
 
-	output <- vector("list", length(chrs))
+    output <- vector("list", length(chrs))
     names(output) <- names(chrs)
-	for (x in names(chrs)) {
-		multiples <- ceiling(chrs[[x]]/spacing)
-		all.starts <- 0:multiples*spacing+1L-shift
-		all.ends <- all.starts+width-1L
-		all.starts <- pmax(all.starts, 1L)
-		all.ends <- pmin(all.ends, chrs[[x]])
+    for (x in names(chrs)) {
+        multiples <- ceiling(chrs[[x]]/spacing)
+        all.starts <- 0:multiples*spacing+1L-shift
+        all.ends <- all.starts+width-1L
+        all.starts <- pmax(all.starts, 1L)
+        all.ends <- pmin(all.ends, chrs[[x]])
 
-		keep <- all.starts <= chrs[[x]] & all.ends > 0L
-		gr <- GRanges(x, IRanges(all.starts[keep], all.ends[keep]))
-		keep <- !GenomicRanges::duplicated(gr) 
-		output[[x]] <- gr[keep]
-	}
+        keep <- all.starts <= chrs[[x]] & all.ends > 0L
+        gr <- GRanges(x, IRanges(all.starts[keep], all.ends[keep]))
+        keep <- !GenomicRanges::duplicated(gr) 
+        output[[x]] <- gr[keep]
+    }
 
-	output <- suppressWarnings(do.call(c, unname(output)))
-	if (!is.na(param$forward)) {
-		strand(output) <- ifelse(param$forward, "+", "-")
-	}
-	return(output)
+    output <- suppressWarnings(do.call(c, unname(output)))
+    if (!is.na(param$forward)) {
+        strand(output) <- ifelse(param$forward, "+", "-")
+    }
+    return(output)
 }
 
 CHECKFUN <- function(bam.files, param, fraglen=200, width=100, shift=0, spacing=50, filter=10) { 
@@ -66,21 +66,38 @@ test_that("windowCounts works with SE data", {
                         readParam(dedup=TRUE),
                         readParam(forward=FALSE),
                         readParam(forward=TRUE),
-                        readParam(discard=makeDiscard(10, 100, chromos)),
-                        readParam(restrict="chrB")
+                        readParam(discard=makeDiscard(10, 100, chromos))
                         )) {
-    	bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(2000, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam)
+    }
+
+    # Checking extension strategies.
+    rparam <- readParam(minq=10)
+    for (ext.param in list(NA, 11, 111, 1111)) {
+        bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+                      regenSE(1500, chromos, file.path(tempdir, "B")))
+        CHECKFUN(bam.files, param=rparam, fraglen=ext.param)
     }
 
     # Checking restriction strategies.
     bam.files <-c(regenSE(600, chromos, file.path(tempdir, "A")), 
                   regenSE(500, chromos, file.path(tempdir, "B")))
-    y1 <- CHECKFUN(bam.files, param=readParam())
-    y2 <- CHECKFUN(bam.files, param=readParam(restrict=names(chromos)))
+    y1 <- CHECKFUN(bam.files, param=readParam(), fraglen=200, width=100, spacing=50, shift=0)
+    y2 <- windowCounts(bam.files, param=readParam(restrict=names(chromos)), ext=200, width=100, spacing=50, shift=0)
     expect_identical(assay(y1), assay(y2))
     expect_identical(y1$totals, y2$totals)
+
+    yA <- windowCounts(bam.files, param=readParam(restrict="chrA"), ext=200, width=100, spacing=50, shift=0)
+    expect_true(all(seqnames(rowRanges(yA))=="chrA"))
+
+    yB <- windowCounts(bam.files, param=readParam(restrict="chrB"), ext=200, width=100, spacing=50, shift=0)
+    expect_true(all(seqnames(rowRanges(yB))=="chrB"))
+
+    expect_equivalent(rbind(assay(yA), assay(yB)), assay(y1))
+    expect_identical(suppressWarnings(c(rowRanges(yA), rowRanges(yB))), rowRanges(y1))
+    expect_equal(yA$totals + yB$totals, y1$totals)
 })
 
 set.seed(40002)
@@ -88,7 +105,7 @@ test_that("windowCounts works with PE data", {
     for (rparam in list(readParam(pe="both"), 
                         readParam(pe="both", max.frag=1e8),
                         readParam(pe="both", max.frag=200))) {
-    	bam.files <-c(regenPE(10000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenPE(10000, chromos, file.path(tempdir, "A")), 
                       regenPE(11000, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam)
     }
@@ -96,7 +113,7 @@ test_that("windowCounts works with PE data", {
     # Checking alternative counting from PE data.
     for (rparam in list(readParam(pe="first"), 
                         readParam(pe="second"))) {
-    	bam.files <-c(regenPE(20000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenPE(20000, chromos, file.path(tempdir, "A")), 
                       regenPE(10000, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam, fraglen=100)
         CHECKFUN(bam.files, param=rparam, fraglen=NA)
@@ -104,32 +121,26 @@ test_that("windowCounts works with PE data", {
 })
 
 set.seed(400021)
-test_that("windowCounts works with irregular extension, width, shift and spacing", {
+test_that("windowCounts works with irregular width, shift and spacing", {
     rparam <- readParam(minq=10)
 
-    for (ext.param in list(NA, 11, 111, 1111)) {
-    	bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
-                      regenSE(1500, chromos, file.path(tempdir, "B")))
-        CHECKFUN(bam.files, param=rparam, fraglen=ext.param)
-	}
-
     for (width in list(11, 1111)) {
-    	bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam, width=width, fraglen=ext.param)
-	}
+    }
 
     for (shift in list(11, 22)) {
-    	bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam, shift=shift, fraglen=ext.param)
-	}
+    }
 
     for (spacing in list(22, 111)) {
-    	bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+        bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
         CHECKFUN(bam.files, param=rparam, spacing=spacing, fraglen=ext.param)
-	}
+    }
 
     # Checking that spacing, shift and width interact properly.
     bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
@@ -182,7 +193,7 @@ test_that("windowCounts behaves correctly with silly inputs", {
     expect_true(all(assay(out)==0))
     expect_identical(out$totals, 0L)
 
-	# Throws with invalid arguments.
+    # Throws with invalid arguments.
     expect_error(windowCounts(obam, shift=-1), "must be a non-negative integer")
     expect_error(windowCounts(obam, spacing=0), "must be a positive integer")
     expect_error(windowCounts(obam, width=0), "must be a positive integer")
