@@ -127,19 +127,19 @@ test_that("windowCounts works with irregular width, shift and spacing", {
     for (width in list(11, 1111)) {
         bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
-        CHECKFUN(bam.files, param=rparam, width=width, fraglen=ext.param)
+        CHECKFUN(bam.files, param=rparam, width=width)
     }
 
     for (shift in list(11, 22)) {
         bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
-        CHECKFUN(bam.files, param=rparam, shift=shift, fraglen=ext.param)
+        CHECKFUN(bam.files, param=rparam, shift=shift)
     }
 
     for (spacing in list(22, 111)) {
         bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
                       regenSE(1500, chromos, file.path(tempdir, "B")))
-        CHECKFUN(bam.files, param=rparam, spacing=spacing, fraglen=ext.param)
+        CHECKFUN(bam.files, param=rparam, spacing=spacing)
     }
 
     # Checking that spacing, shift and width interact properly.
