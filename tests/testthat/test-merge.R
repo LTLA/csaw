@@ -158,7 +158,7 @@ test_that("mergeWindows responds to the maximum width", {
 })
 
 set.seed(900005)
-test_that("mergeWindows works correctly in the basic case", {
+test_that("mergeWindows works correctly for stranded input", {
     chromos <- c(chrA=2000, chrB=5000, chrC=1000) 
     for (nwin in c(50, 100, 200)) {
         for (winsize in c(1, 10, 100)) {
@@ -172,21 +172,21 @@ test_that("mergeWindows works correctly in the basic case", {
                 by.id <- split(strand(reg), combo$id)
                 expect_true(all(lengths(lapply(by.id, FUN=runValue))==1))
                 expect_identical(strand(combo$region)[combo$id], strand(reg))
-    
+
                 # Running separately on each strand, and checking that the boundaries are the same.
-                is.forward <- as.logical(strand(stuff)=="+")
-                forward <- mergeWindows(stuff[is.forward], tol=tol, max.width=maxd)
-                is.reverse <- as.logical(strand(stuff)=="-")
-                reverse <- mergeWindows(stuff[is.reverse], tol=tol, max.width=maxd)
-                is.unstrand <- as.logical(strand(stuff)=="*")
-                unstrand <- mergeWindows(stuff[is.unstrand], tol=tol, max.width=maxd)
-                
+                is.forward <- as.logical(strand(reg)=="+")
+                forward <- mergeWindows(reg[is.forward], tol=tol)
+                is.reverse <- as.logical(strand(reg)=="-")
+                reverse <- mergeWindows(reg[is.reverse], tol=tol)
+                is.unstrand <- as.logical(strand(reg)=="*")
+                unstrand <- mergeWindows(reg[is.unstrand], tol=tol)
+
                 strand(forward$region) <- "+"
                 strand(reverse$region) <- "-"
                 strand(unstrand$region) <- "*"
                 expect_identical(c(forward$region, reverse$region, unstrand$region), combo$region)
 
-                final.out <- integer(length(stuff))
+                final.out <- integer(length(reg))
                 final.out[is.forward] <- forward$id
                 final.out[is.reverse] <- reverse$id+length(forward$region) 
                 final.out[is.unstrand] <- unstrand$id+length(forward$region)+length(reverse$region)
@@ -196,3 +196,12 @@ test_that("mergeWindows works correctly in the basic case", {
     }
 })
 
+test_that("mergeWindows works correctly for silly inputs", {
+    # empty input.
+    out <- mergeWindows(GRanges(), tol=10)
+    expect_identical(out$id, integer(0))
+    expect_identical(out$region, GRanges())
+
+    # mismatch inputs.
+    expect_error(mergeWindows(GRanges("chrA:1-1000"), tol=10, sign=logical(5)), "must be the same")
+})
