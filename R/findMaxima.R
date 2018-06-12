@@ -1,3 +1,8 @@
+#' @export
+#' @importFrom BiocGenerics strand 
+#' @importFrom S4Vectors runValue
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom stats start end
 findMaxima <- function(regions, range, metric, ignore.strand=TRUE)
 # This function finds the maximum window in 'data', given a range
 # around which the maxima is to be considered. The 'metric' is,
@@ -5,32 +10,46 @@ findMaxima <- function(regions, range, metric, ignore.strand=TRUE)
 #
 # written by Aaron Lun
 # created 9 November 2014.
-# last modified 10 February 2015.
 {
-	strs <- strand(regions)
-	if (!ignore.strand && length(runValue(strs))!=1) {
-		# Strand-specific maxima identification.
-		forward <- as.logical(strs=="+")
-		reverse <- as.logical(strs=="-")
-		neither <- as.logical(strs=="*")
-		out <- logical(length(regions))
-		if (any(forward)) { out[forward] <- Recall(regions=regions[forward], range=range, metric=metric[forward], ignore.strand=TRUE) }
-		if (any(reverse)) { out[reverse] <- Recall(regions=regions[reverse], range=range, metric=metric[reverse], ignore.strand=TRUE) }
-		if (any(neither)) { out[neither] <- Recall(regions=regions[neither], range=range, metric=metric[neither], ignore.strand=TRUE) }
-		return(out)
-	}
+    strs <- strand(regions)
+    if (!ignore.strand && length(runValue(strs))!=1) {
+        # Strand-specific maxima identification.
+        forward <- as.logical(strs=="+")
+        reverse <- as.logical(strs=="-")
+        neither <- as.logical(strs=="*")
 
-	chrs <- as.integer(seqnames(regions))
-	starts <- start(regions)
-	ends <- end(regions)
-	o <- order(chrs, starts, ends)
+        out <- logical(length(regions))
+        if (any(forward)) { 
+            out[forward] <- Recall(regions=regions[forward], range=range, metric=metric[forward], ignore.strand=TRUE) 
+        }
+        if (any(reverse)) { 
+            out[reverse] <- Recall(regions=regions[reverse], range=range, metric=metric[reverse], ignore.strand=TRUE) 
+        }
+        if (any(neither)) { 
+            out[neither] <- Recall(regions=regions[neither], range=range, metric=metric[neither], ignore.strand=TRUE) 
+        }
+        return(out)
+    }
 
-	if (length(metric)!=length(regions)) { stop("one metric must be supplied per region") }
-	if (!is.double(metric)) { metric <- as.double(metric) }
-	stopifnot(!any(is.na(metric)))
-	if (!is.integer(range)) { range <- as.integer(range) }
+    chrs <- as.integer(seqnames(regions))
+    starts <- start(regions)
+    ends <- end(regions)
+    o <- order(chrs, starts, ends)
 
-	out <- .Call(cxx_find_maxima, chrs[o], starts[o], ends[o], metric[o], range)
-	out[o] <- out
-	return(out)
+    if (length(metric)!=length(regions)) { 
+        stop("one metric must be supplied per region") 
+    }
+    if (any(is.na(metric))) {
+        stop("missing values in 'metric'")
+    }
+    if (!is.double(metric)) { 
+        metric <- as.double(metric) 
+    }
+    if (!is.integer(range)) { 
+        range <- as.integer(range) 
+    }
+
+    out <- .Call(cxx_find_maxima, chrs[o], starts[o], ends[o], metric[o], range)
+    out[o] <- out
+    return(out)
 }
