@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.15.4}{\itemize{
+\section{Version 1.15.6}{\itemize{
 \item Added normFactors() function to avoid confusion when normOffsets() returns factors.
 
 \item Deprecated type="scaling" option in normOffsets().
@@ -13,6 +13,8 @@
 Deprecated consolidateSizes() itself.
 
 \item Switched output of combineTests() and getBestTest() and related functions to a DataFrame.
+
+\item Modified mergeWindows() behaviour with specified sign=, for dealing with nested windows of opposing sign.
 }}
 
 \section{Version 1.14.0}{\itemize{
