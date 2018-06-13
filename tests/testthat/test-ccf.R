@@ -61,9 +61,7 @@ test_that("correlateReads works correctly with single BAM files", {
     n <- 1000
     for (rparam in list(readParam(), readParam(dedup=TRUE, minq=10))) {
         for (nreads in c(100, 1000, 10000)) {
-            for (chromos in list(c(chrA=1000, chrB=2000), c(chrA=10000), 
-                                 c(chrA=500, chrB=1000, chrC=800) # testing shorter than 'n'.
-                        )) {
+            for (chromos in list(c(chrA=10000), c(chrA=1000, chrB=2000))) { 
                 bam <- regenSE(nreads, chromos, outfname=tempfile())
                 out <- CHECKFUN(bam, max.dist=n, cross=TRUE, param=rparam)
                 out2 <- correlateReads(bam, max.dist=n, cross=TRUE, param=rparam)
@@ -78,7 +76,7 @@ test_that("correlateReads works correctly with autocorrelations", {
     n <- 1000
     rparam <- readParam()
     for (nreads in c(100, 1000, 10000)) {
-        for (chromos in list(c(chrA=1000, chrB=2000), c(chrA=10000), c(chrA=500, chrB=1000, chrC=800))) {
+        for (chromos in list(c(chrA=10000), c(chrA=1000, chrB=2000))) {
             bam <- regenSE(nreads, chromos, outfname=tempfile())
             out <- CHECKFUN(bam, max.dist=n, cross=FALSE, param=rparam)
             out2 <- correlateReads(bam, max.dist=n, cross=FALSE, param=rparam)
@@ -109,6 +107,30 @@ test_that("correlateReads works correctly with multiple BAM files", {
 })
 
 set.seed(800003)
+test_that("correlateReads works correctly when 'max.dist' is longer than the chromosome", {
+    rparam <- readParam()
+    n <- 1000
+    nreads <- 10000
+
+    # Testing shorter than 'n'.
+    chromos <- c(chrA=500, chrB=100, chrC=800) 
+    bam <- regenSE(nreads, chromos, outfname=tempfile())
+    out <- correlateReads(bam, max.dist=n, cross=TRUE, param=rparam)
+    out2 <- CHECKFUN(bam, max.dist=n, cross=TRUE, param=rparam)
+    expect_equal(out, out2)
+    expect_true(all(out[(max(chromos)+1):length(out)]==0))
+
+    # Testing on a tiny chromosome.
+    chromos <- c(chrA=1)
+    bam2 <- regenSE(1000, chromos, outfname=tempfile())
+    out <- correlateReads(bam2, max.dist=n, cross=TRUE, param=rparam)
+    out2 <- CHECKFUN(bam2, max.dist=n, cross=TRUE, param=rparam)
+    expect_equal(out, out2)
+    expect_equal(out[1], -1) # all forwards at 1, all reverse at 1-past-end, i.e., 2.
+    expect_true(all(out[-1]==0))
+})
+
+set.seed(800003)
 test_that("correlateReads works correctly with silly inputs", {
     chromos <- c(chrA=1000, chrB=2000)
     rparam <- readParam()
@@ -133,12 +155,6 @@ test_that("correlateReads works correctly with silly inputs", {
     out <- correlateReads(bam1, max.dist=n, cross=FALSE, param=readParam(forward=FALSE))
     out2 <- CHECKFUN(bam1, max.dist=n, cross=FALSE, param=readParam(forward=FALSE))
     expect_equal(out, out2)
-
-    # Tiny chromosome.
-    chromos <- c(chrA=1)
-    bam2 <- regenSE(1000, chromos, outfname=tempfile())
-    out <- correlateReads(bam0, max.dist=n, cross=TRUE, param=rparam)
-    expect_equal(out, numeric(n+1L))
 
     # Negative or zero width.
     expect_error(correlateReads(bam1, max.dist=0), "positive")
