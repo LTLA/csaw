@@ -1,12 +1,14 @@
+#' @export
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
 getPESizes <- function(bam.file, param=readParam(pe="both")) 
-# This function takes a BAM file and reads it to parse the size of the PE fragments. It then
-# returns a vector of sizes which can be plotted for diagnostics. The length of the vector
-# will also tell you how many read pairs were considered valid. The total number of reads, the
-# number of singletons and the number of interchromosomal pairs is also reported.
+# Reads a BAM file to determine the size of the PE fragments. 
+# Returns a vector of sizes which can be plotted for diagnostics. 
+# The length of the vector will also tell you how many read pairs were considered valid. 
+# The total number of reads, the number of singletons and the number of interchromosomal pairs are also reported.
 # 
 # written by Aaron Lun
 # a long long time ago
-# last modified 18 March 2017
 {
 	if (param$pe!="both") { stop("paired-end inputs required") }
 	extracted.chrs <- .activeChrs(bam.file, param$restrict)
@@ -28,7 +30,7 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
         drkeep <- .discardReads(cur.chr, output$reverse[[1]], output$reverse[[2]], discard)
         mapped <- mapped + sum(dfkeep) + sum(drkeep)
         one.unmapped <- one.unmapped + sum(dfkeep!=drkeep)
-        all.sizes <- output$reverse[[1]] - output$forward[[1]] + output$reverse[[2]]
+        all.sizes <- pmin(output$reverse[[1]] + output$reverse[[2]], extracted.chrs[i] + 1L) - output$forward[[1]] 
         norm.list[[i]] <- all.sizes[dfkeep & drkeep]
 
         # For unoriented read pairs; either go to 'mapped' (and then 'unoriented'), 'one.unmapped', or implicitly unmapped.
