@@ -1,12 +1,15 @@
-checkBimodality <- function(bam.files, regions, width=100, param=readParam(), 
-	prior.count=2, invert=FALSE) 
-# This gives the maximum strand bimodality score for any base pair in each
-# region. The idea is to try to distinguish between genuine TF binding sites
-# and read stacks or other artifacts.
+#' @export
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom BiocGenerics split start end order
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#' @importFrom BiocParallel bpmapply
+checkBimodality <- function(bam.files, regions, width=100, param=readParam(), prior.count=2, invert=FALSE) 
+# Gives the maximum strand bimodality score for any base pair in each region. 
+# The idea is to try to distinguish between genuine TF binding sites and read stacks or other artifacts.
 #
 # written by Aaron Lun
 # created 1 May 2015
-# last modified 5 August 2016
 {
 	nbam <- length(bam.files)
 	extracted.chrs <- .activeChrs(bam.files, param$restrict)
