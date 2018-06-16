@@ -15,10 +15,16 @@ CHECKFUN <- function(bam.files, max.dist, param, cross=FALSE) {
         
 		all.f <- all.r <- vector("list", length(bam.files))
 		for (b in seq_along(bam.files)) {
-            reads <- extractReads(bam.files[b], chromosome, param=param)
-            is.forward <- as.logical(strand(reads)=="+")
-            all.f[[b]] <- start(reads)[is.forward]
-            all.r[[b]] <- pmin(end(reads)[!is.forward], clen) + 1L
+            if (param$pe!="both") {
+                reads <- extractReads(bam.files[b], chromosome, param=param)
+                is.forward <- as.logical(strand(reads)=="+")
+                all.f[[b]] <- start(reads)[is.forward]
+                all.r[[b]] <- pmin(end(reads)[!is.forward], clen) + 1L
+            } else {
+                reads <- extractReads(bam.files[b], chromosome, param=param, as.reads=TRUE)
+                all.f[[b]] <- start(reads$forward)
+                all.r[[b]] <- pmin(end(reads$reverse), clen) + 1L
+            }
 		}
 
 		f <- tabulate(unlist(all.f), clen+1L)
@@ -94,6 +100,27 @@ test_that("correlateReads works correctly with multiple BAM files", {
 
     bam.files <- c(regenSE(nreads, chromos, outfname=tempfile()),
                    regenSE(nreads, chromos, outfname=tempfile()))
+
+    # Cross-correlations.        
+    out <- CHECKFUN(bam.files, max.dist=n, cross=TRUE, param=rparam)
+    out2 <- correlateReads(bam.files, max.dist=n, cross=TRUE, param=rparam)
+    expect_equal(out, out2)
+
+    # Auto-correlations.        
+    out <- CHECKFUN(bam.files, max.dist=n, cross=FALSE, param=rparam)
+    out2 <- correlateReads(bam.files, max.dist=n, cross=FALSE, param=rparam)
+    expect_equal(out, out2)
+})
+
+set.seed(8000021)
+test_that("correlateReads works correctly with paired-end BAM files", {
+    chromos <- c(chrA=1000, chrB=2000)
+    nreads <- 10000
+    n <- 1000
+    rparam <- readParam(pe="both")
+
+    bam.files <- c(regenPE(nreads, chromos, outfname=tempfile()),
+                   regenPE(nreads, chromos, outfname=tempfile()))
 
     # Cross-correlations.        
     out <- CHECKFUN(bam.files, max.dist=n, cross=TRUE, param=rparam)

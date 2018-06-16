@@ -16,14 +16,19 @@ CHECKFUN <- function(bam.files, regions, width, param, prior.count) {
 		left.forward <- right.forward <- left.reverse <- right.reverse <- 0
 
 		for (b in seq_along(bam.files)) { 
-			all.reads <- extractReads(bam.files[b], full.chr, param=param)
+            if (param$pe!="both") { 
+                all.reads <- extractReads(bam.files[b], full.chr, param=param)
+                is.forward <- strand(all.reads)=="+"
+                forward.reads <- all.reads[is.forward]
+                reverse.reads <- all.reads[!is.forward]
+            } else {
+                all.reads <- extractReads(bam.files[b], full.chr, param=param, as.reads=TRUE)
+                forward.reads <- all.reads$forward
+                reverse.reads <- all.reads$reverse
+            }
 
-			# Computing coverage, somewhat counterintuitively; 'left.forward', for example, is extended to 
-			# the right, as it must find all overlaps to the left of the region of interest.
-			is.forward <- strand(all.reads)=="+"
-			forward.reads <- all.reads[is.forward]
-			reverse.reads <- all.reads[!is.forward]
-
+            # Computing coverage, somewhat counterintuitively; 'left.forward', for example, is extended to 
+            # the right, as it must find all overlaps to the left of the region of interest.
 			start.F <- start(forward.reads)
 			end.F <- end(forward.reads)
 			left.forward <- left.forward + coverage(IRanges(start.F, start.F+width[b]-1), width=end(full.chr))
@@ -100,6 +105,18 @@ test_that("checkBimodality responds to variable width and window sizes", {
 })
 
 set.seed(39002)
+test_that("checkBimodality handles paired-end reads correctly", {
+    bam.files <-c(regenPE(10000, chromos, file.path(tmpdir, "A")), regenPE(10000, chromos, file.path(tmpdir, "B")))
+    param <- readParam(pe="both")
+    my.ranges <- generateWindows(chromos, 10, 10)
+
+    out <- checkBimodality(bam.files, my.ranges, param=param, width=100, prior.count=2)
+    ref <- CHECKFUN(bam.files, my.ranges, param=param, width=100, prior.count=2)
+    expect_equal(out, ref)    
+})
+
+
+set.seed(39003)
 test_that("checkBimodality fails correctly on empty inputs", {
     bam.files <-c(regenSE(0, chromos, file.path(tmpdir, "A")), regenSE(0, chromos, file.path(tmpdir, "B")))
     my.ranges <- generateWindows(chromos, 20, 20)
