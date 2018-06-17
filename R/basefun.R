@@ -1,4 +1,5 @@
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom BiocGenerics start end
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
 # duplicate and poorly mapped/non-unique reads. We also discard reads in the
@@ -14,7 +15,9 @@
     bam.file <- path.expand(bam.file)
     bam.index <- paste0(bam.file, ".bai")
 
-    if (length(param$forward)==0L) { stop("read strand extraction must be specified") }
+    if (length(param$forward)==0L) { 
+        stop("read strand extraction must be specified") 
+    }
     if (param$pe=="first") {
         use.first <- TRUE
     } else if (param$pe=="second") { 
@@ -54,6 +57,7 @@
 }
 
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom BiocGenerics start end
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
 # A function to extract PE data for a particular chromosome. Synchronisation
 # is expected.  We avoid sorting by name  as it'd mean we have to process the
@@ -67,6 +71,10 @@
     cur.chr <- as.character(seqnames(where)) 
     bam.file <- path.expand(bam.file)
     bam.index <- paste0(bam.file, ".bai")
+
+    if (!identical(param$forward, NA)) { 
+        stop("cannot specify read strand when 'pe=\"both\"'") 
+    }
     out <- .Call(cxx_extract_pair_data, bam.file, bam.index, cur.chr,
             start(where), end(where), param$minq, param$dedup, diagnostics)
 

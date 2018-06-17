@@ -82,6 +82,8 @@ test_that(".extractSE works correctly in the single-end case", {
         expect_identical(out$reverse$pos, integer(0))
         expect_identical(out$reverse$qwidth, integer(0))
     }
+
+    expect_error(csaw:::.extractSE(obam, element, readParam(forward=NULL)), "strand extraction")
 })
 
 ######################################################################
@@ -160,6 +162,11 @@ test_that(".extractPE works correctly in the paired-end case", {
         expect_identical(out$pos, integer(0))
         expect_identical(out$size, integer(0))
     }
+
+    # Strand can only be NA.
+    expect_error(csaw:::.extractPE(obam, element, readParam(forward=NULL)), "cannot specify read strand")
+    expect_error(csaw:::.extractPE(obam, element, readParam(forward=TRUE)), "cannot specify read strand")
+    expect_error(csaw:::.extractPE(obam, element, readParam(forward=FALSE)), "cannot specify read strand")
 })
 
 set.seed(1002)
