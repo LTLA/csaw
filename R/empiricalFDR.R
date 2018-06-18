@@ -23,13 +23,15 @@ empiricalFDR <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.
     right.tab[,pval.col] <- all.p$right
     right.com <- combineTests(ids, right.tab, weight=weight, pval.col=pval.col, fc.col=fc.col)
     right.com$direction <- NULL
+    right.com$FDR <- NULL
     
     # Repeating in the other direction.
     wrong.tab <- tab
     wrong.tab[,pval.col] <- all.p$wrong
     wrong.com <- combineTests(ids, wrong.tab, weight=weight, pval.col=pval.col, fc.col=integer(0))
+    right.com[,paste0(pval.colname, ".neg")] <- wrong.com[,pval.colname]
 
-    # Computing empirical FDR.
+    # Computing the empirical FDR.
     right.comp <- right.com[,pval.colname]
     o <- order(right.comp)
     right.comp <- right.comp[o]

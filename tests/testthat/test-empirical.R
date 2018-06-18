@@ -37,6 +37,7 @@ test_that("empiricalFDR works correctly with vanilla input", {
             tab2$PValue <- 1-new.p
             ref <- combineTests(merged.ids, tab2)
             expect_equal(alt$PValue, ref$PValue)
+            expect_equal(out$PValue.neg, ref$PValue)
         
             # Checking calculations for the FDR.
             emp.fdr <- findInterval(out$PValue, sort(alt$PValue))/rank(out$PValue, ties.method="max")

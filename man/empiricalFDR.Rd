@@ -10,12 +10,12 @@ empiricalFDR(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE)
 }
 
 \arguments{
-\item{ids}{an integer vector containing the cluster ID for each test}
-\item{tab}{a dataframe of results with \code{PValue} and at least one \code{logFC} field for each test}
-\item{weight}{a numeric vector of weights for each window, defaults to 1 for each test}
-\item{pval.col}{an integer scalar or string specifying the column of \code{tab} containing the p-values}
-\item{fc.col}{an integer scalar or string specifying the column of \code{tab} containing the log-fold changes}
-\item{neg.down}{a logical scalar indicating if negative log-fold changes correspond to the \dQuote{wrong} direction}
+\item{ids}{Integer vector containing the cluster ID for each test.}
+\item{tab}{A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.}
+\item{weight}{A numeric vector of weights for each window, defaults to 1 for each test.}
+\item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.}
+\item{fc.col}{An integer scalar or string specifying the column of \code{tab} containing the log-fold changes.}
+\item{neg.down}{A logical scalar indicating if negative log-fold changes correspond to the \dQuote{wrong} direction.}
 }
 
 \details{
@@ -45,7 +45,9 @@ The BH method in \code{\link{combineTests}} is more statistically rigorous and s
 A DataFrame containing one row per cluster, with various fields:
 \itemize{
 \item A numeric field containing the one-sided p-value for each cluster in the right direction.
-This field is named \code{PValue} if \code{pval.col=NULL}, otherwise its name is set to \code{colnames(tab[,pval.col]}.
+This field is named \code{PValue} if \code{pval.col=NULL}, otherwise its name is set to \code{colnames(tab[,pval.col])}.
+\item A numeric field containing the one-sided p-value for each cluster in the \emph{wrong} direction.
+This has the same name as the previous field but with an additional \code{.neg} suffix, e.g., \code{PValue.neg}.
 \item A numeric field \code{FDR}, containing the empirical FDR corresponding to the p-value threshold equal to the value in \code{PValue}.
 }
 All other fields are the same as those returned by \code{\link{combineTests}}.
