@@ -1,3 +1,4 @@
+#' @export
 clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, ..., weight=NULL, grid.param=NULL) 
 # This does a search for the clusters based on DB windows. 
 # It aims to achieve a cluster-level FDR of 'target'.
@@ -53,6 +54,7 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
     pmin(adjp, 1)
 }
 
+#' @export
 consolidateClusters <- function(data.list, result.list, equiweight=TRUE, ...) 
 # This does the same as clusterWindows, but for results from many different analyses
 # (ostensibly with different window sizes).

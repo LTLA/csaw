@@ -1,3 +1,4 @@
+#' @export
 clusterFDR <- function(ids, threshold, weight=NULL)
 # This computes an informal estimate of the cluster-level FDR,
 # given the cluster IDs for all significant windows. The idea
@@ -6,7 +7,6 @@ clusterFDR <- function(ids, threshold, weight=NULL)
 #
 # written by Aaron Lun
 # created 13 April 2015
-# last modified 8 January 2016
 {
     ids <- as.integer(ids)
     o <- order(ids)
@@ -33,6 +33,7 @@ clusterFDR <- function(ids, threshold, weight=NULL)
     }
 }
 
+#' @export
 controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.param=NULL)
 # Identifies the window-level FDR threshold that is required to 
 # control the cluster-level threshold at 'target', given the 
@@ -40,7 +41,6 @@ controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.param=NU
 #
 # written by Aaron Lun
 # created 5 January 2016
-# last modified 8 January 2016
 {
     if (is.list(grid.param)) { 
         ref.args <- c("length", "iter", "range", "scale")
