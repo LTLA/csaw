@@ -68,21 +68,35 @@ test_that("weighted p-value calculations are correct", {
 
 set.seed(102)
 test_that("controlClusterFDR works as expected", {
-    for (mult in c(5, 10, 20)) {
+    nfalse <- 1000
+    ntrue <- 100
+
+    for (nsites in c(5, 10, 20)) {
         for (target in c(0.01, 0.05, 0.1)) {
-            p <- runif(1000)
-            FUN <- function(is.sig) which(is.sig)/mult
+            # Setting up situations with small and large clusters, where the latter are always detected (strong true DB).
+            # This provides the maximal chance that the window- and cluster-level FDRs are different.
+            ids <- c(seq_len(nfalse), nfalse + sample(nsites, ntrue, replace=TRUE))
+            p <- c(runif(nfalse), numeric(ntrue))
+            FUN <- function(is.sig) ids[is.sig]
 
             out <- controlClusterFDR(target=target, adjp=p, FUN=FUN)
             expect_true(out$FDR <= target)
             expect_true(out$threshold <= target)
             expect_identical(clusterFDR(FUN(p <= out$threshold), out$threshold), out$FDR)
 
-            # Exceeding the window-level threshold should increase the cluster-level FDR.
-            a.bit.up <- out$threshold*1.1
-            expect_true(clusterFDR(FUN(p <= a.bit.up), a.bit.up) > target || a.bit.up > target)
+            # Exceeding the window-level threshold should generally increase the cluster-level FDR
+            # (note, possible failures here as this depends on resolution).
+            for (up in c(1.05, 1.1, 1.5, 2)) {
+                a.bit.up <- out$threshold*up
+                expect_true(clusterFDR(FUN(p <= a.bit.up), a.bit.up) > target || a.bit.up > target)
+            }
         }
     }
+
+    # Caps at the target.
+    expect_identical(controlClusterFDR(target=0.05, adjp=0, FUN=function(is.sig) { 1 })$threshold, 0.05)
+    expect_identical(controlClusterFDR(target=0.1, adjp=0, FUN=function(is.sig) { 1 })$threshold, 0.1)
+    expect_identical(controlClusterFDR(target=0.01, adjp=0, FUN=function(is.sig) { 1 })$threshold, 0.01)
 
     # Checking correct behaviour for empty inputs.
     out <- controlClusterFDR(target=0.05, adjp=numeric(0), FUN=FUN)
