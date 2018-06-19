@@ -33,8 +33,10 @@ test_that('clusterFDR works correctly', {
 
     # Silly input checks.
     expect_identical(clusterFDR(integer(0), 0.05), 0)
-    expect_identical(clusterFDR(1, numeric(0)), 0)
     expect_error(clusterFDR(integer(0), 0.05, weight=1), "must be the same")
+
+    expect_identical(clusterFDR(runif(100), 0), 0) # threshold of zero => FDR of zero.
+    expect_identical(clusterFDR(1, numeric(0)), 0)
 })
 
 set.seed(101)
@@ -64,13 +66,36 @@ test_that("weighted p-value calculations are correct", {
     expect_equal(numeric(0), csaw:::.weightedFDR(numeric(0), numeric(0)))
 })
 
+set.seed(102)
+test_that("controlClusterFDR works as expected", {
+    for (mult in c(5, 10, 20)) {
+        for (target in c(0.01, 0.05, 0.1)) {
+            p <- runif(1000)
+            FUN <- function(is.sig) which(is.sig)/mult
+
+            out <- controlClusterFDR(target=target, adjp=p, FUN=FUN)
+            expect_true(out$FDR <= target)
+            expect_true(out$threshold <= target)
+            expect_identical(clusterFDR(FUN(p <= out$threshold), out$threshold), out$FDR)
+
+            # Exceeding the window-level threshold should increase the cluster-level FDR.
+            a.bit.up <- out$threshold*1.1
+            expect_true(clusterFDR(FUN(p <= a.bit.up), a.bit.up) > target || a.bit.up > target)
+        }
+    }
+
+    # Checking correct behaviour for empty inputs.
+    out <- controlClusterFDR(target=0.05, adjp=numeric(0), FUN=FUN)
+    expect_identical(out$threshold, 0.05)
+    expect_identical(out$FDR, 0)
+})
 
 ##################################################
-# Reference results for the consolidation function; also implicitly tests clusterWindows and controlClusterFDR.
+# Reference results for the consolidation function; also implicitly tests clusterWindows.
 # There's not much point doing exact checks, because we'd just be re-implementing most of it.
 
-checkResults <- function(data.list, result.list, pval.col="PValue", ..., true.pos) {
-    out <- consolidateClusters(data.list, result.list, pval.col=pval.col, ...)
+checkResults <- function(data.list, result.list, target, pval.col="PValue", ..., true.pos) {
+    out <- consolidateClusters(data.list, result.list, pval.col=pval.col, target=target, ...)
 
     # Checking that the clustering is fine.
     all.ids <- unlist(out$id)
@@ -87,12 +112,13 @@ checkResults <- function(data.list, result.list, pval.col="PValue", ..., true.po
 
     # Comparing the observed and estimated FDRs.
     np <- out$region[!overlapsAny(out$region, true.pos),]
-    expect_true(length(np)/length(out$region) <= out$FDR)
+    expect_true(length(np)/length(out$region) <= out$FDR * 1.1) # A bit fragile, hence the tolerance.
+    expect_true(out$FDR <= target)
     return(NULL)
 }
 
+set.seed(103)
 test_that("consolidateClusters works as expected", {
-    set.seed(100)
     windows <- GRanges("chrA", IRanges(1:1000, 1:1000))
     test.p <- runif(1000)
     test.p[rep(1:2, 100) + rep(0:99, each=2) * 10] <- 0 
@@ -122,10 +148,6 @@ test_that("consolidateClusters works as expected", {
     checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p, logFC=signs), data.frame(PValue=test.p[1:10], logFC=signs[1:10])), 
                  tol=0, fc.col="logFC", target=0.05, true.pos=true.pos)
     
-    # Fiddling with grid search parameters.
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=0, grid.param=list(scale=5, iter=10), target=0.05, true.pos=true.pos) 
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=0, grid.param=list(len=11, it=10), target=0.05, true.pos=true.pos)
-
     # Checking behaviour when empty.
     out <- consolidateClusters(list(windows[0]), list(data.frame(PValue=numeric(0))), tol=0, target=0.05)
     expect_identical(out$id, list())
