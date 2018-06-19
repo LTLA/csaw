@@ -34,7 +34,7 @@ clusterFDR <- function(ids, threshold, weight=NULL)
 }
 
 #' @export
-controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.param=NULL)
+controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.length=21, iterations=4)
 # Identifies the window-level FDR threshold that is required to 
 # control the cluster-level threshold at 'target', given the 
 # window-level adjusted p-values and the clustering function FUN.
@@ -42,54 +42,37 @@ controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.param=NU
 # written by Aaron Lun
 # created 5 January 2016
 {
-    if (is.list(grid.param)) { 
-        ref.args <- c("length", "iter", "range", "scale")
-        m <- pmatch(names(grid.param), ref.args)
-        if (any(is.na(m))) { stop("invalid arguments specified in 'grid.param'") }
-        names(grid.param) <- ref.args[m]
-    }
+    if (is.null(weight)) { 
+        weight <- rep(1, length(adjp)) 
+    } 
 
-    grid.range <- grid.param$range
-    if (is.null(grid.range)) { grid.range <- 20 }
-    grid.range <- grid.range/2
-    grid.length <- grid.param$length
-    if (is.null(grid.length)) { grid.length <- 21 }
-    iter <- grid.param$iter
-    if (is.null(iter)) { iter <- 5 }
-    scale <- grid.param$scale
-    if (is.null(scale)) { scale <- 4 }
-    
-    lt <- log(target/(1-target))
-    if (is.null(weight)) { weight <- rep(1, length(adjp)) } 
+    # Doesn't make sense to have window-level FDR > cluster-level FDR. 
+    # We'll be conservative and only search grid points that are lower (+- some imprecision)
+    upper <- target * 1.000001
+    lower <- 0
 
-    # Using an iterative grid search, as this tends to be most
-    # robust for a discrete and discontinuous function.
-    for (it in seq_len(iter)) { 
-        grid <- seq(lt-grid.range, lt+grid.range, length=grid.length)
-        thresholds <- exp(grid)/(exp(grid)+1)
-
-        # Doesn't make sense to have window-level FDR > cluster-level FDR. 
-        # We'll be conservative and only search grid points that are lower (+- some imprecision)
-        keep <- thresholds <= target * 1.000001 
-        grid <- grid[keep]
-        thresholds <- thresholds[keep]
+    # Using an iterative grid search, as this tends to be most robust for a discrete and discontinuous function.
+    for (it in seq_len(iterations)) { 
+        grid <- seq(lower, upper, length.out=grid.length)
 
         fdrs <- integer(length(grid))
-        for (tx in seq_along(thresholds)) { 
-            threshold <- thresholds[tx]
+        for (tx in seq_along(grid)) { 
+            threshold <- grid[tx]
             is.sig <- adjp <= threshold
             fdrs[tx] <- clusterFDR(FUN(is.sig, ...), threshold, weight=weight[is.sig])
         }
 
-        # Picking the largest threshold that yields an FDR closest to the target.
-        # Avoids searching values that are too small when there are many ties.        
-        chosen <- length(grid) - which.min(rev(abs(fdrs-target))) + 1L
-        lt <- grid[chosen]
-
-        # Grid contracts at a moderate pace, to provide better resolution.
-        grid.range <- grid.range/scale
+        # Picking the highest grid point above which the FDR > target.
+        # There must be at least one below the target, as FDR = 0 at threshold=0.
+        controlled <- fdrs <= target
+        chosen <- max(which(controlled))
+        if (chosen==grid.length) {
+            break
+        } 
+        lower <- grid[chosen]
+        upper <- grid[chosen+1L]
     }
 
-    return(list(threshold=exp(lt)/(exp(lt)+1), FDR=fdrs[chosen]))
+    return(list(threshold=grid[chosen], FDR=fdrs[chosen]))
 }
 
