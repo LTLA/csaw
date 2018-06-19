@@ -43,6 +43,16 @@ test_that("consolidateWindows works correctly with mergeWindows", {
             cons4 <- consolidateWindows(all.win, equiweight=FALSE, merge.args=list(tol=100))
             expect_identical(cons[c("id", "region")], cons4[c("id", "region")])
             expect_identical(cons4$weight, NULL)
+
+            # Responds to the sign.
+            sign.list <- list()
+            for (s in seq_along(sizes)) {
+                sign.list[[s]] <- rbinom(length(data.list[[s]]), 1, 0.5)==1
+            }
+            cons5 <- consolidateWindows(data.list, merge.args=list(tol=100), sign.list=sign.list)
+            ref3 <- mergeWindows(do.call(c, all.win), tol=100, sign=unlist(sign.list))
+            expect_identical(unlist(cons5$id), ref3$id)
+            expect_identical(cons5$region, ref3$region)
         }
     }
 
@@ -63,6 +73,10 @@ test_that("consolidateWindows works correctly with mergeWindows", {
      expect_identical(lengths(cons.E$id), integer(2))
      expect_identical(length(cons.E$region), 0L)
      expect_identical(lengths(cons.E$weight), integer(2))
+
+     # Throws an error when expected.
+     expect_error(consolidateWindows(all.win, merge.args=list(tol=100), sign.list=list()), "are not identical")
+     expect_error(consolidateWindows(all.win, merge.args=list(tol=100), sign.list=vector("list", length(all.win))), "are not identical")
 })
 
 # Defining a function that unpacks and sorts the query/subject hits.

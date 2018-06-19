@@ -1,8 +1,7 @@
 #' @export
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits
-consolidateWindows <- function(data.list, equiweight=TRUE, 
-    merge.args=list(), region=NULL, overlap.args=list()) 
+consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), region=NULL, overlap.args=list(), sign.list=NULL) 
 # Consolidates results for multiple window sizes into a result for the
 # genomic region over which those windows are tiled. Returns the combined
 # results, as well as ID vectors for cross-referencing and inspection.
@@ -17,12 +16,23 @@ consolidateWindows <- function(data.list, equiweight=TRUE,
     rel.weights <- NULL
 
 	if (is.null(region)) { 
+        # Determining tolerance.
         merge.call <- do.call(call, c("mergeWindows", merge.args))
         merge.call <- match.call(mergeWindows, merge.call)
         merge.args <- as.list(merge.call)[-1]
         if (is.null(merge.args$tol)) { 
             merge.args$tol <- 100
             warning("'tol' for 'mergeWindows' set to a default of 100 bp")
+        }
+
+        # Determining sign.
+        if (!is.null(sign.list)) {
+            slen <- lengths(sign.list)
+            dlen <- lengths(data.list)
+            if (length(slen)!=length(dlen) || any(slen!=dlen)) { 
+                stop("vector lengths of 'sign.list' and 'data.list' are not identical")
+            }
+            merge.args$sign <- unlist(sign.list)
         }
 
 		all.ranges <- do.call(c, data.list)

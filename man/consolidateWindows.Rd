@@ -7,7 +7,7 @@
 
 \usage{
 consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
-    region=NULL, overlap.args=list()) 
+    region=NULL, overlap.args=list(), sign.list=NULL) 
 
 # Deprecated, use consolidateTests or consolidateOverlaps instead!
 consolidateSizes(data.list, result.list, equiweight=TRUE, merge.args=list(),
@@ -21,6 +21,8 @@ consolidateSizes(data.list, result.list, equiweight=TRUE, merge.args=list(),
 \item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
 \item{region}{A \code{GRanges} object specifying regions of interest for overlapping with windows.}
 \item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}
+\item{sign.list}{A list of logical vectors, where each vector corresponds to and is of the same length as an object in \code{data.list}.
+Each value of the vector should indicate whether the log-fold change is positive for the corresponding window.}
 \item{...}{Further arguments to pass to \code{\link{consolidateTests}} or \code{\link{consolidateOverlaps}}.}
 }
 
@@ -31,7 +33,7 @@ If \code{region=NULL}, a named list is returned containing:
 The entries of the vector specify the cluster to which each window of that object is assigned.}
 \item{\code{weight}:}{A list of numeric vectors, where each vector corresponds to a vector in \code{id}.
 The entries of the vector specify the weight of the corresponding windows.}
-\item{\code{region}:}{a GRanges object containing the genomic coordinates of the clusters of merged windows.}
+\item{\code{region}:}{A GRanges object containing the genomic coordinates of the clusters of merged windows.}
 }
 
 If \code{region} is not \code{NULL}, a named list is returned containing:
@@ -57,6 +59,10 @@ By default, we set \code{equiweight=TRUE} to offset the differences in the numbe
 The weight of each window is inversely proportional to the number of windows of the same size within a given cluster.
 If \code{region!=NULL}, the weight of each overlap is inversely proportional to the number of overlaps involving windows of the same size to the given region.
 This ensures that the combined p-value is not fully determined by numerous small windows within a cluster.
+
+The signs of the log-fold change can be specified using \code{sign.list}.
+This should be a list of logical vectors indicating whether the log-fold changes for each set of windows of \code{data.list} are positive.
+We do not recommend using this for routine analyses - see \code{?\code{mergeWindows}} for details.
 }
 
 \seealso{
