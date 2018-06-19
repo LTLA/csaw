@@ -1,5 +1,5 @@
 #' @export
-clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, ..., weight=NULL, grid.param=NULL) 
+clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, ..., weight=NULL, grid.length=21, iterations=4)
 # This does a search for the clusters based on DB windows. 
 # It aims to achieve a cluster-level FDR of 'target'.
 #
@@ -32,7 +32,7 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
     # Controlling the cluster-level FDR
     FUN <- function(sig) { mergeWindows(regions[sig], tol=tol, sign=sign[sig], ...) }
     out <- controlClusterFDR(target=target, adjp=adjp, FUN=function(sig) { FUN(sig)$id }, 
-                             weight=weight, grid.param=grid.param)
+                             weight=weight, grid.length=grid.length, iterations=iterations)
     sig <- adjp <= out$threshold
     clusters <- FUN(sig)
 
