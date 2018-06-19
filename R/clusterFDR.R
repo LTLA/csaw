@@ -47,8 +47,8 @@ controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.length=2
     } 
 
     # Doesn't make sense to have window-level FDR > cluster-level FDR. 
-    # We'll be conservative and only search grid points that are lower (+- some imprecision)
-    upper <- target * 1.000001
+    # We'll be conservative and only search grid points that are lower.
+    upper <- target
     lower <- 0
 
     # Using an iterative grid search, as this tends to be most robust for a discrete and discontinuous function.
