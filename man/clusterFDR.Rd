@@ -7,18 +7,21 @@
 
 \usage{
 clusterFDR(ids, threshold, weight=NULL)
-controlClusterFDR(target, adjp, FUN, ..., weight=NULL, grid.param=NULL)
+
+controlClusterFDR(target, adjp, FUN, ..., weight=NULL, 
+    grid.length=21, iterations=4)
 }
 
 \arguments{
-\item{ids}{an integer vector of cluster IDs for each significant test below \code{threshold}}
-\item{threshold}{a numeric scalar, specifying the FDR threshold used to define the significant tests}
-\item{target}{a numeric scalar specifying the desired cluster-level FDR threshold}
-\item{adjp}{a numeric vector of window-level adjusted p-values}
-\item{FUN}{a clustering function that takes a logical vector indicating which windows are significant, and returns an integer vector of cluster IDs (see below)}
-\item{...}{additional arguments to be passed to \code{FUN}}
-\item{weight}{a numeric vector of frequency weights, for internal use}
-\item{grid.param}{a named list of grid search parameters, see Details}
+\item{ids}{An integer vector of cluster IDs for each significant test below \code{threshold}.}
+\item{threshold}{A numeric scalar, specifying the FDR threshold used to define the significant tests.}
+\item{target}{A numeric scalar specifying the desired cluster-level FDR threshold.}
+\item{adjp}{A numeric vector of window-level adjusted p-values.}
+\item{FUN}{A clustering function that takes a logical vector indicating which windows are significant, and returns an integer vector of cluster IDs (see below).}
+\item{...}{Additional arguments to be passed to \code{FUN}.}
+\item{weight}{A numeric vector of frequency weights, for internal use.}
+\item{grid.length}{Integer scalar specifying the number of points to use in the grid search.}
+\item{iterations}{Integer scalar specifying the number of iterations of the grid search.}
 } 
 
 \section{Definition of the cluster-level FDR}{
@@ -26,14 +29,17 @@ The \code{clusterFDR} function computes an informal estimate of the cluster-leve
 In the context of ChIP-seq, each significant test refers to a DB window that is detected at a FDR below \code{threshold}.
 The idea is to obtain an error rate while reporting the precise coordinates of a DB subinterval in a complex region.
 
-The cluster-level FDR is defined as the proportion of reported clusters that have no true positives.
-Simply using \code{threshold} is not appropriate, as the cluster- and window-level FDRs are not equivalent. 
-This function also differs from the standard pipeline that is based on \code{\link{combineTests}}.
-Specifically, region definition in \code{\link{combineTests}} must be independent of DB so that precise coordinates of the DB subinterval cannot be reported.
-This is overcome here, by clustering directly on DB windows and applying post-hoc control of the cluster-level FDR.
+This complements the standard pipeline based on \code{\link{combineTests}}, which defines regions independently of the DB status of the windows.
+In a complex region, the precise coordinates of the DB subinterval cannot be reported.
+Here, we overcome this by clustering directly on DB windows and applying post-hoc control of the cluster-level FDR.
+See \code{\link{clusterWindows}} for more details.
 
-Note that the calculation of the cluster-level FDR here is not statistically rigorous.
-In particular, the observed number of false positive tests is estimated based on \code{threshold} and the total number of significant tests.
+The cluster-level FDR is defined as the proportion of reported clusters that have no true positives.
+Simply using \code{threshold} on the window-level adjusted p-values is not sufficient to control this, as the cluster- and window-level FDRs are not equivalent. 
+Instead, the observed number of false positive tests is estimated based on \code{threshold} and the total number of significant tests, 
+and a conservative estimate for the number of false positive clusters (where all tests are true nulls) is computed.
+
+However, note that the calculation of the cluster-level FDR here is not statistically rigorous.
 This is not guaranteed to be an upper bound, especially with few or correlated tests. 
 Thus, users should use the standard \code{\link{combineTests}}-based pipeline wherever possible.
 Clustering on significant windows should only be performed where the precise coordinates of the DB subinterval are important for interpretation.
@@ -44,22 +50,16 @@ Clustering on significant windows should only be performed where the precise coo
 The former is not a simple function of the latter (neither continuous nor guaranteed to be monotonic), so a grid search is used.
 Clusters of significant windows are identified at each window-level threshold, and the corresponding cluster-level FDR is computed with \code{clusterFDR}.
 
-At each iteration, the grid point with the closest cluster-level FDR to \code{target} is chosen and the grid is recentered around that point.
-The size of the grid is also scaled down to provide greater resolution.
-Users can tune the settings of the grid search by specifying elements in \code{grid.param} as:
-\describe{
-\item{\code{length}:}{an integer scalar specifying the length of the grid, defaults to 21}
-\item{\code{range}:}{a numeric scalar indicating the range of the grid in logit units, defaults to 20}
-\item{\code{iter}:}{an integer scalar indicating the number of iterations of the grid search}
-\item{\code{scale}:}{a numeric scalar specifying how the range of the grid should be downscaled at each iteration}
-}
+The grid is initially defined with \code{grid.length} equally spaced points in \code{[0, target]}.
+At each iteration, the grid points with cluster-level FDRs above and below \code{target} are chosen, and the grid is redefined within that interval.
+This is repeated for \code{iterations} iterations, and the largest window-level threshold that achieves a cluster-level FDR below \code{target} is chosen.
 
 The \code{FUN} argument should be a function that accepts a logical vector specifying significance, and returns an integer vector of cluster IDs.
 If, for example, it accepts an input vector \code{ix}, then the output should contain cluster IDs corresponding to the entries of \code{which(ix)}.
 This is because cluster IDs are only defined for significant tests, given that only those tests are used for clustering.
 
-An additional requirement is that the returned window-level FDR threshold should be less than \code{target}.
-Thus, each window should be significantly DB on its own merits before it is placed into a cluster.
+A consequence of this search strategy is that the returned window-level FDR threshold will always be less than \code{target}.
+In other words, each window should be significantly DB on its own merits (i.e., after controlling the window-level FDR) before it is placed into a cluster.
 This protects against scenarios where very large thresholds yield low cluster-level FDRs, due to the formation of a few large clusters.
 }
 

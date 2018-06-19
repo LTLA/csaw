@@ -6,19 +6,18 @@
 \description{Clusters significant windows into clusters while controlling the cluster-level FDR.}
 
 \usage{
-clusterWindows(regions, tab, target, pval.col=NULL, 
-    fc.col=NA, tol, ..., weight=NULL, grid.param=NULL) 
+clusterWindows(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
+    ..., weight=NULL, grid.length=21, iterations=4)
 }
 
 \arguments{
-	\item{regions}{a GRanges or RangedSummarizedExperiment object containing window coordinates}
-    \item{tab}{a dataframe of results with a \code{PValue} field for each window}
-    \item{target}{a numeric scalar indicating the desired cluster-level FDR}
-    \item{pval.col}{a string or integer scalar specifying the column of \code{tab} with the p-values}
-    \item{fc.col}{a string or integer scalar specifying the column of \code{tab} with the log-fold changes}
-	\item{tol, ...}{arguments to be passed to \code{\link{mergeWindows}}}
-
-    \item{weight, grid.param}{arguments to be passed to \code{\link{controlClusterFDR}}}
+	\item{regions}{A GRanges or RangedSummarizedExperiment object containing window coordinates.}
+    \item{tab}{A dataframe of results with a \code{PValue} field for each window.}
+    \item{target}{A numeric scalar indicating the desired cluster-level FDR.}
+    \item{pval.col}{A string or integer scalar specifying the column of \code{tab} with the p-values.}
+    \item{fc.col}{A string or integer scalar specifying the column of \code{tab} with the log-fold changes.}
+	\item{tol, ...}{Arguments to be passed to \code{\link{mergeWindows}}.}
+    \item{weight, grid.length, iterations}{Arguments to be passed to \code{\link{controlClusterFDR}}.}
 }
 
 \value{
