@@ -17,6 +17,8 @@ Deprecated consolidateSizes() itself.
 \item Modified mergeWindows() behaviour with specified sign=, for dealing with nested windows of opposing sign.
 
 \item Altered controlClusterFDR() to take the largest adjusted p-value threshold that yields a cluster-level FDR below target=.
+
+\item Simplified detailRanges() output so that it no longer returns an arbitrary exon number.
 }}
 
 \section{Version 1.14.0}{\itemize{

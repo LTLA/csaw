@@ -6,26 +6,24 @@
 
 \usage{
 detailRanges(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), 
-    max.intron=1e6, key.field="ENTREZID", name.field="SYMBOL", 
-    ignore.strand=TRUE)
+    key.field="ENTREZID", name.field="SYMBOL", ignore.strand=TRUE)
 }
 
 \arguments{
-\item{incoming}{a \code{GRanges} object containing the ranges to be annotated}
-\item{txdb}{a \code{TranscriptDb} object for the genome of interest}
-\item{orgdb}{a genome wide annotation object for the genome of interest}
-\item{dist}{an integer scalar specifying the flanking distance to annotate}
-\item{promoter}{an integer vector of length 2, where first and second values define the promoter as some distance upstream and downstream from the TSS, respectively}
-\item{max.intron}{an integer scalar indicating the maximum distance between exons}
-\item{key.field}{a character scalar specifying the keytype for name extraction}
-\item{name.field}{a character scalar or vector specifying the column(s) to use as the gene name}
-\item{ignore.strand}{a logical scalar indicating whether strandedness in \code{incoming} should be ignored}
+\item{incoming}{A GRanges object containing the ranges to be annotated.}
+\item{txdb}{A TxDb object for the genome of interest.}
+\item{orgdb}{An OrgDb object for the genome of interest.}
+\item{dist}{An integer scalar specifying the flanking distance to annotate.}
+\item{promoter}{An integer vector of length 2, where first and second values define the promoter as some distance upstream and downstream from the TSS, respectively.}
+\item{key.field}{A character scalar specifying the keytype for name extraction.}
+\item{name.field}{A character scalar specifying the column to use as the gene name.}
+\item{ignore.strand}{A logical scalar indicating whether strandedness in \code{incoming} should be ignored.}
 }
 
 \value{
 If \code{incoming} is not provided, a \code{GRanges} object will be returned containing ranges for the exons, promoters and gene bodies. 
-Gene keys (e.g., Entrez IDs) are stored as row names.
-Gene symbols, exon numbers and internal groupings (for exons of genes with multiple genomic locations) are also stored as metadata.
+Gene keys (e.g., Entrez IDs) are povided as row names.
+Gene symbols and feature types are stored as metadata.
 
 If \code{incoming} is a \code{GRanges} object, a list will be returned with \code{overlap}, \code{left} and \code{right} elements. 
 Each element is a character vector of length equal to the number of ranges in \code{incoming}.
@@ -34,50 +32,37 @@ For \code{left} and \code{right}, the gap between the range and the annotated fe
 }
 
 \details{
-This function adds exon-based annotations to a given set of genomic regions, in the form of compact character strings specifying the features overlapping and flanking each region.
-The aim is to determine the genic context of empirically identified regions. 
-This allows some basic biological interpretation of binding/marking in those regions. 
+This function adds annotations to a given set of genomic regions in the form of compact character strings specifying the features overlapping and flanking each region.
+The aim is to determine the genic context of empirically identified regions, for some basic biological interpretation of binding/marking in those regions. 
 All neighboring genes within a specified range are reported, rather than just the closest gene to the region.
 If a region in \code{incoming} is stranded and \code{ignore.strand=FALSE}, annotated features will only be reported if they lie on the same strand as that region.
 
 If \code{incoming} is missing, then the annotation will be provided directly to the user in the form of a \code{GRanges} object. 
-This may be more useful when further work on the annotation is required. 
-Exon numbers are provided in the metadata with promoters and gene bodies labelled as 0 and -1, respectively.
+This may be more useful when further work on the annotation is required.
+Features are labelled as exons (\code{"E"}), promoters (\code{"P"}) or gene bodies (\code{"G"}).
 Overlaps to introns can be identified by finding those regions that overlap with gene bodies but not with any of the corresponding exons.
-}
-
-\section{Explanation of fields}{
-For annotated features overlapping a region, the character string in the \code{overlap} output vector will be of the form \code{GENE|EXONS|STRAND}. 
-\code{GENE} is the gene symbol by default, but reverts to \code{<XXX>} if no symbol is defined for a gene with the Entrez ID \code{XXX}.
-The \code{EXONS} indicate the exon or range of exons that are overlapped. 
-The \code{STRAND} is, obviously, the strand on which the gene is coded. 
-For annotated regions flanking the region within a distance of \code{dist}, the character string in the \code{left} or \code{right} output vectors will have an additional \code{[DIST]} value. 
-This represents the gap between the edge of the region and the closest exon for that gene.
-
-Exons are numbered in order of increasing start or end position for genes on the forward or reverse strands, respectively. 
-Exon ranges in \code{EXON} are reported from as a comma-separated list where stretches of consecutive exons are summarized into a range. 
-Promoters are defined around any annotated TSS in \code{txdb}, and are marked as exon 0.
-Genes can have multiple TSS, but an overlap to multiple promoters will only be reported once. 
-If the region overlaps an intron, it is labelled with \code{I} in \code{EXON}. 
-Intronic overlaps are not reported if there is an exonic overlap.
-
-Note that promoter and intronic annotations are only reported for the \code{overlap} vector to reduce redundancy in the output. 
-For example, it makes little sense to report that the region is both flanking and overlapping an intron. 
-Similarly, the value of \code{DIST} is more relevant when it is reported to the nearest exon rather than to an intron.
-In cases where the distance is reported to the first exon, it can be used to refine the choice of \code{promoter}.
-}
-
-\section{Other options}{
-The \code{max.intron} value is necessary to deal with genes that have ambiguous locations on the genome. 
-If a gene has exons on different chromosomes, its location is uncertain and the gene is partitioned into two sets of exons for separate processing. 
-However, this is less obvious when the ambiguous locations belong to the same chromosome. 
-The \code{max.intron} value protects against excessively large genes that may occur from considering those locations as a single transcriptional unit.
-Exons are partitioned into two (or more) internal groupings for further processing.
 
 The default settings for \code{key.field} and \code{name.field} will work for human and mouse genomes, but may not work for other organisms.
 The \code{key.field} should refer to the key type in the \code{OrgDb} object, and also correspond to the \code{GENEID} of the \code{TxDb} object.
 For example, in S. cerevisiae, \code{key.field} is set to \code{"ORF"} while \code{name.field} is set to \code{"GENENAME"}.
-If multiple entries are supplied in \code{name.field}, the value of \code{GENE} is defined as a semicolon-separated list of each of those entries.
+}
+
+\section{Explanation of fields}{
+For annotated features overlapping a region, the character string in the \code{overlap} output vector will be of the form \code{GENE:STRAND:TYPE}. 
+\code{GENE} is the gene symbol by default, but reverts to the key (default Entrez ID) if no symbol is defined.
+\code{STRAND} is simply the strand of the gene, either \code{"+"} or \code{"-"}.
+The \code{TYPE} indicates the feature types that are overlapped - exon (\code{"E"}), promoter (\code{"P"}) and/or intron (\code{"I"}).
+Note that intron overlaps are only reported if the region does not overlap an exon directly.
+
+For annotated features flanking the region within a distance of \code{dist}, the \code{TYPE} is instead the distance to the feature.
+This represents the gap between the edge of the region and the closest exon for that gene.
+Flanking promoters are not reported, as it is more informative to report the distance to the exon directly;
+and flanking an intron should be impossible without overlapping them directly.
+
+The strand information is often useful in conjunction with the left/right flanking features.
+For example, if an exon for a negative-strand gene is to the left, the current region must be upstream of that exon.
+Conversely, if the exon for a positive-strand gene is to the left, the region must be downstream.
+The opposite applies for features to the right of the current region.
 }
 
 \author{Aaron Lun}
@@ -92,18 +77,6 @@ output <- detailRanges(current, orgdb=org.Mm.eg.db,
 head(output$overlap)
 head(output$right)
 head(output$left)
-
-detailRanges(txdb=TxDb.Mmusculus.UCSC.mm10.knownGene, orgdb=org.Mm.eg.db)
-
-\dontrun{
-output <- detailRanges(current, txdb=TxDb.Mmusculus.UCSC.mm10.knownGene, 
-    orgdb=org.Mm.eg.db, name.field=c("ENTREZID"))
-head(output$overlap)
-
-output <- detailRanges(current, txdb=TxDb.Mmusculus.UCSC.mm10.knownGene, 
-    orgdb=org.Mm.eg.db, name.field=c("SYMBOL", "ENTREZID"))
-head(output$overlap)
-}
 }
 
 \keyword{annotation}
