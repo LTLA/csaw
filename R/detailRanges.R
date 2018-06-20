@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom GenomicFeatures exonsBy genes
 #' @importFrom IRanges promoters trim IRanges flank findOverlaps
-#' @importFrom BiocGenerics strand start end
+#' @importFrom BiocGenerics strand start end lengths
 #' @importFrom GenomeInfoDb seqnames seqinfo
 #' @importFrom AnnotationDbi mapIds 
 #' @importFrom GenomicRanges GRanges
@@ -30,7 +30,7 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
     prom.ranges <- suppressWarnings(trim(promoters(txdb, upstream=promoter[1], downstream=promoter[2], column="gene_id")))
     expanded <- rep(seq_along(prom.ranges), lengths(prom.ranges$gene_id))
     prom.ranges <- prom.ranges[expanded]
-    names(prom.ranges) <- prom.ranges$gene_id
+    names(prom.ranges) <- unlist(prom.ranges$gene_id)
     prom.ranges$gene_id <- NULL
 
     # Obtain gene bodies.
