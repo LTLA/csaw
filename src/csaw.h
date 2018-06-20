@@ -22,9 +22,7 @@ extern "C" {
 
 SEXP collate_exon_data (SEXP, SEXP, SEXP, SEXP);
 
-SEXP annotate_overlaps (SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
-     SEXP, SEXP, SEXP,
-	 SEXP, SEXP, SEXP, SEXP); 
+SEXP annotate_overlaps (SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 /* best_in_cluster.cpp */
 

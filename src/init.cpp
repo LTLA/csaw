@@ -7,8 +7,7 @@
 extern "C" {
 
 static const R_CallMethodDef all_call_entries[] = {
-    REGISTER(collate_exon_data, 4),
-    REGISTER(annotate_overlaps, 13),
+    REGISTER(annotate_overlaps, 8),
     REGISTER(best_in_cluster, 3),
     REGISTER(get_cluster_stats, 5),
     REGISTER(merge_windows, 6),
