@@ -15,6 +15,8 @@ Deprecated consolidateSizes() itself.
 \item Switched output of combineTests() and getBestTest() and related functions to a DataFrame.
 
 \item Modified mergeWindows() behaviour with specified sign=, for dealing with nested windows of opposing sign.
+
+\item Altered controlClusterFDR() to take the largest adjusted p-value threshold that yields a cluster-level FDR below target=.
 }}
 
 \section{Version 1.14.0}{\itemize{
