@@ -159,6 +159,9 @@ test_that("profileSites correctly handles silly inputs", {
     expect_identical(ncol(out), 201L)
     expect_identical(nrow(out), 0L)
 
+    out <- profileSites(bam0, windows[0], ext=100, range=100, param=rparam, average=TRUE)
+    expect_equivalent(out, rep(NA_real_, 201L))
+
     # Negative or zero width.
     expect_error(out <- profileSites(bam0, windows, ext=100, range=-100, param=rparam), "positive")
     expect_error(out <- profileSites(bam0, windows, ext=-100, range=100, param=rparam), "positive")

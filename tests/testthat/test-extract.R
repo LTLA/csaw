@@ -151,21 +151,40 @@ set.seed(2004)
 test_that("extractReads correctly raises errors", {
     chromos <- c(chrA=1000, chrB=3000, chrC=2000)
     genome <- GRanges(names(chromos), IRanges(1L, chromos))
-    rparam <- readParam(pe="both")
 
+    # Only one range allowed.
     obam <- regenSE(100L, chromos, outfname=tempfile())
     extractor <- generateWindows(chromos, 2, 500)
     expect_error(extractReads(obam, extractor), "exactly one range")
 
-    test <- extractor[1]
+    # Effects of strandedness.
+    test <- GRanges("chrA", IRanges(250, 750))
     strand(test) <- "+"
     expect_warning(out.f <- extractReads(obam, test), "ignored")
     strand(test) <- "-"
     expect_warning(out.r <- extractReads(obam, test), "ignored")
     expect_identical(out.f, out.r)
 
+    # restrict and chromosome-wide settings.
     test <- GRanges("chrA", IRanges(1, 1000))
     expect_warning(extractReads(obam, test, param=readParam(restrict="chrC")), "not in restricted subset")
     test <- GRanges("chrD", IRanges(1, 1000))
     expect_error(extractReads(obam, test, param=readParam(restrict="chrC")), "cannot find current chromosome")
+
+    # Empty bam files.
+    test <- GRanges("chrA", IRanges(250, 750))
+    obam2 <- regenSE(0L, chromos, outfname=tempfile())
+    out <- extractReads(obam2, test)
+    expect_s4_class(out, "GRanges")
+    expect_identical(length(out), 0L)
+
+    out <- extractReads(obam2, test, param=readParam(pe="both"))
+    expect_s4_class(out, "GRanges")
+    expect_identical(length(out), 0L)
+
+    out <- extractReads(obam2, test, param=readParam(pe="both"), as.reads=TRUE)
+    expect_s4_class(out$forward, "GRanges")
+    expect_identical(length(out$forward), 0L)
+    expect_s4_class(out$reverse, "GRanges")
+    expect_identical(length(out$reverse), 0L)
 })

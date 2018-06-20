@@ -31,6 +31,11 @@ test_that("combineOverlaps works correctly", {
             expect_identical(output, output2)
         }
     }
+
+    # Testing with empty inputs.
+    out <- combineOverlaps(Hits(), data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0)))
+    expect_identical(nrow(out), 0L)
+    expect_identical(out$PValue, numeric(0)) 
 })
 
 set.seed(130001)
@@ -61,6 +66,11 @@ test_that("getBestOverlaps works correctly", {
         	expect_identical(output, output2)
         }
     }
+
+    # Testing with empty inputs.
+    out <- getBestOverlaps(Hits(), data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0)))
+    expect_identical(nrow(out), 0L)
+    expect_identical(out$PValue, numeric(0)) 
 })
 
 set.seed(130002)
@@ -90,6 +100,11 @@ test_that("empiricalOverlaps works correctly", {
         	expect_identical(output, output2)
         }
     }
+
+    # Testing with empty inputs.
+    out <- empiricalOverlaps(Hits(), data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0)))
+    expect_identical(nrow(out), 0L)
+    expect_identical(out$PValue, numeric(0)) 
 })
 
 set.seed(130003)
@@ -133,4 +148,8 @@ test_that("summitOverlaps works correctly", {
             }
         }
     }
+
+    # Testing with empty inputs.
+    out <- summitOverlaps(Hits(), data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0)))
+    expect_identical(out, numeric(0))
 })

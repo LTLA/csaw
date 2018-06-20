@@ -109,6 +109,15 @@ test_that("regionCounts works with PE data", {
 
 set.seed(40002)
 test_that("regionCounts works with silly inputs", {
+    # Doesn't fail with no regions.
+    obam <- regenSE(1000L, chromos, outfname=tempfile())
+    extractor <- generateWindows(chromos, 5, 500)
+    out <- regionCounts(obam, extractor[0])
+    expect_identical(nrow(out), 0L)
+    expect_identical(ncol(out), 1L)
+    expect_identical(assayNames(out), "counts")
+    expect_identical(out$totals, 1000L)
+
     # Doesn't fail with no counts.
     obam <- regenSE(0L, chromos, outfname=tempfile())
     extractor <- generateWindows(chromos, 5, 500)

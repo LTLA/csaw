@@ -124,6 +124,6 @@ test_that("checkBimodality fails correctly on empty inputs", {
     out <- checkBimodality(bam.files, my.ranges[0])
     expect_identical(out, numeric(0))
 
-    out <- checkBimodality(bam.files, my.ranges[1]) # prior counts come into play.
-    expect_identical(out, 1)
+    out <- checkBimodality(bam.files, my.ranges[1:10]) # prior counts come into play.
+    expect_identical(out, rep(1, 10L))
 })
