@@ -4,7 +4,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom BiocParallel bpmapply
 #' @importFrom SummarizedExperiment SummarizedExperiment
-#' @importFrom S4Vectors SimpleList
+#' @importFrom S4Vectors SimpleList split
 #' @importFrom BiocGenerics strand<-
 regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 # This just counts reads over regions. The only reason I'm using this and not

@@ -1,3 +1,4 @@
+#' @export
 upweightSummit <- function(ids, summits)
 # This takes a set of cluster IDs and a vector of summits (e.g., from
 # getBestTest or from findMaxima). It then computes relative weights for each

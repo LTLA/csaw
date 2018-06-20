@@ -1,11 +1,10 @@
 #' @export
-#' @importFrom GenomicRanges GRanges
+#' @importFrom GenomicRanges GRanges GRangesList
 #' @importFrom IRanges IRanges overlapsAny
-#' @importFrom stats start end
 #' @importFrom GenomeInfoDb Seqinfo seqnames
 #' @importFrom Rsamtools scanBamHeader
 #' @importFrom S4Vectors Rle
-#' @importFrom BiocGenerics strand strand<-
+#' @importFrom BiocGenerics strand strand<- start end
 extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=FALSE)
 # Exactly as specified. Takes a region and plots it in bimodal mode, with
 # options for duplicate removal, mapping quality enhancement, colorization,

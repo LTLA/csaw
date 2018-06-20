@@ -2,6 +2,7 @@
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom GenomeInfoDb seqlevels<- seqlengths<-
 #' @importFrom BiocParallel bpmapply
 windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, param=readParam())
 # Gets counts from BAM files at each position of the sliding window. 

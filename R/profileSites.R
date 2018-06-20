@@ -1,5 +1,6 @@
 #' @export
-#' @importFrom BiocGenerics start end strand split
+#' @importFrom BiocGenerics start end strand start<-
+#' @importFrom S4Vectors split
 #' @importFrom BiocParallel bpmapply 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges

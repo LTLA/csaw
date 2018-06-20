@@ -3,7 +3,7 @@
 #' @importFrom IRanges promoters trim IRanges flank findOverlaps
 #' @importFrom BiocGenerics strand start end
 #' @importFrom GenomeInfoDb seqnames seqinfo
-#' @importFrom AnnotationDbi select
+#' @importFrom AnnotationDbi mapIds 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom S4Vectors queryHits subjectHits
 detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), key.field="ENTREZID", name.field="SYMBOL", ignore.strand=TRUE)

@@ -1,3 +1,4 @@
+#' @export
 maximizeCcf <- function(profile, ignore=100) 
 # A quick and dirty function to maximize the CCF to get the 
 # average fragment length, while ignoring the phantom peak.

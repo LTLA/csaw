@@ -2,6 +2,9 @@
 # parameters for read loading in csaw. A class is used here so that
 # there are continuous validity checks on the list values.
 
+#' @export
+#' @importClassesFrom BiocParallel BiocParallelParam
+#' @importClassesFrom GenomicRanges GRanges
 setClass("readParam", representation(pe="character", max.frag="integer",
     dedup="logical", minq="integer", forward="logical", 
 	restrict="character", discard="GRanges", BPPARAM="BiocParallelParam"))
@@ -36,10 +39,13 @@ setMethod("initialize", signature("readParam"), function(.Object, ...) {
 	value
 })
 
+#' @export
 setMethod("$", signature("readParam"), function(x, name) { 
 	slot(x, name)
 })
 
+#' @export
+#' @importFrom BiocParallel bpworkers
 setMethod("show", signature("readParam"), function(object) {
 	cat("    ", switch(object@pe,
  	   none="Extracting reads in single-end mode",
@@ -84,6 +90,8 @@ setMethod("show", signature("readParam"), function(object) {
     cat("    Using", class(object@BPPARAM)[1], "with", nc, ifelse(nc>1L, "workers", "worker\n"))
 })
 
+#' @export
+#' @importFrom BiocParallel SerialParam
 readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=SerialParam())
 # This creates a list of parameters, formally represented as a readParam
 # object, specifying how reads should be extracted from the BAM files. The
@@ -103,7 +111,10 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 		restrict=restrict, discard=discard, BPPARAM=BPPARAM)
 }
 
+#' @export
 setGeneric("reform", function(x, ...) { standardGeneric("reform") })
+
+#' @export
 setMethod("reform", signature("readParam"), function(x, ...) {
 	incoming <- list(...)
 	sn <- slotNames(x)

@@ -1,3 +1,4 @@
+#' @export
 csawUsersGuide <- function(view=TRUE)
 # Find, and optionally show, the csaw user's guide 
 # 

@@ -1,6 +1,7 @@
 #' @export
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics split start end order
+#' @importFrom BiocGenerics start end order
+#' @importFrom S4Vectors split
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom BiocParallel bpmapply

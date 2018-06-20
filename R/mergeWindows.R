@@ -1,10 +1,9 @@
 #' @export
-#' @importFrom BiocGenerics strand strand<-
+#' @importFrom BiocGenerics strand strand<- start end
 #' @importFrom S4Vectors runValue
 #' @importFrom GenomeInfoDb seqnames Seqinfo seqlevels seqlengths
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom stats start end
 mergeWindows <- function(regions, tol, sign=NULL, max.width=NULL, ignore.strand=TRUE)
 # This function merges the adjacent windows if they lie within 'tol' of each other,
 # Any abundance filtering should be done beforehand. Negative values of tol refer

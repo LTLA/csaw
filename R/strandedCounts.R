@@ -1,3 +1,6 @@
+#' @export
+#' @importFrom SummarizedExperiment SummarizedExperiment assay rowRanges colData
+#' @importFrom S4Vectors metadata
 strandedCounts <- function(bam.files, param=readParam(forward=NULL), regions=NULL, ...) 
 # This is a convenience wrapper for strand-specific window counting.  It
 # returns a RangedSummarizedExperiment object with up to two sets of counts
