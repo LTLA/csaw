@@ -1,3 +1,5 @@
+#' @export
+#' @importFrom stats p.adjust
 mixedClusters <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL) 
 # Tests for mixed clusters, by performing an IUT on the one-sided combined p-values 
 # in each direction for each cluster.
