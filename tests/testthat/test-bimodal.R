@@ -40,7 +40,7 @@ CHECKFUN <- function(bam.files, regions, width, param, prior.count) {
 			right.reverse <- right.reverse + coverage(IRanges(end.R-width[b]+1, end.R), width=end(full.chr))
 		}
 
-		for (r in which(seqnames(regions)==chr)) {
+		for (r in BiocGenerics::which(seqnames(regions)==chr)) { # using BiocGenerics:: as testthat is unhappy during CHECK.
 			cur.reg <- regions[r]
 
 			# Computing the bimodality statistic.

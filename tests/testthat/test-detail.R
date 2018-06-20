@@ -33,8 +33,9 @@ test_that("detailRanges works without any supplied regions", {
 
     # Promoters should match up to the gene start.
     # Not all of them, though, due to alternative TSS.
+    # Using BiocGenerics:: as testthat is unhappy during CHECK.
     custom.prom <- suppressWarnings(trim(promoters(all.gene, upstream=3000, downstream=1000)))
-    expect_true(all(custom.prom %in% all.prom))
+    expect_true(all(!is.na(BiocGenerics::match(custom.prom, all.prom))))
 })
 
 set.seed(700001)
