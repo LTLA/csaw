@@ -66,6 +66,8 @@ test_that("weighted p-value calculations are correct", {
     expect_equal(numeric(0), csaw:::.weightedFDR(numeric(0), numeric(0)))
 })
 
+##################################################
+
 set.seed(102)
 test_that("controlClusterFDR works as expected", {
     nfalse <- 1000
@@ -85,7 +87,7 @@ test_that("controlClusterFDR works as expected", {
             expect_identical(clusterFDR(FUN(p <= out$threshold), out$threshold), out$FDR)
 
             # Exceeding the window-level threshold should generally increase the cluster-level FDR
-            # (note, possible failures here as this depends on resolution).
+            # (note: in theory, it is possible to get failures here as this depends on resolution).
             for (up in c(1.05, 1.1, 1.5, 2)) {
                 a.bit.up <- out$threshold*up
                 expect_true(clusterFDR(FUN(p <= a.bit.up), a.bit.up) > target || a.bit.up > target)
@@ -105,11 +107,73 @@ test_that("controlClusterFDR works as expected", {
 })
 
 ##################################################
-# Reference results for the consolidation function; also implicitly tests clusterWindows.
-# There's not much point doing exact checks, because we'd just be re-implementing most of it.
+
+set.seed(103)
+test_that("clusterWindows works as expected", {
+    windows <- GRanges("chrA", IRanges(1:1000, 1:1000))
+    test.p <- runif(1000)
+    test.p[rep(1:2, 100) + rep(0:99, each=2) * 10] <- 0 # every 10 bases contains 2 true positives.
+   
+    target <- 0.05
+    out.0 <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0)
+    expect_true(out.0$FDR <= target)
+
+    adjp <- p.adjust(test.p, method="BH")
+    keep <- !is.na(out.0$id)
+    presumed.threshold <- max(adjp[keep])
+    expect_identical(keep, adjp <= presumed.threshold)
+
+    merged <- mergeWindows(windows[keep], tol=0)
+    expect_identical(merged$region, out.0$region)
+    expect_identical(merged$id, out.0$id[keep])
+
+    # Upper threshold should have p-values above the specified FDR.
+    upper.threshold <- min(adjp[!keep])
+    upper.FDR <- clusterFDR(out.0$id[keep], upper.threshold) 
+    expect_true(upper.FDR > target)
+
+    # Trying with a higher tolerance - this should merge everything.
+    out.10 <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=10)
+    expect_identical(start(out.10$region), 1L)
+    expect_identical(end(out.10$region), max(which(test.p==0)))
+    expect_identical(out.10$FDR, 0)
+    expect_identical(!is.na(out.10$id), adjp <= target)
+
+    # Checking that the frequency weights work.
+    weight <- sample(3, length(windows), replace=TRUE)
+    expand <- rep(seq_along(weight), weight)
+    out <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0, weight=weight)
+    ref <- clusterWindows(windows[expand], data.frame(PValue=test.p[expand]), target=target, tol=0)
+
+    expect_identical(out$FDR, ref$FDR)
+    expect_identical(out$region, ref$region)
+    expect_identical(out$id, ref$id[!duplicated(expand)])
+
+    # Responsive to the sign.
+    out <- clusterWindows(windows, data.frame(PValue=test.p, logFC=1), target=target, tol=0, fc.col="logFC")
+    expect_identical(out, out.0)
+
+    lfc <- rnorm(length(windows))
+    out <- clusterWindows(windows, data.frame(PValue=test.p, logFC=lfc), target=target, tol=0, fc.col="logFC")
+    expect_true(out$FDR <= target)
+    expect_true(all(lengths(lapply(split(lfc > 0, out$id), unique))==1L))
+
+    # Trying with empty and other silly inputs.
+    out <- clusterWindows(windows[0], data.frame(PValue=test.p[0]), target=target, tol=0)
+    expect_identical(out$id, integer(0))
+    expect_identical(out$region, windows[0])
+    expect_identical(out$FDR, 0)
+
+    expect_error(clusterWindows(windows[0], data.frame(PValue=test.p), target=target, tol=0), "number of regions")
+    expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), target=target), "'tol'")
+    expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), tol=100), "set to 0.05")
+})
+
+##################################################
 
 checkResults <- function(data.list, result.list, target, pval.col="PValue", ..., true.pos) {
     out <- consolidateClusters(data.list, result.list, pval.col=pval.col, target=target, ...)
+    expect_true(out$FDR <= target)
 
     # Checking that the clustering is fine.
     all.ids <- unlist(out$id)
@@ -124,41 +188,27 @@ checkResults <- function(data.list, result.list, target, pval.col="PValue", ...,
         expect_true(max(all.ps[was.sig]) < min(all.ps[!was.sig])) 
     }
 
-    # Comparing the observed and estimated FDRs.
-    np <- out$region[!overlapsAny(out$region, true.pos),]
-    expect_true(length(np)/length(out$region) <= out$FDR * 1.1) # A bit fragile, hence the tolerance.
-    expect_true(out$FDR <= target)
+    # Comparing the observed and estimated FDRs (far too fragile for use).
+#    np <- out$region[!overlapsAny(out$region, true.pos),]
+#    expect_true(length(np)/length(out$region) <= out$FDR) 
+#    print(length(np)/length(out$region))
     return(NULL)
 }
 
-set.seed(103)
+set.seed(104)
 test_that("consolidateClusters works as expected", {
-    windows <- GRanges("chrA", IRanges(1:1000, 1:1000))
-    test.p <- runif(1000)
-    test.p[rep(1:2, 100) + rep(0:99, each=2) * 10] <- 0 
+    windows <- GRanges("chrA", IRanges(1:2000, 1:2000))
+    test.p <- runif(2000)
+    test.p[rep(1:2, 50) + rep(0:49, each=2) * 40] <- 0  
     
     true.pos <- windows[test.p==0]
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=0, target=0.05, true.pos=true.pos)
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=10, target=0.05, true.pos=true.pos)
-    
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=0, target=0.05, true.pos=true.pos) # Multiple entries
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=0, target=0.05, true.pos=true.pos) 
     checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), equiweight=FALSE, tol=0, target=0.05, true.pos=true.pos)
-    
-    # Smaller number of true positive regions
-    set.seed(50)
-    test.p <- runif(1000)
-    test.p[rep(1:2, 50) + rep(0:49, each=2) * 10] <- 0  
-    
-    true.pos <- windows[test.p==0]
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=0, target=0.05, true.pos=true.pos)
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=5, target=0.05, true.pos=true.pos)
-    checkResults(list(windows), list(data.frame(PValue=test.p)), tol=5, target=0.1, true.pos=true.pos)
-    checkResults(list(windows), list(data.frame(whee=test.p)), tol=2, pval.col="whee", target=0.05, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=5, target=0.05, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=0, target=0.1, true.pos=true.pos)
  
     # Adding sign information.
     signs <- ifelse(rbinom(1000, 1, 0.5)!=0L, 1, -1)
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p, logFC=signs), data.frame(PValue=test.p[1:10], logFC=signs[1:10])), 
-                 tol=0, target=0.05, true.pos=true.pos)
     checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p, logFC=signs), data.frame(PValue=test.p[1:10], logFC=signs[1:10])), 
                  tol=0, fc.col="logFC", target=0.05, true.pos=true.pos)
     
@@ -168,5 +218,8 @@ test_that("consolidateClusters works as expected", {
     expect_identical(out$FDR, 0)
     expect_s4_class(out$region, "GRanges")
     expect_identical(length(out$region), 0L)
+
+    expect_error(consolidateClusters(list(windows, windows[1:10]), list(data.frame(PValue=test.p)), tol=0, target=0.1), "must have same length")
+    expect_error(consolidateClusters(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p)), tol=0, target=0.1), "number of entries")
 })
 
