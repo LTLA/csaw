@@ -19,7 +19,7 @@ consolidateSizes(data.list, result.list, equiweight=TRUE, merge.args=list(),
 \item{result.list}{A list of data.frames containing the DB test results for each entry of \code{data.list}.}
 \item{equiweight}{A logical scalar indicating whether equal weighting from each window size should be enforced.}
 \item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
-\item{region}{A \code{GRanges} object specifying regions of interest for overlapping with windows.}
+\item{region}{A GRanges object specifying regions of interest for overlapping with windows.}
 \item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}
 \item{sign.list}{A list of logical vectors, where each vector corresponds to and is of the same length as an object in \code{data.list}.
 Each value of the vector should indicate whether the log-fold change is positive for the corresponding window.}
@@ -62,7 +62,7 @@ This ensures that the combined p-value is not fully determined by numerous small
 
 The signs of the log-fold change can be specified using \code{sign.list}.
 This should be a list of logical vectors indicating whether the log-fold changes for each set of windows of \code{data.list} are positive.
-We do not recommend using this for routine analyses - see \code{?\code{mergeWindows}} for details.
+We do not recommend using this for routine analyses - see \code{?\link{mergeWindows}} for details.
 }
 
 \seealso{

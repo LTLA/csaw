@@ -1,3 +1,4 @@
+#' @export
 empiricalFDR <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
 # Converts two-tailed p-values to one-tailed p-values, combines them 
 # and takes the number of rejections in the "wrong" direction as an 

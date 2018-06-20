@@ -1,5 +1,5 @@
 #' @export
-#' @importFrom edgeR scaleOffset cpm addPriorCount
+#' @importFrom edgeR scaleOffset.default cpm addPriorCount
 #' @importFrom SummarizedExperiment assay
 calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE, 
         log=TRUE, prior.count=1, assay.id="counts")
@@ -27,7 +27,7 @@ calculateCPM <- function(object, use.norm.factors=TRUE, use.offsets=FALSE,
 
     # Computing a offset-adjusted CPM matrix.
     off.mat <- assay(object, i="offset", withDimnames=FALSE)
-    new.offset <- scaleOffset(lib.size, off.mat)
+    new.offset <- scaleOffset.default(lib.size, off.mat)
     if (!log) {
         cpm.out <- mat/exp(new.offset) * 1e6
     } else {

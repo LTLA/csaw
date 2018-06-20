@@ -124,6 +124,7 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 	quantile(ab, probs=1 - 0.5/prop.seen) 
 }
 
+#' @export
 #' @importFrom stats median
 scaleControlFilter <- function(data, background) 
 # Computes the normalization factor due to composition bias
