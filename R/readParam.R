@@ -45,7 +45,7 @@ setMethod("$", signature("readParam"), function(x, name) {
 })
 
 #' @export
-#' @importFrom BiocParallel bpworkers
+#' @importFrom BiocParallel bpnworkers
 setMethod("show", signature("readParam"), function(object) {
 	cat("    ", switch(object@pe,
  	   none="Extracting reads in single-end mode",
@@ -86,7 +86,7 @@ setMethod("show", signature("readParam"), function(object) {
 		cat("    No regions are specified to discard reads\n")
 	}
 
-    nc <- bpworkers(object@BPPARAM)
+    nc <- bpnworkers(object@BPPARAM)
     cat("    Using", class(object@BPPARAM)[1], "with", nc, ifelse(nc>1L, "workers", "worker\n"))
 })
 
