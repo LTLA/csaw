@@ -11,7 +11,7 @@ set.seed(50000)
 test_that("combineTests works as expected on vanilla inputs", {
     # Always testing differing numbers of windows relative to the number of clusters,
     # to explore the gamut of behaviours when there are few to many windows per cluster.
-    for (ntests in c(10, 50, 100)) {
+    for (ntests in c(10, 50, 100, 200)) {
         test <- autogen(20, ntests)
         ids <- test$id
         tab <- test$table
@@ -32,7 +32,7 @@ test_that("combineTests works as expected on vanilla inputs", {
         reference <- ifelse(is.na(reference), 0L, reference) 
         expect_identical(reference, tabcom$logFC.down)
 
-           # Checking Simes.
+        # Checking Simes.
         checker <- split(data.frame(PValue=tab$PValue), ids)
         osimes <- sapply(checker, FUN=function(x) { min(p.adjust(x$PValue, method="BH")) })
         osimes <- unname(osimes)
@@ -53,7 +53,7 @@ test_that("combineTests works as expected on vanilla inputs", {
 
 set.seed(50001)
 test_that("combineTests works with alternative options", {
-    for (ntests in c(10, 50, 100)) {
+    for (ntests in c(10, 50, 100, 200)) {
         test <- autogen(20, ntests)
         ids <- test$id
         tab <- test$table
@@ -104,7 +104,7 @@ test_that("combineTests works with alternative options", {
 
 set.seed(50002)
 test_that("combineTests direction inference works as expected", {
-    for (nclusters in c(10, 50, 100)) { 
+    for (nclusters in c(10, 20, 50, 100)) { 
         test <- autogen(nclusters, 200)
         ids <- test$id
         tab <- test$table
