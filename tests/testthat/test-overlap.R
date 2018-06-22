@@ -107,6 +107,40 @@ test_that("empiricalOverlaps works correctly", {
     expect_identical(out$PValue, numeric(0)) 
 })
 
+set.seed(1300021)
+test_that("mixedOverlaps works correctly", {
+    for (nreg in c(2, 10)) {
+        for (nwin in c(1, 10, 100)) {
+            regions <- generateWindows(chromos, nreg, 500)
+            windows <- generateWindows(chromos, nwin, 50)
+
+            olap <- findOverlaps(regions, windows)
+            ns <- length(windows)
+            tab <- data.frame(logFC=rnorm(ns), PValue=rbeta(ns, 1, 3), logCPM=rnorm(ns))
+
+            # Straight-up comparison to combineTests, after discarding all NA's.
+            output <- mixedOverlaps(olap, tab)
+            refstats <- mixedClusters(queryHits(olap), tab[subjectHits(olap),])
+            expect_identical(output[!is.na(output$PValue),], refstats)
+
+        	# Testing with weights.
+            test.weight <- runif(ns)
+            output <- mixedOverlaps(olap, tab, i.weight=test.weight)
+            refstats <- mixedClusters(queryHits(olap), tab[subjectHits(olap),], weight=test.weight[subjectHits(olap)])
+            expect_identical(output[!is.na(output$PValue),], refstats)
+
+        	# More weight testing, where o.weight is constructed from the weight for each i.weight.
+            output2 <- mixedOverlaps(olap, tab, o.weight=test.weight[subjectHits(olap)])
+            expect_identical(output, output2)
+        }
+    }
+
+    # Testing with empty inputs.
+    out <- mixedOverlaps(Hits(), data.frame(logFC=numeric(0), PValue=numeric(0), logCPM=numeric(0)))
+    expect_identical(nrow(out), 0L)
+    expect_identical(out$PValue, numeric(0)) 
+})
+
 set.seed(130003)
 test_that("summitOverlaps works correctly", {
     for (nreg in c(2, 10)) {
