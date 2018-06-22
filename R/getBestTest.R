@@ -52,21 +52,3 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 # robustly (i.e., get rid of very low p-values) to a B(1, n) distribution to determine the
 # effective number of independent tests 'n'. You can then apply that to the Bonferroni 
 # correction for a cluster of that size.
-
-.getPValCol <- function(pval.col, tab) {
-    if (length(pval.col)>1L) { 
-        stop("multiple p-value columns are not supported")
-    }
-	if (is.null(pval.col)) { 
-		pval.col <- "PValue"
-    }
-    if (is.character(pval.col)) {
-        pval.col <- which(colnames(tab)==pval.col)
-    } else {
-        pval.col <- as.integer(pval.col) # coerce to integer, just in case.
-    }
-    if (length(pval.col)==0) { 
-        stop("failed to find any p-value column")
-    }
-    return(pval.col)
-}
