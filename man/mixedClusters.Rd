@@ -32,9 +32,13 @@ The exception is the \code{direction} field, which is not returned as the test i
 This function converts two-sided p-values to one-sided counterparts for each direction of log-fold change.
 For each direction, the corresponding one-sided p-values are combined to yield a combined p-value for each cluster.
 Each cluster is associated with two combined p-values (one in each direction), which are intersected using the Berger's intersection-union test (IUT).
-This tests against the null hypothesis that either direction is not significant.
+
+The IUT p-value provides evidence against the null hypothesis that either direction is not significant.
 In short, a low p-value is only possible if there is DB in both directions.
 This formally identifies mixed clusters corresponding to complex DB events.
+
+As with \code{\link{empiricalFDR}}, the p-values in \code{pval.col} should be independent of the sign of the log-fold change.
+This may not be true for all hypothesis tests, so caution is required when supplying values in \code{tab}.
 }
 
 \seealso{

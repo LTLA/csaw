@@ -32,8 +32,9 @@ Dividing the number of false positives by the nmber of discoveries yields the em
 Monotonicity is enforced (i.e., the empirical FDR only decreases with decreasing p-value) as is the fact that the empirical FDR must be below unity.
 
 The p-values specified in \code{pval.col} are assumed to be originally computed from some two-sided test,
-where the direction of change is independent of the magnitude of the p-value under the null hypothesis.
-This rules out p-values computed from, e.g., ANODEV where multiple contrasts are tested at once.
+where the distribution of p-values is the same regardless of the direction of the log-fold change (under both the null and alternative hypothesis).
+This rules out p-values computed from ANODEV where multiple contrasts are tested at once;
+or from methods that yield asymmetric p-value distributions, e.g., GLM-based TREAT.
 
 Control of the empirical FDR is best used for very noisy data sets where the BH method is not adequate.
 While the BH method protects against statistical false positives, the empirical FDR also protects against experimental false positives, e.g., due to non-specific binding.
