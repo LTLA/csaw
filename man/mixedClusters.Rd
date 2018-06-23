@@ -37,7 +37,7 @@ The IUT p-value provides evidence against the null hypothesis that either direct
 In short, a low p-value is only possible if there is DB in both directions.
 This formally identifies mixed clusters corresponding to complex DB events.
 
-As with \code{\link{empiricalFDR}}, the p-values in \code{pval.col} should be independent of the sign of the log-fold change.
+The two-sided p-values in \code{pval.col} should be independent of the sign of the log-fold change under the null hypothesis.
 This may not be true for all hypothesis tests, so caution is required when supplying values in \code{tab}.
 }
 

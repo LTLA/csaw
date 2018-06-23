@@ -35,11 +35,20 @@ The p-values specified in \code{pval.col} are assumed to be originally computed 
 where the distribution of p-values is the same regardless of the direction of the log-fold change (under both the null and alternative hypothesis).
 This rules out p-values computed from ANODEV where multiple contrasts are tested at once;
 or from methods that yield asymmetric p-value distributions, e.g., GLM-based TREAT.
+}
 
+\section{Caution:}{
 Control of the empirical FDR is best used for very noisy data sets where the BH method is not adequate.
-While the BH method protects against statistical false positives, the empirical FDR also protects against experimental false positives, e.g., due to non-specific binding.
+The BH method only protects against statistical false positives under the null hypothesis that the log-fold change is zero.
+However, the empirical FDR also protects against experimental false positives, caused by non-specific binding that yields uninteresting (but statistically significant) DB.
+
 The downside is that the empirical FDR calculation relies on the availability of a good estimate of the number of false positives.
-The BH method in \code{\link{combineTests}} is more statistically rigorous and should be preferred for routine analyses.
+It also assumes that the distribution of p-values is the same for non-specific binding events in both directions 
+(i.e., known events with negative log-FCs and unknown events among those with positive log-FCs).
+Even if the log-fold changes are symmetric around zero, this does not mean that the p-value distributions will be the same,
+due to differences in library size and number between control and ChIP samples.
+
+In summary, the BH method in \code{\link{combineTests}} is more statistically rigorous and should be preferred for routine analyses.
 }
 
 \value{
