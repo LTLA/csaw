@@ -6,6 +6,8 @@
 #' @importFrom AnnotationDbi mapIds 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom S4Vectors queryHits subjectHits
+#' @importFrom methods is
+#' @importClassesFrom GenomicFeatures TxDb
 detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), key.field="ENTREZID", name.field="SYMBOL", ignore.strand=TRUE)
 # Gives three character vectors for each 'incoming'. 
 # The first specifies which features are wholly or partially overlapped by the current range.
@@ -34,8 +36,12 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
     prom.ranges$gene_id <- NULL
 
     # Obtain gene bodies.
-    gene.ranges <- genes(txdb, single.strand.genes.only=FALSE)
-    gene.ranges <- unlist(gene.ranges)
+    if (is(txdb, "TxDb")) { 
+        gene.ranges <- genes(txdb, single.strand.genes.only=FALSE)
+        gene.ranges <- unlist(gene.ranges)
+    } else {
+        gene.ranges <- genes(txdb)
+    }
 
     # Assembling all ranges.
     all.ranges <- c(exon.ranges, prom.ranges, gene.ranges)
