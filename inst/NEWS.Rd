@@ -2,7 +2,7 @@
 \title{csaw News}
 \encoding{UTF-8}
 
-\section{Version 1.15.6}{\itemize{
+\section{Version 1.16.0}{\itemize{
 \item Added normFactors() function to avoid confusion when normOffsets() returns factors.
 
 \item Deprecated type="scaling" option in normOffsets().
