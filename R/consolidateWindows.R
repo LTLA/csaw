@@ -81,25 +81,3 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
         return(list(olap=final.olaps, weight=rel.weights))
 	}
 }
-
-consolidateSizes <- function(data.list, result.list, equiweight=TRUE, 
-    merge.args=list(), region=NULL, overlap.args=list(), ...) 
-# Deprecated function that calls consolidateWindows.    
-{
-    .Deprecated(new="consolidateWindows")
-    out <- consolidateWindows(data.list, equiweight=equiweight, 
-        merge.args=merge.args, region=region, overlap.args=overlap.args)
-    
-    if (!is.null(region)) {
-        tabcom <- consolidateTests(olap.list=out$olap, result.list=result.list,
-            weight.list=out$weight, ...) 
-    } else {
-        tabcom <- consolidateTests(id.list=out$id, result.list=result.list,
-            weight.list=out$weight, ...) 
-    }
-   
-    out$table <- tabcom
-    out$weight <- NULL
-    return(out)
-}
-

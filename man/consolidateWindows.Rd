@@ -1,6 +1,5 @@
 \name{consolidateWindows}
 \alias{consolidateWindows}
-\alias{consolidateSizes}
 
 \title{Consolidate window sizes}
 \description{Consolidate windows of different sizes into a common set of clusters.}
@@ -8,10 +7,6 @@
 \usage{
 consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
     region=NULL, overlap.args=list(), sign.list=NULL) 
-
-# Deprecated, use consolidateTests or consolidateOverlaps instead!
-consolidateSizes(data.list, result.list, equiweight=TRUE, merge.args=list(),
-    region=NULL, overlap.args=list(), ...)
 }
 
 \arguments{
