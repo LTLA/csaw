@@ -4,19 +4,13 @@
 #' @importFrom edgeR aveLogCPM
 #' @importFrom methods is
 #' @importFrom SummarizedExperiment assay assay<-
-normOffsets <- function(object, type=c("scaling", "loess"), ..., assay.id="counts", se.out=TRUE) 
+normOffsets <- function(object, type=NULL, ..., assay.id="counts", se.out=TRUE) 
 # Perform a fast loess normalization which uses the average count as the covariate, 
 # rather than the typical A-value-based methods to avoid instability at low abundances.
 #
 # written by Aaron Lun
 # created 19 November 2013
 {
-	type <- match.arg(type)
-	if (type=="scaling") { 
-        .Deprecated(msg='type="scaling" is deprecated.\nUse normFactors() instead.')
-		return(normFactors(object, lib.size=lib.sizes, ..., assay.id=assay.id, se.out=se.out))
-	} 
-
     mat <- assay(object, i=assay.id, withDimnames=FALSE)
     nlibs <- ncol(mat)
     nwin <- nrow(mat)
@@ -24,6 +18,9 @@ normOffsets <- function(object, type=c("scaling", "loess"), ..., assay.id="count
     lib.sizes <- object$totals
     if (is.null(lib.sizes)) {
         stop("library sizes not present in 'object$totals'")
+    }
+    if (!is.null(type)) {
+        .Deprecated(msg="any non-NULL value for 'type' is deprecated.")
     }
 
     # Scaled corrections squeeze offsets towards relative log-library sizes.

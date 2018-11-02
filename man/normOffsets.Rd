@@ -7,15 +7,14 @@
 \description{Calculate normalization factors or offsets using count data from multiple libraries.}
 
 \usage{
-normOffsets(object, type=c("scaling", "loess"), ..., assay.id="counts", 
-    se.out=TRUE)
+normOffsets(object, type=NULL, ..., assay.id="counts", se.out=TRUE)
 
 normFactors(object, weighted=FALSE, ..., assay.id="counts", se.out=TRUE)
 }
 
 \arguments{
   \item{object}{A SummarizedExperiment object containing a count matrix.}
-  \item{type}{A character string indicating what type of normalization is to be performed.}
+  \item{type}{Deprecated; a character string indicating what type of normalization is to be performed.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
   \item{assay.id}{An integer scalar or string specifying the assay values to use for normalization.}
@@ -34,13 +33,11 @@ Assigning excessive weight to such regions will defeat the purpose of trimming w
 % enough new information in the dataset. This can be overcome by (obviously) increasing the counts. For example, binning
 % can be performed with a larger bin size in \code{windowCounts} to obtain proportionally larger counts.
 
-The \code{normOffsets} function with \code{type="loess"} performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
+The \code{normOffsets} function performs non-linear normalization similar to the fast loess algorithm in \code{\link{normalizeCyclicLoess}}. 
 This aims to account for mean dependencies in the efficiency biases between libraries.
 For each sample, a lowess curve is fitted to the log-counts against the log-average count. 
 The fitted value for each genomic window is used as an offset in a generalized linear model for that feature and sample. 
 The use of the average count provides more stability than the average log-count when low counts are present for differentially bound regions.
-
-\code{normOffsets} with \code{type="scaling"} behaves the same as \code{normFactors}, but is deprecated to avoid confusion when the function returns normalization \emph{factors}. 
 
 Both functions expect SummarizedExperiment objects as input.
 The count matrix to be used for normalization will be extracted according to the specified \code{assay.id} field.
