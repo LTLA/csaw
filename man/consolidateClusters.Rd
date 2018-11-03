@@ -26,7 +26,7 @@ A named list is returned containing:
 This function consolidates DB results from multiple analyses, typically involving different window sizes.
 The aim is to provide comprehensive detection of DB at a range of spatial resolutions.
 Significant windows from each analysis are identified and used for clustering with \code{\link{clusterWindows}}.
-This represents the post-hoc counterpart to \code{\link{consolidateSizes}}.
+This represents the post-hoc counterpart to \code{\link{consolidateWindows}}.
 
 Some effort is required to equalize the contribution of the results from each analysis.
 This is done by setting \code{equiweight=TRUE}, where the weight of each window is inversely proportional to the number of windows from that analysis.
@@ -39,7 +39,7 @@ However, note that nested windows with opposite signs may give unintuitive resul
 
 \seealso{
 \code{\link{clusterWindows}},
-\code{\link{consolidateSizes}}
+\code{\link{consolidateWindows}}
 }
 
 \author{
