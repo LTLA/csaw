@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom GenomicFeatures exonsBy genes
 #' @importFrom IRanges promoters trim IRanges flank findOverlaps
-#' @importFrom BiocGenerics strand start end lengths
+#' @importFrom BiocGenerics strand start end
 #' @importFrom GenomeInfoDb seqnames seqinfo
 #' @importFrom AnnotationDbi mapIds 
 #' @importFrom GenomicRanges GRanges
