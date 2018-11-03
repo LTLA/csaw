@@ -5,7 +5,7 @@ Title: ChIP-Seq Analysis with Windows
 Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
         "infinite.monkeys.with.keyboards@gmail.com"),
         person("Gordon", "Smyth", role="aut"))
-Depends: R (>= 3.5), GenomicRanges, SummarizedExperiment, BiocParallel
+Depends: R (>= 3.6), GenomicRanges, SummarizedExperiment, BiocParallel
 Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures, 
         AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats
 Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat
