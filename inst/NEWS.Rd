@@ -2,6 +2,12 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.18.0}{\itemize{
+\item Deprecated the type= argument in normOffsets().
+
+\item Removed the deprecated consolidateSizes() function.
+}}
+
 \section{Version 1.16.0}{\itemize{
 \item Added normFactors() function to avoid confusion when normOffsets() returns factors.
 
