@@ -44,26 +44,27 @@ SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end,
     BamRead br;
     BamIterator biter(bf, chr, start, end);
     std::deque<int> forward_pos, forward_len, reverse_pos, reverse_len;
-    AlignData algn_data;
 
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){    
 //        // If we can see that it is obviously unmapped (IMPOSSIBLE for a sorted file).
 //        if (((br.read -> core).flag & BAM_FUNMAP)!=0) { 
 //            continue;
 //        } 
-        
+
         if (!br.is_well_mapped(minqual, rmdup)) { continue; }
-        if (((br.read->core).flag & set_flags)!=set_flags) { continue; }
-        if (((br.read->core).flag & unset_flags)!=0) { continue; }
-        int curpos = (br.read -> core).pos + 1;
-        br.extract_data(algn_data);
+        auto cur_flag = br.get_flag();
+        if ((cur_flag & set_flags)!=set_flags) { continue; }
+        if ((cur_flag & unset_flags)!=0) { continue; }
+
+        int curpos = br.get_aln_pos() + 1;
+        int curlen = br.get_aln_len();
         
-        if (algn_data.is_reverse) { 
+        if (br.is_reverse()) { 
             reverse_pos.push_back(curpos);
-            reverse_len.push_back(algn_data.len);
+            reverse_len.push_back(curlen);
         } else {
             forward_pos.push_back(curpos);
-            forward_len.push_back(algn_data.len);
+            forward_len.push_back(curlen);
         }        
     }
 

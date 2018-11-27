@@ -1,6 +1,8 @@
 #include "bam_utils.h"
 #include "utils.h"
 
+/* A safe wrapper class to open and class BAM files. */
+
 BamFile::BamFile(SEXP bam, SEXP idx) {
     Rcpp::String path=check_string(bam, "BAM file path");
     Rcpp::String xpath=check_string(idx, "BAM index file path");
@@ -39,21 +41,34 @@ BamFile::~BamFile() {
     return;
 }
 
+
+/* A safe wrapper class to open and close BAM alignment objects */
+
 BamRead::BamRead() {
     read=bam_init1();
     return;
 }
 
-bool BamRead::is_well_mapped(const int& minqual, const bool& rmdup) const {
+uint16_t BamRead::get_flag() const {
+    return (read->core).flag;
+}
+
+int32_t BamRead::get_aln_pos() const {
+    return (read->core).pos;
+}
+
+bool BamRead::is_well_mapped(int minqual, bool rmdup) const {
     if (minqual!=NA_INTEGER && (read -> core).qual < minqual) { return false; } 
     if (rmdup && ((read -> core).flag & BAM_FDUP)!=0) { return false; }
     return true;
 }
 
-void BamRead::extract_data(AlignData& data) const {
-    data.len=bam_cigar2rlen((read->core).n_cigar, bam_get_cigar(read));
-    data.is_reverse=bam_is_rev(read);
-    return;
+bool BamRead::is_reverse() const { 
+    return bam_is_rev(read); 
+}
+
+int BamRead::get_aln_len() const {
+    return bam_cigar2rlen((read->core).n_cigar, bam_get_cigar(read));
 }
 
 BamRead::~BamRead() { 
@@ -61,7 +76,7 @@ BamRead::~BamRead() {
     return;
 }
 
-AlignData::AlignData() : len(0), is_reverse(true) { }
+/* A safe wrapper class to open and close BAM iterator objects */
 
 BamIterator::BamIterator(const BamFile& bf) : iter(NULL) {
     iter=bam_itr_queryi(bf.index, HTS_IDX_NOCOOR, 0, 0);
@@ -74,7 +89,7 @@ BamIterator::BamIterator(const BamFile& bf, SEXP Chr, SEXP Start, SEXP End) : it
     int start=check_integer_scalar(Start, "start position")-1;
     int end=check_integer_scalar(End, "end position");
 
-    // Pulling out chromsoome name.
+    // Pulling out chromosome name.
     int cid=bam_name2id(bf.header, chr.get_cstring());
     if (cid==-1) {
         std::stringstream err;

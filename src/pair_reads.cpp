@@ -1,6 +1,13 @@
 #include "bam_utils.h"
 #include "utils.h"
 
+struct AlignData {
+    AlignData() : len(0), is_reverse(false) {}
+    AlignData(int L, bool R) : len(L), is_reverse(R) {}
+    int len;
+    bool is_reverse;
+};
+
 struct OutputContainer {
     OutputContainer(bool d) : diagnostics(d), totals(0) {}
 
@@ -113,20 +120,19 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     typedef std::map<std::pair<int, std::string>, AlignData> Holder;
     std::deque<Holder> all_holders(4); // four holders, one for each strand/first combination; cut down searches.
     std::pair<int, std::string> current;
-    AlignData algn_data;
 
     std::set<std::string> identical_pos;
     int last_identipos=-1;
 
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){
-        const auto& curflag=(br.read -> core).flag;
+        auto curflag=br.get_flag();
         if ((curflag & BAM_FSECONDARY)!=0 || (curflag & BAM_FSUPPLEMENTARY)!=0) {
             continue; // These guys don't even get counted as reads.
         }
 
         ++oc.totals;
-        const int curpos = (br.read->core).pos + 1; // Getting 1-indexed position.
-        br.extract_data(algn_data);
+        const int curpos = br.get_aln_pos() + 1; // Getting 1-indexed position.
+        const AlignData algn_data(br.get_aln_len(), br.is_reverse());
         const bool am_mapped=br.is_well_mapped(minqual, rmdup);
 
         /* Reasons to not add a read: */
@@ -162,7 +168,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
             continue;
         }
 
-        /* Checking the map and adding it if it doesn't exist. */
+        /* Checking the map for its mate, adding it if it doesn't exist. */
         
         current.second.assign(bam_get_qname(br.read));
         const int mate_pos = (br.read -> core).mpos + 1; // 1-indexed position, again.
@@ -175,7 +181,8 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
                 identical_pos.clear();
                 last_identipos=curpos;
             }
-            std::set<std::string>::iterator itip=identical_pos.lower_bound(current.second);
+
+            auto itip=identical_pos.lower_bound(current.second);
             if (itip!=identical_pos.end() && !(identical_pos.key_comp()(current.second, *itip))) {
                 mate_is_in=true;
                 identical_pos.erase(itip);
