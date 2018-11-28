@@ -1,10 +1,45 @@
 #include "intersector.h"
 
-intersector::intersector(SEXP p, SEXP e) : positions(p), elements(e), index(0), open(positions.size()), num_open(0) {
+intersector::intersector(SEXP p, SEXP e) : positions(p), elements(e), index(0), num_open(0) {
     // See csaw:::.setupDiscard for the expected input vectors.
-    if (positions.size()!=elements.size()) {
-        throw std::runtime_error("position and identity vectors should be of the same length");
+    // We do some fairly careful input checks here, just in case
+    // users do stupid things to the readParam() object.
+    const size_t N=positions.size();
+    if (N!=elements.size()) {
+        throw std::runtime_error("position and element vectors should be of the same length");
     }
+
+    if (N) {
+        if (positions[0]<1) {
+            throw std::runtime_error("position vector should be 1-based");
+        }
+
+        for (size_t i=1; i<N; ++i) {
+            if (positions[i]<positions[i-1]) {
+                throw std::runtime_error("position vector should be sorted");
+            }
+        }
+    }
+
+    if (N%2!=0) {
+        throw std::runtime_error("each element should be present exactly twice");
+    }
+    const size_t nelements=N/2;
+
+    open.resize(nelements);
+    for (size_t i=0; i<N; ++i) {
+        auto current=elements[i];
+        if (current < 0 || current >= nelements) {
+            throw std::runtime_error("element ID out of range for blacklister");
+        }
+        ++open[current];
+    }
+
+    for (auto n : open) {
+        if (n!=2) { throw std::runtime_error("each element should be present exactly twice"); }
+    }
+    std::fill(open.begin(), open.end(), 0);
+
     return;
 }
 
