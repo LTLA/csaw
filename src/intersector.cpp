@@ -1,6 +1,6 @@
 #include "intersector.h"
 
-intersector::intersector(SEXP p, SEXP e) : positions(p), elements(e), index(0), num_open(0) {
+intersector::intersector(SEXP p, SEXP e) : positions(p), elements(e), index(0), num_open(0), lastpos(0) {
     // See csaw:::.setupDiscard for the expected input vectors.
     // We do some fairly careful input checks here, just in case
     // users do stupid things to the readParam() object.
@@ -44,6 +44,10 @@ intersector::intersector(SEXP p, SEXP e) : positions(p), elements(e), index(0), 
 }
 
 void intersector::advance_to_start(int curpos) {
+    if (lastpos > curpos) {
+        throw std::runtime_error("supplied base positions should not decrease");
+    }
+
     while (index < positions.size() && curpos >= positions[index]) {
         auto cur_element=elements[index];
         auto& cur_open=open[cur_element];
@@ -56,9 +60,16 @@ void intersector::advance_to_start(int curpos) {
         }
         ++index;
     }
+
+    lastpos=curpos;
+    return;
 }
 
 bool intersector::end_is_within(int curend) const {
+    if (lastpos > curend) {
+        throw std::runtime_error("end of read should not occur before the start position");
+    }
+
     int end_index=index;
     int cur_open=num_open;
     while (end_index < positions.size() && curend > positions[end_index]) {

@@ -20,6 +20,8 @@ private:
 
     std::vector<int> open;
     int num_open;
+
+    int lastpos;
 };
 
 #endif
