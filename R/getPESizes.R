@@ -10,14 +10,14 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # written by Aaron Lun
 # a long long time ago
 {
-	if (param$pe!="both") { stop("paired-end inputs required") }
+    if (param$pe!="both") { stop("paired-end inputs required") }
 
-	extracted.chrs <- .activeChrs(bam.file, param$restrict)
+    extracted.chrs <- .activeChrs(bam.file, param$restrict)
     nchrs <- length(extracted.chrs)
     totals <- singles <- one.unmapped <- mapped <- unoriented <- 0L
     norm.list <- loose.names.1 <- loose.names.2 <- vector("list", nchrs)
 
-	for (i in seq_len(nchrs)) { 
+    for (i in seq_len(nchrs)) { 
         cur.chr <- names(extracted.chrs)[i]
         output <- .extractPE(bam.file, GRanges(cur.chr, IRanges(1L, extracted.chrs[i])), param=param, diagnostics=TRUE)
         totals <- totals + output$total
@@ -34,12 +34,12 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
         loose.names.2[[i]] <- output$inter.chr[[2]]
     }
 
-	# Checking whether a read is positively matched to a mapped counterpart on another chromosome.
-	# If not, then it's just a read in an unmapped pair.
-	loose.names.1 <- unlist(loose.names.1)
-	loose.names.2 <- unlist(loose.names.2)
-	inter.chr <- sum(loose.names.1 %in% loose.names.2)
-	one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
+    # Checking whether a read is positively matched to a mapped counterpart on another chromosome.
+    # If not, then it's just a read in an unmapped pair.
+    loose.names.1 <- unlist(loose.names.1)
+    loose.names.2 <- unlist(loose.names.2)
+    inter.chr <- sum(loose.names.1 %in% loose.names.2)
+    one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
 
     bam.file <- path.expand(bam.file)
     bam.index <- paste0(bam.file, ".bai")
@@ -49,8 +49,8 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
     norm.list <- unlist(norm.list)
     mapped <- singles + one.unmapped + 2L * (unoriented + inter.chr + length(norm.list))
 
-   	# Returning sizes and some diagnostic data.
-	list(sizes=norm.list, 
+    # Returning sizes and some diagnostic data.
+    list(sizes=norm.list, 
         diagnostics=c(
             total.reads=totals, 
             mapped.reads=mapped, 
