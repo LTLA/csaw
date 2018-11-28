@@ -11,50 +11,46 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 # 
 # written by Aaron Lun
 # created 5 April 2012
-{   
-    nbam <- length(bam.files)
-    extracted.chrs <- .activeChrs(bam.files, param$restrict)
-
-    # Processing input parameters.
+{
     shift <- as.integer(shift)
     width <- as.integer(width)
     spacing <- as.integer(spacing)
+
     if (bin) { # A convenience flag for binning.
         spacing <- width
         ext <- 1L
         filter <- min(1, filter)
     }
-    ext.data <- .collateExt(nbam, ext)
 
-    # Checking the values of the parameters. 
     if (shift < 0L) { stop("shift must be a non-negative integer") }
     if (width <= 0L) { stop("width must be a positive integer") }
     if (spacing <= 0L) { stop("spacing must be a positive integer") }
-    if (shift >= spacing) { stop("shift must be less than the spacing") }
+    if (shift >= spacing) { stop("shift must be less than the spacing") } # avoid redundant windows, see POINT 1 below.
+    at.start <- .is_pt_at_start(shift, width) # see POINT 2
 
-    # Initializing various collectable containers (non-empty so it'll work if no chromosomes are around).
+    # Setting up all other parameters.
+    nbam <- length(bam.files)
+    ext.data <- .collateExt(nbam, ext)
+
+    original.param <- param
+    param <- .setupDiscard(param)
+
+    # Initializing various collectable containers. These are non-empty so the class 
+    # will be right even if no chromosomes are around and the loop is empty.
     totals <- integer(nbam)
-    nchrs <- length(extracted.chrs)    
-    all.out <- rep(list(matrix(0L, ncol=nbam, nrow=0)), nchrs) # ensure that the class is right, even if nothing is added.
+    extracted.chrs <- .activeChrs(bam.files, param$restrict)
+    nchrs <- length(extracted.chrs)
+
+    all.out <- rep(list(matrix(0L, ncol=nbam, nrow=0)), nchrs)
     all.regions <- rep(list(GRanges()), nchrs)
     all.lengths <- rep(list(vector("list", nchrs)), nbam)
 
     for (i in seq_len(nchrs)) { 
         chr <- names(extracted.chrs)[i]
-        outlen <- extracted.chrs[i]        
+        outlen <- extracted.chrs[i]
         where <- GRanges(chr, IRanges(1, outlen))
+        total.pts <- .get_total_pts(outlen, shift, spacing, at.start) # see POINT 3
 
-        # Need to account for the possible loss of a window from the front when
-        # the shift is non-zero, because the corresponding window is wholly outside the
-        # chromosome (i.e., shifted so that the width of the window is before position 1).
-        at.start <- shift < width 
-
-        # Accounting for the possible gain of a centrepoint from the back when
-        # shift is non-zero, i.e., does the shift bring the next window start under outlen?
-        # i.e., 1L - shift + spacing * X <= outlen, solve for the largest integer X.
-        total.pts <- as.integer(floor((outlen + shift - 1L)/spacing))
-        total.pts <- total.pts + at.start # if the extra point exists at the start.
-        
         # Parallelized loading.
         bp.out <- bpmapply(FUN=.window_counts, bam.file=bam.files, init.ext=ext.data$ext, 
                            MoreArgs=list(where=where, param=param, 
@@ -62,7 +58,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
                                          shift=shift, width=width, spacing=spacing, 
                                          total.pts=total.pts, at.start=at.start),
                            BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
-        
+
         outcome <- matrix(0L, total.pts, nbam)
         for (bf in seq_along(bp.out)) {
             outcome[,bf] <- bp.out[[bf]]$counts
@@ -70,10 +66,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
             all.lengths[[bf]][[i]] <- bp.out[[bf]]$lengths
         }
 
-        # Filtering on row sums (for memory efficiency). Note that redundant windows
-        # are avoided by enforcing 'shift < spacing', as a window that is shifted to 
-        # cover the whole chromosome cannot be spaced to a new position where it still 
-        # covers the whole chromosome. The next one must be inside the chromosome.
+        # Filtering on row sums (for memory efficiency). 
         keep <- rowSums(outcome)>=filter 
         if (!any(keep)) { 
             next 
@@ -96,20 +89,45 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
     seqlengths(all.regions) <- extracted.chrs
     strand(all.regions) <- .decideStrand(param)
 
-    return(SummarizedExperiment(assays=SimpleList(counts=do.call(rbind, all.out)), 
+    SummarizedExperiment(
+        assays=SimpleList(counts=do.call(rbind, all.out)), 
         rowRanges=all.regions, 
         colData=.formatColData(bam.files, totals, ext.data, all.lengths, param),
-        metadata=list(spacing=spacing, width=width, shift=shift, bin=bin, 
-            param=param, final.ext=ifelse(bin, 1L, ext.data$final)))) # For getWidths with paired-end binning.
+        metadata=list(
+            spacing=spacing, width=width, shift=shift, bin=bin, 
+            param=original.param, 
+            final.ext=ifelse(bin, 1L, ext.data$final) # For getWidths with paired-end binning.
+        )
+    ) 
+}
+
+# POINT 1: redundant windows are avoided by enforcing 'shift < spacing'. 
+# A window that is shifted to cover the whole chromosome cannot be spaced 
+# to a new position where it still covers the whole chromosome. The next 
+# one must be inside the chromosome.
+
+# POINT 2: Need to account for the possible loss of a window from the front when
+# the shift is non-zero, because the corresponding window is wholly outside the
+# chromosome (i.e., shifted so that the width of the window is before position 1).
+.is_pt_at_start <- function(shift, width) {
+    shift < width 
+}
+ 
+# POINT 3: Accounting for the possible gain of a centrepoint from the back when
+# shift is non-zero, i.e., does the shift bring the next window start under outlen?
+# i.e., given 1L - shift + spacing * X <= outlen, solve for the largest integer X.
+.get_total_pts <- function(outlen, shift, spacing, at.start) {
+    as.integer(floor((outlen + shift - 1L)/spacing)) + at.start # if the extra point exists at the start.
 }
 
 .window_counts <- function(bam.file, where, param, 
-                           init.ext, final.ext, outlen, bin, 
-                           shift, width, spacing, 
-                           total.pts, at.start) {
-
+        init.ext, final.ext, outlen, bin, 
+        shift, width, spacing, 
+        total.pts, at.start) 
+# Internal function to ensure csaw namespace carries into bplapply.
+{
     if (param$pe!="both") {
-        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        reads <- .extractSE(bam.file, where=where, param=param)
         extended <- .extendSE(reads, ext=init.ext, final=final.ext, chrlen=outlen)
         frag.start <- extended$start
         frag.end <- extended$end

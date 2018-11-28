@@ -12,48 +12,50 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 # written by Aaron Lun
 # created 1 May 2015
 {
-	nbam <- length(bam.files)
-	extracted.chrs <- .activeChrs(bam.files, param$restrict)
-	ext.data <- .collateExt(nbam, width) 
-	invert <- as.logical(invert)
+    nbam <- length(bam.files)
+    ext.data <- .collateExt(nbam, width) 
 
-	totals <- integer(nbam)
-	nx <- length(regions)
-	out.scores <- rep(NA_real_, nx)
-	indices <- split(seq_len(nx), seqnames(regions))
-	prior.count <- as.double(prior.count)
+    param <- .setupDiscard(param)
+    invert <- as.logical(invert)
 
-	for (chr in names(extracted.chrs)) {
-		chosen <- indices[[chr]]
-		if (length(chosen)==0L) { next } 
-		outlen <- extracted.chrs[[chr]]
-		where <- GRanges(chr, IRanges(1, outlen))
+    totals <- integer(nbam)
+    nx <- length(regions)
+    out.scores <- rep(NA_real_, nx)
+    indices <- split(seq_len(nx), seqnames(regions))
+    prior.count <- as.double(prior.count)
 
-		# Pulling out read data.
-		collected <- bpmapply(FUN=.check_bimodality, bam.file=bam.files, init.ext=ext.data$ext, 
+    extracted.chrs <- .activeChrs(bam.files, param$restrict)
+    for (chr in names(extracted.chrs)) {
+        chosen <- indices[[chr]]
+        if (length(chosen)==0L) { next } 
+        outlen <- extracted.chrs[[chr]]
+        where <- GRanges(chr, IRanges(1, outlen))
+
+        # Pulling out read data.
+        collected <- bpmapply(FUN=.check_bimodality, bam.file=bam.files, init.ext=ext.data$ext, 
                               MoreArgs=list(where=where, param=param,
                                             final.ext=ext.data$final, outlen=outlen),
                               BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
 
-		# Checking region order.
-		rstarts <- start(regions)[chosen]
-		rends <- end(regions)[chosen]
-		ro <- order(rstarts)
-		
-		# Computing bimodality scores.
-		out <- .Call(cxx_check_bimodality, collected, rstarts[ro], rends[ro], prior.count, invert)
-		out.scores[chosen][ro] <- out 
-	}
+        # Checking region order.
+        rstarts <- start(regions)[chosen]
+        rends <- end(regions)[chosen]
+        ro <- order(rstarts)
 
-	return(out.scores)	
+        # Computing bimodality scores.
+        out <- .Call(cxx_check_bimodality, collected, rstarts[ro], rends[ro], prior.count, invert)
+        out.scores[chosen][ro] <- out 
+    }
+
+    return(out.scores)
 }
 
-.check_bimodality <- function(bam.file, where, param,
-                              init.ext, final.ext, outlen) {
+.check_bimodality <- function(bam.file, where, param, init.ext, final.ext, outlen)
+{
     if (param$pe=="both") {
         reads <- .getPairedEnd(bam.file, where=where, param=param, with.reads=TRUE)
     } else {
-        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        reads <- .extractSE(bam.file, where=where, param=param)
     }
 
     # Computing what would happen if we extended one way and the other.
