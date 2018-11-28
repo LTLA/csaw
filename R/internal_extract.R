@@ -36,36 +36,8 @@
     return(out)
 }
 
-#' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics start end
-#' @importFrom S4Vectors metadata
-.setupDiscard <- function(param) 
-# Returns a modified param object with processed ranges in the medata of 'discard'.
-{
-    all.discard <- param$discard
-    by.chr <- split(all.discard, seqnames(all.discard))
-    output <- vector("list", length(by.chr))
-    names(output) <- names(by.chr)
-
-    for (x in names(output)) {
-        cur.discard <- by.chr[[x]]
-        cur.pos <- c(start(cur.discard), end(cur.discard)+1L) # 1-based positions.
-        cur.ids <- rep(seq_along(cur.discard) - 1L, 2) # zero indexed elements.
-        o <- order(cur.pos)
-        output[[x]] <- list(pos=cur.pos[o], id=cur.ids[o])
-    }
-
-    metadata(param@discard)$processed <- output
-    param
-}
-
-#' @importFrom S4Vectors metadata
 .getDiscard <- function(param, chr) {    
-    all.discard <- metadata(param$discard)$processed
-    if (is.null(all.discard)) {
-        stop("need to process discard ranges")
-    } 
-    cur.discard <- all.discard[[chr]]
+    cur.discard <- param$processed.discard[[chr]]
     if (is.null(cur.discard)) {
         cur.discard <- list(pos=integer(0), id=integer(0))
     }

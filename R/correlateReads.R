@@ -10,8 +10,6 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 # written by Aaron Lun
 # created 2 July 2012
 {
-    param <- .setupDiscard(param)
-
     max.dist <- as.integer(max.dist)
     if (max.dist <=0) { 
         stop("maximum distance must be positive") 

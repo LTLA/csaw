@@ -47,8 +47,6 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
     }
     actual.region <- GRanges(cur.chr, IRanges(max(1L, start(region)-max.ext), min(max.len, end(region)+max.ext)))
 
-    param <- .setupDiscard(param)
-
     if (param$pe!="both") {
         read.data <- .extractSE(bam.file, where=actual.region, param=param)
         forward.reads <- .extendSEdir(read.data$forward, ext=ext.data$ext[1], final=ext.data$final, chrlen=max.len, forward=TRUE)

@@ -10,7 +10,6 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # written by Aaron Lun
 # a long long time ago
 {
-    param <- .setupDiscard(param)
 	if (param$pe!="both") { stop("paired-end inputs required") }
 
 	extracted.chrs <- .activeChrs(bam.file, param$restrict)

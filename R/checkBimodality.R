@@ -14,8 +14,6 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 {
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, width) 
-
-    param <- .setupDiscard(param)
     invert <- as.logical(invert)
 
     totals <- integer(nbam)

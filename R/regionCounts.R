@@ -23,8 +23,6 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 
     nbam <- length(bam.files)
 	ext.data <- .collateExt(nbam, ext) 
-    original.param <- param
-    param <- .setupDiscard(param)
 
 	totals <- integer(nbam)
 	nx <- length(regions)
@@ -57,7 +55,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
         assays=SimpleList(counts=counts), 
 		rowRanges=regions, 
 		colData=.formatColData(bam.files, totals, ext.data, all.extras, param),
-		metadata=list(final.ext=ext.data$final, param=original.param)
+		metadata=list(final.ext=ext.data$final, param=param)
     )
 }
 

@@ -74,8 +74,6 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
     }
     indices <- split(seq_along(regions), seqnames(regions))
 
-    param <- .setupDiscard(param)
-
     # Running through the chromosomes.
     extracted.chrs <- .activeChrs(bam.files, param$restrict)
     for (i in seq_along(extracted.chrs)) {

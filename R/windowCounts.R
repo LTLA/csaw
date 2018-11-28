@@ -32,9 +32,6 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
 
-    original.param <- param
-    param <- .setupDiscard(param)
-
     # Initializing various collectable containers. These are non-empty so the class 
     # will be right even if no chromosomes are around and the loop is empty.
     totals <- integer(nbam)
@@ -95,7 +92,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
         colData=.formatColData(bam.files, totals, ext.data, all.lengths, param),
         metadata=list(
             spacing=spacing, width=width, shift=shift, bin=bin, 
-            param=original.param, 
+            param=param, 
             final.ext=ifelse(bin, 1L, ext.data$final) # For getWidths with paired-end binning.
         )
     ) 
