@@ -64,7 +64,7 @@ SEXP get_leftovers(SEXP, SEXP, SEXP);
 
 /* single_reads.cpp */
 
-SEXP extract_single_data(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP extract_single_data(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 }
 
