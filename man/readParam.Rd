@@ -15,14 +15,14 @@
 Each readParam object stores a number of parameters, each pertaining to the extraction of reads from a BAM file.
 Slots are defined as:
 \describe{
-	\item{\code{pe}:}{a character string indicating whether paired-end data is present; set to \code{"none"}, \code{"both"}, \code{"first"} or \code{"second"}}
-	\item{\code{max.frag}:}{an integer scalar, specifying the maximum fragment length corresponding to a read pair}
-	\item{\code{dedup}:}{a logical scalar indicating whether marked duplicate reads should be ignored}
-	\item{\code{minq}:}{an integer scalar, specifying the minimum mapping quality score for an aligned read}
-	\item{\code{forward}:}{a logical scalar indicating whether only forward reads should be extracted}
-	\item{\code{restrict}:}{a character vector containing the names of allowable chromosomes from which reads will be extracted}
-	\item{\code{discard}:}{a \code{GRanges} object containing intervals in which any alignments will be discarded}
-    \item{\code{BPPARAM}:}{a \code{BiocParallelParam} object specifying if and how parallelization is performed}
+	\item{\code{pe}:}{A string indicating whether paired-end data is present; set to \code{"none"}, \code{"both"}, \code{"first"} or \code{"second"}.}
+	\item{\code{max.frag}:}{An integer scalar, specifying the maximum fragment length corresponding to a read pair.}
+	\item{\code{dedup}:}{A logical scalar indicating whether marked duplicate reads should be ignored.}
+	\item{\code{minq}:}{An integer scalar, specifying the minimum mapping quality score for an aligned read.}
+	\item{\code{forward}:}{A logical scalar indicating whether only forward reads should be extracted.}
+	\item{\code{restrict}:}{A character vector containing the names of allowable chromosomes from which reads will be extracted.}
+	\item{\code{discard}:}{A \linkS4class{GRanges} object containing intervals in which any alignments will be discarded.}
+    \item{\code{BPPARAM}:}{A \linkS4class{BiocParallelParam} object specifying if and how parallelization is performed.}
 }
 }
 
@@ -111,7 +111,7 @@ In the code snippes below, \code{x} is a readParam object.
 }
 
 \section{Other methods}{
-In the code snippes below, \code{x} is a readParam object.
+In the code snippets below, \code{x} is a readParam object.
 \describe{
     \item{}{\code{show(x)}:
 	Describes the parameter settings in plain English.
