@@ -53,7 +53,7 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 .check_bimodality <- function(bam.file, where, param, init.ext, final.ext, outlen)
 {
     if (param$pe=="both") {
-        reads <- .getPairedEnd(bam.file, where=where, param=param, with.reads=TRUE)
+        reads <- .extractPE(bam.file, where=where, param=param, with.reads=TRUE)
     } else {
         reads <- .extractSE(bam.file, where=where, param=param)
     }

@@ -74,7 +74,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
         extra <- cbind(c(mean(reads$forward$qwidth), mean(reads$reverse$qwidth)),
                        c(length(reads$forward$qwidth), length(reads$reverse$qwidth)))
     } else {
-        out <- .getPairedEnd(bam.file, where=where, param=param)
+        out <- .extractPE(bam.file, where=where, param=param)
         extra <- c(mean(out$size), length(out$size))
 
         checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)

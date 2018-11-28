@@ -135,7 +135,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
         rlengths <- cbind(c(mean(reads$forward$qwidth), mean(reads$reverse$qwidth)),
                        c(length(reads$forward$qwidth), length(reads$reverse$qwidth)))
     } else {
-        out <- .getPairedEnd(bam.file, where=where, param=param)
+        out <- .extractPE(bam.file, where=where, param=param)
         if (bin) { 
             # Only want to record each pair once in a bin, so forcing it to only use the midpoint.
             mid <- as.integer(out$pos + out$size/2)

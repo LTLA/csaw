@@ -65,7 +65,7 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
         r.reads <- r.reads[rkeep]
         return(c(f.reads, r.reads))
     } else {
-        frag.data <- .getPairedEnd(bam.file, where=actual.region, param=param, with.reads=as.reads)
+        frag.data <- .extractPE(bam.file, where=actual.region, param=param, with.reads=as.reads)
         cur.frags <- .coerceFragments(frag.data$pos, frag.data$pos + frag.data$size - 1L, final=ext.data$final, chrlen=max.len)
 
         # Filtering to retain those fragments that actually overlap.

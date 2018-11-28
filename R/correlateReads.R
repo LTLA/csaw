@@ -74,7 +74,7 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 
 .correlate_reads <- function(bam.file, where, param, total.len) {
     if (param$pe=="both") {
-        reads <- .getPairedEnd(bam.file, where=where, param=param, with.reads=TRUE)
+        reads <- .extractPE(bam.file, where=where, param=param, with.reads=TRUE)
     } else {
         reads <- .extractSE(bam.file, where=where, param=param)
     }

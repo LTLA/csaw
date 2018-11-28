@@ -134,7 +134,7 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
         start.pos <- extended$start
         end.pos <- extended$end
     } else {
-        out <- .getPairedEnd(bam.file, where=where, param=param)
+        out <- .extractPE(bam.file, where=where, param=param)
         checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)
         start.pos <- checked$start
         end.pos <- checked$end
