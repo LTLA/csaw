@@ -1,6 +1,5 @@
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics start end
-#' @importFrom S4Vectors metadata
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
 # duplicate and poorly mapped/non-unique reads. We also discard reads in the
@@ -25,14 +24,7 @@
         use.first <- NA
     }
 
-    all.discard <- metadata(param$discard)$processed
-    if (is.null(all.discard)) {
-        stop("need to process discard ranges")
-    } 
-    cur.discard <- all.discard[[cur.chr]]
-    if (is.null(cur.discard)) {
-        cur.discard <- list(pos=integer(0), id=integer(0))
-    }
+    cur.discard <- .getDiscard(param, cur.chr)
 
     out <- .Call(cxx_extract_single_data, bam.file, bam.index, 
         cur.chr, start(where), end(where), 
@@ -67,6 +59,19 @@
     param
 }
 
+#' @importFrom S4Vectors metadata
+.getDiscard <- function(param, chr) {    
+    all.discard <- metadata(param$discard)$processed
+    if (is.null(all.discard)) {
+        stop("need to process discard ranges")
+    } 
+    cur.discard <- all.discard[[chr]]
+    if (is.null(cur.discard)) {
+        cur.discard <- list(pos=integer(0), id=integer(0))
+    }
+    cur.discard
+}
+
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics start end
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
@@ -86,29 +91,28 @@
     if (!identical(param$forward, NA)) { 
         stop("cannot specify read strand when 'pe=\"both\"'") 
     }
-    out <- .Call(cxx_extract_pair_data, bam.file, bam.index, cur.chr,
-            start(where), end(where), param$minq, param$dedup, diagnostics)
+
+    cur.discard <- .getDiscard(param, cur.chr)
+
+    out <- .Call(cxx_extract_pair_data, bam.file, bam.index, 
+        cur.chr, start(where), end(where), 
+        param$minq, param$dedup, 
+        cur.discard$pos, cur.discard$id, 
+        diagnostics)
 
     if (diagnostics) {
-        names(out) <- c("forward", "reverse", "total", "single", "ufirst", "usecond", "one.mapped", "ifirst", "isecond")
+        names(out) <- c("forward", "reverse", "total", "single", "unoriented", "one.unmapped", "inter.chr")
         return(out)
     }
+
     left.pos <- out[[1]][[1]]
     left.len <- out[[1]][[2]]
     right.pos <- out[[2]][[1]]
     right.len <- out[[2]][[2]]
 
-    # Filtering by discard.
-    dlkeep <- .discardReads(cur.chr, left.pos, left.len, param$discard)
-    drkeep <- .discardReads(cur.chr, right.pos, right.len, param$discard)
-    dkeep <- dlkeep & drkeep
-
-    # Computing fragment sizes (implicit truncation of overrun reads).
+    # Computing fragment sizes.
     all.sizes <- right.pos + right.len - left.pos
-    fkeep <- all.sizes <= param$max.frag 
-
-    # Reporting output.
-    keep <- dkeep & fkeep
+    keep <- all.sizes <= param$max.frag 
     output <- list(pos=left.pos[keep], size=all.sizes[keep])
     if (with.reads) {
         output$forward <- list(pos=left.pos[keep], qwidth=left.len[keep])
@@ -116,7 +120,3 @@
     }
     return(output)
 }
-
-# Aliases, for convenience.
-
-.getPairedEnd <- .extractPE
