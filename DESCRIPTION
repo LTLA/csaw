@@ -8,7 +8,8 @@ Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
 Depends: R (>= 3.6), GenomicRanges, SummarizedExperiment, BiocParallel
 Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures, 
         AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats
-Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat
+Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat,
+        GenomicAlignments
 biocViews: MultipleComparison, ChIPSeq, Normalization, Sequencing,
         Coverage, Genetics, Annotation, DifferentialPeakCalling
 Description: Detection of differentially bound regions in ChIP-seq data
@@ -18,4 +19,4 @@ License: GPL-3
 NeedsCompilation: yes
 LinkingTo: Rhtslib (>= 1.13.1), zlibbioc, Rcpp
 SystemRequirements: C++11
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
