@@ -91,7 +91,6 @@ data$totals <- colSums(counts)
 
 # TMM normalization.
 normFactors(data)
-normFactors(data, lib.sizes=rep(400, 4))
 
 # Using loess-based normalization, instead.
 offsets <- normOffsets(data, type="loess")
