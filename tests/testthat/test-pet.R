@@ -12,15 +12,20 @@ CHECKFUN <- function(npairs, nsingles, chromosomes, param) {
     out <- mergeBam(c(SE, PE), file.path(tempdir, "combined"), indexDestination=TRUE, overwrite=TRUE)
     stuff <- getPESizes(out, param=param)
 
+    chrs.to.use <- names(chromosomes)
+    if (length(param$restrict)) {
+        chrs.to.use <- intersect(chrs.to.use, param$restrict)
+    }
+
     # Checking singletons. 
-    ref1 <- lapply(names(chromosomes), FUN=function(chr) { 
+    ref1 <- lapply(chrs.to.use, FUN=function(chr) { 
         extractReads(SE, GRanges(chr, IRanges(1, chromosomes[[chr]])), param=reform(param, pe="none")) 
     })
     se.nreads <- sum(sapply(ref1, length))
     expect_identical(stuff$diagnostics[["single"]], se.nreads)
 
     # Checking mapped reads.
-    ref2 <- lapply(names(chromosomes), FUN=function(chr) { 
+    ref2 <- lapply(chrs.to.use, FUN=function(chr) { 
         extractReads(PE, GRanges(chr, IRanges(1, chromosomes[[chr]])), param=reform(param, pe="none")) 
     })
     pe.nreads <- sum(sapply(ref2, length))
@@ -30,7 +35,7 @@ CHECKFUN <- function(npairs, nsingles, chromosomes, param) {
     expect_identical(stuff$diagnostics[["total.reads"]], npairs*2L+nsingles)
 
     # Checking sizes.
-    ref3 <- lapply(names(chromosomes), FUN=function(chr) { 
+    ref3 <- lapply(chrs.to.use, FUN=function(chr) { 
         width(extractReads(out, GRanges(chr, IRanges(1, chromosomes[[chr]])), param=reform(param, max.frag=1e8)))
     })
     expect_identical(sort(stuff$sizes), sort(unlist(ref3)))
@@ -82,7 +87,8 @@ test_that("getPESizes calculates the diagnostics correctly", {
                         readParam(pe="both", minq=10),
                         readParam(pe="both", dedup=TRUE),
                         readParam(pe="both", discard=discarder),
-                        readParam(pe="both", minq=10, dedup=TRUE, discard=discarder)
+                        readParam(pe="both", minq=10, dedup=TRUE, discard=discarder),
+                        readParam(pe="both", restrict="chrB")
                         )) {
         for (npairs in c(1000L, 5000L)) {
             CHECKFUN(npairs=npairs, nsingles=20L, chromosomes=chromos, param=rparam)

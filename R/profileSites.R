@@ -16,7 +16,6 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 # created 2 July 2014
 {
     average <- as.logical(average)
-    nbam <- length(bam.files)
 
     # A bit of work for strand-specificity.
     strand <- match.arg(strand)
@@ -61,7 +60,7 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
     norm.type <- match(normalize, norm.types)
 
     # Setting up.
-    extracted.chrs <- .activeChrs(bam.files, param$restrict)
+    nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
     range <- as.integer(range)
     if (range <= 0L) { 
@@ -74,12 +73,16 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
         total.profile <- matrix(0L, length(regions), range*2 + 1)
     }
     indices <- split(seq_along(regions), seqnames(regions))
-        
+
     # Running through the chromosomes.
+    extracted.chrs <- .activeChrs(bam.files, param$restrict)
     for (i in seq_along(extracted.chrs)) {
         chr <- names(extracted.chrs)[i]
         chosen <- indices[[chr]]
-        if (!length(chosen)) { next }
+        if (!length(chosen)) { 
+            next 
+        }
+
         outlen <- extracted.chrs[i]
         where <- GRanges(chr, IRanges(1L, outlen))
 
@@ -91,7 +94,7 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 
         starts <- lapply(bp.out, "[[", "starts")
         ends <- lapply(bp.out, "[[", "ends")
-            
+
         # Pulling out the regions.
         all.starts <- start(regions)[chosen]
         os <- order(all.starts)
@@ -124,17 +127,17 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 
 .profile_sites <- function(bam.file, where, param, init.ext, final.ext, outlen) {
     if (param$pe!="both") {
-        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        reads <- .extractSE(bam.file, where=where, param=param)
         extended <- .extendSE(reads, ext=init.ext, final=final.ext, chrlen=outlen)
         start.pos <- extended$start
         end.pos <- extended$end
     } else {
-        out <- .getPairedEnd(bam.file, where=where, param=param)
+        out <- .extractPE(bam.file, where=where, param=param)
         checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)
         start.pos <- checked$start
         end.pos <- checked$end
     }
-   
+
     list(starts=start.pos, ends=end.pos)
 }
 

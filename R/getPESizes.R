@@ -10,70 +10,54 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 # written by Aaron Lun
 # a long long time ago
 {
-	if (param$pe!="both") { stop("paired-end inputs required") }
-	extracted.chrs <- .activeChrs(bam.file, param$restrict)
+    if (param$pe!="both") { stop("paired-end inputs required") }
+
+    extracted.chrs <- .activeChrs(bam.file, param$restrict)
     nchrs <- length(extracted.chrs)
     totals <- singles <- one.unmapped <- mapped <- unoriented <- 0L
     norm.list <- loose.names.1 <- loose.names.2 <- vector("list", nchrs)
 
-	for (i in seq_len(nchrs)) { 
+    for (i in seq_len(nchrs)) { 
         cur.chr <- names(extracted.chrs)[i]
         output <- .extractPE(bam.file, GRanges(cur.chr, IRanges(1L, extracted.chrs[i])), param=param, diagnostics=TRUE)
         totals <- totals + output$total
+        singles <- singles + output$single
+        unoriented <- unoriented + output$unoriented
+        one.unmapped <- one.unmapped + output$one.unmapped 
 
-        # Filtering out based on discard.
-        relevant <- seqnames(param$discard)==cur.chr
-        discard <- param$discard[relevant]
-
-        # For valid read pairs; go to 'mapped' (and then norm.list or 'one.unmapped'), or implicitly unmapped.
-        dfkeep <- .discardReads(cur.chr, output$forward[[1]], output$forward[[2]], discard)
-        drkeep <- .discardReads(cur.chr, output$reverse[[1]], output$reverse[[2]], discard)
-        mapped <- mapped + sum(dfkeep) + sum(drkeep)
-        one.unmapped <- one.unmapped + sum(dfkeep!=drkeep)
+        # Valid read pairs get their sizes stored.
         all.sizes <- pmin(output$reverse[[1]] + output$reverse[[2]], extracted.chrs[i] + 1L) - output$forward[[1]] 
-        norm.list[[i]] <- all.sizes[dfkeep & drkeep]
-
-        # For unoriented read pairs; either go to 'mapped' (and then 'unoriented'), 'one.unmapped', or implicitly unmapped.
-        ufkeep <- .discardReads(cur.chr, output$ufirst[[1]], output$ufirst[[2]], discard)
-        uskeep <- .discardReads(cur.chr, output$usecond[[1]], output$usecond[[2]], discard)
-        mapped <- mapped + sum(ufkeep) + sum(uskeep)
-        unoriented <- unoriented + sum(ufkeep & uskeep)
-        one.unmapped <- one.unmapped + sum(ufkeep!=uskeep)
-        
-        # For singles; either go to 'mapped' (and then 'singles') or implicitly unmapped.
-        skeep <- .discardReads(cur.chr, output$single[[1]], output$single[[2]], discard)
-        smapped <- sum(skeep)
-        mapped <- mapped + smapped
-        singles <- singles + smapped
-
-        # For lone mappers; either go to 'mapped' (and then 'one.unmapped') or implicitly unmapped.
-        omkeep <- .discardReads(cur.chr, output$one.mapped[[1]], output$one.mapped[[2]], discard)
-        omapped <- sum(omkeep)
-        mapped <- mapped + omapped
-        one.unmapped <- one.unmapped + omapped
+        norm.list[[i]] <- all.sizes
 
         # For inter-chromosomals; either mapped (and then store names), or implicitly unmapped.
-        ikeep1 <- .discardReads(cur.chr, output$ifirst[[1]], output$ifirst[[2]], discard)
-        loose.names.1[[i]] <- output$ifirst[[3]][ikeep1]
-        ikeep2 <- .discardReads(cur.chr, output$isecond[[1]], output$isecond[[2]], discard)    
-        loose.names.2[[i]] <- output$isecond[[3]][ikeep2]
-        mapped <- mapped + sum(ikeep1) + sum(ikeep2)
+        loose.names.1[[i]] <- output$inter.chr[[1]]
+        loose.names.2[[i]] <- output$inter.chr[[2]]
     }
 
-	# Checking whether a read is positively matched to a mapped counterpart on another chromosome.
-	# If not, then it's just a read in an unmapped pair.
-	loose.names.1 <- unlist(loose.names.1)
-	loose.names.2 <- unlist(loose.names.2)
-	inter.chr <- sum(loose.names.1 %in% loose.names.2)
-	one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
+    # Checking whether a read is positively matched to a mapped counterpart on another chromosome.
+    # If not, then it's just a read in an unmapped pair.
+    loose.names.1 <- unlist(loose.names.1)
+    loose.names.2 <- unlist(loose.names.2)
+    inter.chr <- sum(loose.names.1 %in% loose.names.2)
+    one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
 
     bam.file <- path.expand(bam.file)
     bam.index <- paste0(bam.file, ".bai")
     out <- .Call(cxx_get_leftovers, bam.file, bam.index, names(extracted.chrs))
     totals <- totals + out
 
-   	# Returning sizes and some diagnostic data.
-	return(list(sizes=unlist(norm.list), diagnostics=c(total.reads=totals, mapped.reads=mapped, 
-		single=singles, mate.unmapped=one.unmapped, unoriented=unoriented, inter.chr=inter.chr)))
-}
+    norm.list <- unlist(norm.list)
+    mapped <- singles + one.unmapped + 2L * (unoriented + inter.chr + length(norm.list))
 
+    # Returning sizes and some diagnostic data.
+    list(sizes=norm.list, 
+        diagnostics=c(
+            total.reads=totals, 
+            mapped.reads=mapped, 
+            single=singles, 
+            mate.unmapped=one.unmapped, 
+            unoriented=unoriented, 
+            inter.chr=inter.chr
+        )
+    )
+}

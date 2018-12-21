@@ -48,7 +48,7 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
     actual.region <- GRanges(cur.chr, IRanges(max(1L, start(region)-max.ext), min(max.len, end(region)+max.ext)))
 
     if (param$pe!="both") {
-        read.data <- .getSingleEnd(bam.file, where=actual.region, param=param)
+        read.data <- .extractSE(bam.file, where=actual.region, param=param)
         forward.reads <- .extendSEdir(read.data$forward, ext=ext.data$ext[1], final=ext.data$final, chrlen=max.len, forward=TRUE)
         reverse.reads <- .extendSEdir(read.data$reverse, ext=ext.data$ext[1], final=ext.data$final, chrlen=max.len, forward=FALSE)
 
@@ -63,7 +63,7 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
         r.reads <- r.reads[rkeep]
         return(c(f.reads, r.reads))
     } else {
-        frag.data <- .getPairedEnd(bam.file, where=actual.region, param=param, with.reads=as.reads)
+        frag.data <- .extractPE(bam.file, where=actual.region, param=param, with.reads=as.reads)
         cur.frags <- .coerceFragments(frag.data$pos, frag.data$pos + frag.data$size - 1L, final=ext.data$final, chrlen=max.len)
 
         # Filtering to retain those fragments that actually overlap.

@@ -5,9 +5,12 @@
 #' @export
 #' @importClassesFrom BiocParallel BiocParallelParam
 #' @importClassesFrom GenomicRanges GRanges
-setClass("readParam", representation(pe="character", max.frag="integer",
+setClass("readParam", representation(
+    pe="character", max.frag="integer",
     dedup="logical", minq="integer", forward="logical", 
-	restrict="character", discard="GRanges", BPPARAM="BiocParallelParam"))
+	restrict="character", 
+    discard="GRanges", processed.discard="list",
+    BPPARAM="BiocParallelParam"))
 
 setValidity("readParam", function(object) {
     if (length(object@pe)!=1L || ! object@pe %in%c("none", "both", "first", "second")) { 
@@ -30,6 +33,9 @@ setValidity("readParam", function(object) {
 		stop("strand-specific extraction is not supported for paired-end data")
 	}
 
+    if (length(object@processed.discard)==0L && length(object@discard)!=0) {
+        stop("discard ranges has not been properly processed")
+    }
 	return(TRUE)
 })
 
@@ -108,7 +114,29 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 	restrict <- as.character(restrict) 
 	new("readParam", pe=pe, max.frag=max.frag, 
 		dedup=dedup, forward=forward, minq=minq, 
-		restrict=restrict, discard=discard, BPPARAM=BPPARAM)
+		restrict=restrict, 
+        discard=discard, processed.discard=.setupDiscard(discard),
+        BPPARAM=BPPARAM)
+}
+
+#' @importFrom GenomeInfoDb seqnames
+#' @importFrom BiocGenerics start end
+.setupDiscard <- function(discard)
+# Returns a modified param object with processed ranges in the metadata of 'discard'.
+{
+    by.chr <- split(discard, seqnames(discard))
+    output <- vector("list", length(by.chr))
+    names(output) <- names(by.chr)
+
+    for (x in names(output)) {
+        cur.discard <- by.chr[[x]]
+        cur.pos <- c(start(cur.discard), end(cur.discard)+1L) # 1-based positions.
+        cur.ids <- rep(seq_along(cur.discard) - 1L, 2) # zero indexed elements.
+        o <- order(cur.pos)
+        output[[x]] <- list(pos=cur.pos[o], id=cur.ids[o])
+    }
+
+    output
 }
 
 #' @export
@@ -129,6 +157,13 @@ setMethod("reform", signature("readParam"), function(x, ...) {
 			restrict=as.character(val),
 			val)
 	}
+
+    # Strictly internal.
+    incoming$processed.discard <- NULL
+    if (!is.null(incoming$discard)) {
+        incoming$processed.discard <- .setupDiscard(incoming$discard)
+    }
+
 	do.call(initialize, c(x, incoming))
 })
 

@@ -1,5 +1,6 @@
 #include "bam_utils.h"
 #include "utils.h"
+#include "intersector.h"
 
 struct AlignData {
     AlignData() : len(0), is_reverse(false) {}
@@ -8,15 +9,13 @@ struct AlignData {
     bool is_reverse;
 };
 
-struct OutputContainer {
-    OutputContainer(bool d) : diagnostics(d), totals(0) {}
-
-    void add_genuine(int pos1, const AlignData& data1, int pos2, const AlignData& data2, bool isfirst1) {
+struct valid_pairs {
+    bool add_pair(int pos1, const AlignData& data1, int pos2, const AlignData& data2, bool isfirst1) {
         if (data2.is_reverse==data1.is_reverse) {
-            add_unoriented(pos1, data1, pos2, data2, isfirst1); 
-            return;
+            return false;
         }
-         
+
+        int forward_pos, forward_len, reverse_pos, reverse_len;
         if (data2.is_reverse) {
             forward_pos = pos1;
             forward_len = data1.len;
@@ -31,92 +30,43 @@ struct OutputContainer {
 
         // Completely overrun fragments go into the 'unoriented' basket.
         if (forward_pos >= reverse_pos + reverse_len) {
-            add_unoriented(pos1, data1, pos2, data2, isfirst1);
-            return; 
+            return false; 
         } 
 
         forward_pos_out.push_back(forward_pos); 
         forward_len_out.push_back(forward_len);
         reverse_pos_out.push_back(reverse_pos);
         reverse_len_out.push_back(reverse_len);
-        return;
+        return true;
     }
-
-    void add_unoriented(int pos1, const AlignData& data1, int pos2, const AlignData& data2, bool isfirst1) {
-        if (!diagnostics) { return; }
-        if (isfirst1) {
-            ufirst_pos.push_back(pos1);
-            ufirst_len.push_back(data1.len);
-            usecond_pos.push_back(pos2);
-            usecond_len.push_back(data2.len);
-        } else {
-            ufirst_pos.push_back(pos2);
-            ufirst_len.push_back(data2.len);
-            usecond_pos.push_back(pos1);
-            usecond_len.push_back(data1.len);
-        }
-    }
-
-    void add_onemapped(int pos, const AlignData& data) {
-        if (!diagnostics) { return; }
-        onemap_pos.push_back(pos);
-        onemap_len.push_back(data.len);
-        return;
-    }
-
-    void add_single(int pos, const AlignData& data) {
-        if (!diagnostics) { return; }
-        single_pos.push_back(pos);
-        single_len.push_back(data.len);
-        return;
-    }
-
-    void add_interchr(int pos, const AlignData& data, const char* name, bool isfirst) {
-        if (!diagnostics) { return; }
-        if (isfirst) { 
-            ifirst_pos.push_back(pos);
-            ifirst_len.push_back(data.len);
-            interchr_names_1.push_back(std::string(name));
-        } else {
-            isecond_pos.push_back(pos);
-            isecond_len.push_back(data.len);
-            interchr_names_2.push_back(std::string(name));
-        }
-        return;
-    }
-
-    const bool diagnostics;
-    int totals;
-    int forward_pos, reverse_pos, forward_len, reverse_len;
 
     std::deque<int> forward_pos_out, forward_len_out, reverse_pos_out, reverse_len_out;
-    std::deque<int> ufirst_pos, ufirst_len, usecond_pos, usecond_len;
-    std::deque<int> onemap_pos, onemap_len;
-    std::deque<int> single_pos, single_len;
-    std::deque<std::string> interchr_names_1, interchr_names_2;
-    std::deque<int> ifirst_pos, ifirst_len, isecond_pos, isecond_len;
 };
-
 
 /* Strolls through the file for each chromosome and accumulates paired-end statistics; 
  * forward and reverse reads (position and width), singles, unoriented, and names of
  * inter-chromosomals.
  */
 
-SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEXP mapq, SEXP dedup, SEXP diagnostics) {
+SEXP extract_pair_data(SEXP bam, SEXP index, 
+        SEXP chr, SEXP start, SEXP end, 
+        SEXP mapq, SEXP dedup, 
+        SEXP discard_pos, SEXP discard_id,
+        SEXP diagnostics)
+{
     BEGIN_RCPP
 
     // Checking input values.
     const int minqual=check_integer_scalar(mapq, "minimum mapping quality");
     const bool rmdup=check_logical_scalar(dedup, "duplicate removal specification");
-    const bool getnames=check_logical_scalar(diagnostics, "diagnostics specification");
+    const bool storediags=check_logical_scalar(diagnostics, "diagnostics specification");
+    intersector discarder(discard_pos, discard_id);
 
     // Initializing odds and ends.
     BamFile bf(bam, index);
     BamRead br;
     BamIterator biter(bf, chr, start, end);
-    OutputContainer oc(getnames);
-        
+
     typedef std::map<std::pair<int, std::string>, AlignData> Holder;
     std::deque<Holder> all_holders(4); // four holders, one for each strand/first combination; cut down searches.
     std::pair<int, std::string> current;
@@ -124,34 +74,35 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     std::set<std::string> identical_pos;
     int last_identipos=-1;
 
+    valid_pairs valid;
+    int totals=0, num_singles=0, num_onemapped=0, num_unoriented=0;
+    std::deque<std::string> interchr_names_1, interchr_names_2;
+
     while (bam_itr_next(bf.in, biter.iter, br.read) >= 0){
         auto curflag=br.get_flag();
         if ((curflag & BAM_FSECONDARY)!=0 || (curflag & BAM_FSUPPLEMENTARY)!=0) {
             continue; // These guys don't even get counted as reads.
         }
 
-        ++oc.totals;
+        ++totals;
         const int curpos = br.get_aln_pos() + 1; // Getting 1-indexed position.
         const AlignData algn_data(br.get_aln_len(), br.is_reverse());
-        const bool am_mapped=br.is_well_mapped(minqual, rmdup);
+
+        discarder.advance_to_start(curpos);
+        const bool am_mapped=br.is_well_mapped(minqual, rmdup) & 
+            !discarder.end_is_within(curpos + algn_data.len);
 
         /* Reasons to not add a read: */
        
-//        // If we can see that it is obviously unmapped (IMPOSSIBLE for a sorted file).
-//        if (((br.read -> core).flag & BAM_FUNMAP)!=0) { 
-//            // We don't filter by additional mapping criteria, as we need to search 'holder' to pop out the partner and to store diagnostics.
-//            continue;
-//        } 
-        
         // If it's a singleton.
         if ((curflag & BAM_FPAIRED)==0) {
-            if (am_mapped) { oc.add_single(curpos, algn_data); }
+            if (storediags && am_mapped) { ++num_singles; }
             continue;
         }
 
         // Or, if we can see that its partner is obviously unmapped.
         if ((curflag & BAM_FMUNMAP)!=0) {
-            if (am_mapped) { oc.add_onemapped(curpos, algn_data); }
+            if (storediags && am_mapped) { ++num_onemapped; }
             continue;
         }
 
@@ -164,7 +115,10 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
         }
       
         if ((br.read -> core).mtid!=(br.read -> core).tid) { 
-            if (am_mapped) { oc.add_interchr(curpos, algn_data, bam_get_qname(br.read), is_first); } 
+            if (storediags && am_mapped) { 
+                auto& interchr_names=(is_first ? interchr_names_1 : interchr_names_2);
+                interchr_names.push_back(bam_get_qname(br.read)); 
+            } 
             continue;
         }
 
@@ -198,17 +152,20 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
 
             if (ith != holder.end()) { 
                 if (!am_mapped) {
-                    // Searching to pop out the mate, to reduce the size of 'holder' for the remaining searches (and to store diagnostics).
-                    oc.add_onemapped((ith->first).first, ith->second);
+                    // Searching to pop out the mate, to reduce the size of 'holder' for the remaining searches.
+                    if (storediags) { ++num_onemapped; }
                     holder.erase(ith);
                     continue;
                 }
 
-                oc.add_genuine(curpos, algn_data, (ith->first).first, ith->second, is_first);
+                if (!valid.add_pair(curpos, algn_data, (ith->first).first, ith->second, is_first)) {
+                    ++num_unoriented;
+                }
                 holder.erase(ith);
+
             } else if (am_mapped) {
                 // Only possible if the mate didn't get added because 'am_mapped' was false.
-                oc.add_onemapped(curpos, algn_data);
+                if (storediags) { ++num_onemapped; }
             }
         } else if (am_mapped) {
             current.first = curpos;
@@ -218,56 +175,44 @@ SEXP extract_pair_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, SEX
     }
 
     // Leftovers treated as one_unmapped; marked as paired, but the mate is not in file.
-    for (auto& holder : all_holders ) {
-        for (auto ith=holder.begin(); ith!=holder.end(); ++ith) { 
-            oc.add_onemapped((ith->first).first, ith->second);
-        }
-        holder.clear();
-    }    
+    if (storediags) {
+        for (auto& holder : all_holders) {
+            num_onemapped+=holder.size();
+        }    
+    }
 
     // Storing all output.
-    Rcpp::List output(getnames ? 9 : 2);
-    output[0]=Rcpp::List::create(
-        Rcpp::IntegerVector(oc.forward_pos_out.begin(), oc.forward_pos_out.end()),
-        Rcpp::IntegerVector(oc.forward_len_out.begin(), oc.forward_len_out.end())
-    );
-    output[1]=Rcpp::List::create(
-        Rcpp::IntegerVector(oc.reverse_pos_out.begin(), oc.reverse_pos_out.end()),
-        Rcpp::IntegerVector(oc.reverse_len_out.begin(), oc.reverse_len_out.end())
-    ); 
-        
-    if (getnames) {
-        output[2]=Rcpp::IntegerVector::create(oc.totals);
-        output[3]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.single_pos.begin(), oc.single_pos.end()),
-            Rcpp::IntegerVector(oc.single_len.begin(), oc.single_len.end())
+    if (storediags) {
+        return Rcpp::List::create(
+            Rcpp::List::create(
+                Rcpp::IntegerVector(valid.forward_pos_out.begin(), valid.forward_pos_out.end()),
+                Rcpp::IntegerVector(valid.forward_len_out.begin(), valid.forward_len_out.end())
+            ),
+            Rcpp::List::create(
+                Rcpp::IntegerVector(valid.reverse_pos_out.begin(), valid.reverse_pos_out.end()),
+                Rcpp::IntegerVector(valid.reverse_len_out.begin(), valid.reverse_len_out.end())
+            ),
+            Rcpp::IntegerVector::create(totals),
+            Rcpp::IntegerVector::create(num_singles),
+            Rcpp::IntegerVector::create(num_unoriented),
+            Rcpp::IntegerVector::create(num_onemapped),
+            Rcpp::List::create(
+                Rcpp::StringVector(interchr_names_1.begin(), interchr_names_1.end()),
+                Rcpp::StringVector(interchr_names_2.begin(), interchr_names_2.end())
+            )
         );
-        output[4]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.ufirst_pos.begin(), oc.ufirst_pos.end()),
-            Rcpp::IntegerVector(oc.ufirst_len.begin(), oc.ufirst_len.end())
+    } else {
+        return Rcpp::List::create(
+            Rcpp::List::create(
+                Rcpp::IntegerVector(valid.forward_pos_out.begin(), valid.forward_pos_out.end()),
+                Rcpp::IntegerVector(valid.forward_len_out.begin(), valid.forward_len_out.end())
+            ),
+            Rcpp::List::create(
+                Rcpp::IntegerVector(valid.reverse_pos_out.begin(), valid.reverse_pos_out.end()),
+                Rcpp::IntegerVector(valid.reverse_len_out.begin(), valid.reverse_len_out.end())
+            )
         );
-        output[5]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.usecond_pos.begin(), oc.usecond_pos.end()),
-            Rcpp::IntegerVector(oc.usecond_len.begin(), oc.usecond_len.end())
-        );
-        output[6]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.onemap_pos.begin(), oc.onemap_pos.end()),
-            Rcpp::IntegerVector(oc.onemap_len.begin(), oc.onemap_len.end())
-        );
-        
-        output[7]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.ifirst_pos.begin(), oc.ifirst_pos.end()),
-            Rcpp::IntegerVector(oc.ifirst_len.begin(), oc.ifirst_len.end()),
-            makeStringVector(oc.interchr_names_1.begin(), oc.interchr_names_1.end())
-        );
-        output[8]=Rcpp::List::create(
-            Rcpp::IntegerVector(oc.isecond_pos.begin(), oc.isecond_pos.end()),
-            Rcpp::IntegerVector(oc.isecond_len.begin(), oc.isecond_len.end()),
-            makeStringVector(oc.interchr_names_2.begin(), oc.interchr_names_2.end())
-        );
-    } 
-
-    return output;
+    }
     END_RCPP
 }
 

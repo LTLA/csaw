@@ -15,8 +15,13 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 # written by Aaron Lun
 # created 14 May 2014
 {
-	nbam <- length(bam.files)
-	extracted.chrs <- .activeChrs(bam.files, param$restrict)
+    # No sense in setting the strand; you should set param$forward for strand-specific counting.
+	if (any(strand(regions)!="*")) { 
+		warning("ignoring strandedness of supplied regions") 
+		strand(regions) <- "*"
+	}
+
+    nbam <- length(bam.files)
 	ext.data <- .collateExt(nbam, ext) 
 
 	totals <- integer(nbam)
@@ -24,13 +29,8 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 	counts <- matrix(0L, nrow=nx, ncol=nbam)
 	indices <- split(seq_len(nx), seqnames(regions))
     all.extras <- rep(list(list()), nbam)
-    
-	# No sense in doing so; you can set param$forward for strand-specific counting.
-	if (any(strand(regions)!="*")) { 
-		warning("ignoring strandedness of supplied regions") 
-		strand(regions) <- "*"
-	}
 
+    extracted.chrs <- .activeChrs(bam.files, param$restrict)
 	for (chr in names(extracted.chrs)) {
 		chosen <- indices[[chr]]
 		outlen <- extracted.chrs[[chr]]
@@ -51,18 +51,20 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 	}
 
     strand(regions) <- .decideStrand(param)
-	return(SummarizedExperiment(assays=SimpleList(counts=counts), 
+	SummarizedExperiment(
+        assays=SimpleList(counts=counts), 
 		rowRanges=regions, 
 		colData=.formatColData(bam.files, totals, ext.data, all.extras, param),
-		metadata=list(final.ext=ext.data$final, param=param)))
+		metadata=list(final.ext=ext.data$final, param=param)
+    )
 }
 
-#' @importFrom IRanges countOverlaps
+#' @importFrom IRanges countOverlaps IRanges ranges
 .region_counts <- function(bam.file, where, param, 
                            init.ext, final.ext, outlen, 
                            regions, chosen) {
     if (param$pe!="both") {
-        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        reads <- .extractSE(bam.file, where=where, param=param)
         extended <- .extendSE(reads, ext=init.ext, final=final.ext, chrlen=outlen)
         frag.start <- extended$start
         frag.end <- extended$end
@@ -70,7 +72,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
         extra <- cbind(c(mean(reads$forward$qwidth), mean(reads$reverse$qwidth)),
                        c(length(reads$forward$qwidth), length(reads$reverse$qwidth)))
     } else {
-        out <- .getPairedEnd(bam.file, where=where, param=param)
+        out <- .extractPE(bam.file, where=where, param=param)
         extra <- c(mean(out$size), length(out$size))
 
         checked <- .coerceFragments(out$pos, out$pos+out$size-1L, final=final.ext, chrlen=outlen)

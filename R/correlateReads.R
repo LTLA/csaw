@@ -10,9 +10,6 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 # written by Aaron Lun
 # created 2 July 2012
 {
-    nbam <- length(bam.files)
-    extracted.chrs <- .activeChrs(bam.files, param$restrict)
-
     max.dist <- as.integer(max.dist)
     if (max.dist <=0) { 
         stop("maximum distance must be positive") 
@@ -20,6 +17,7 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
     total.cor <- numeric(max.dist+1L)
     total.read.num <- 0L
 
+    extracted.chrs <- .activeChrs(bam.files, param$restrict)
     for (i in seq_along(extracted.chrs)) {
         chr <- names(extracted.chrs)[i]
         where <- GRanges(chr, IRanges(1L, extracted.chrs[i]))
@@ -74,9 +72,9 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
 
 .correlate_reads <- function(bam.file, where, param, total.len) {
     if (param$pe=="both") {
-        reads <- .getPairedEnd(bam.file, where=where, param=param, with.reads=TRUE)
+        reads <- .extractPE(bam.file, where=where, param=param, with.reads=TRUE)
     } else {
-        reads <- .getSingleEnd(bam.file, where=where, param=param)
+        reads <- .extractSE(bam.file, where=where, param=param)
     }
     
     forward.pos <- reads$forward$pos
