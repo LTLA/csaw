@@ -1,13 +1,14 @@
 Package: csaw
-Version: 1.17.2
-Date: 2018-11-27
+Version: 1.17.3
+Date: 2019-01-19
 Title: ChIP-Seq Analysis with Windows
 Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
         "infinite.monkeys.with.keyboards@gmail.com"),
         person("Gordon", "Smyth", role="aut"))
-Depends: R (>= 3.6), GenomicRanges, SummarizedExperiment, BiocParallel
+Depends: GenomicRanges, SummarizedExperiment
 Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures, 
-        AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats
+        AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats,
+        BiocParallel
 Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat,
         GenomicAlignments
 biocViews: MultipleComparison, ChIPSeq, Normalization, Sequencing,
@@ -17,6 +18,6 @@ Description: Detection of differentially bound regions in ChIP-seq data
         FDR control.
 License: GPL-3
 NeedsCompilation: yes
-LinkingTo: Rhtslib (>= 1.13.1), zlibbioc, Rcpp
+LinkingTo: Rhtslib, zlibbioc, Rcpp
 SystemRequirements: C++11
 RoxygenNote: 6.1.1
