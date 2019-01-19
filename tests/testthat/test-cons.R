@@ -185,13 +185,13 @@ test_that("consolidateTests works correctly", {
         expect_identical(ref, cons)
 
         cons <- consolidateTests(id.list, result.list, weight.list=weight.list, FUN=getBestTest)
-        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes[1]))[cons$best$origin])
         cons$best <- ref$best <- NULL
         expect_identical(ref, cons)
 
         cons <- consolidateTests(id.list, result.list, weight.list=NULL, FUN=getBestTest)
         ref <- getBestTest(combo.id, combo.res)
-        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes))[cons$best$origin])
+        expect_identical(ref$best, cons$best$row + c(0L, as.integer(sizes[1]))[cons$best$origin])
         cons$best <- ref$best <- NULL
         expect_identical(ref, cons)
 

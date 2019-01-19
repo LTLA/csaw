@@ -41,7 +41,7 @@ consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests
 
         for (rdx in intersect(colnames(output), reindex)) {
             current <- output[[rdx]] 
-            origin <- findInterval(current, endpoint, rightmost.closed=TRUE)
+            origin <- findInterval(current, endpoint, left.open=TRUE)
             output[[rdx]] <- DataFrame(origin=origin, row=current - per.hit[origin])
         }
     }
