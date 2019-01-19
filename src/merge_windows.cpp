@@ -52,7 +52,7 @@ SEXP merge_windows(SEXP win_chrs, SEXP win_start, SEXP win_end, SEXP win_sign, S
     }
 
     // Cleaning up the last cluster, if necessary.
-    if (limit_size) {
+    if (limit_size && nwin) {
         ngroups = split_cluster(start, end, out_index, first_of_run, nwin, maxs);
     }
 

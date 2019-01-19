@@ -197,8 +197,12 @@ test_that("mergeWindows works correctly for stranded input", {
 })
 
 test_that("mergeWindows works correctly for silly inputs", {
-    # empty input.
+    # empty inputs.
     out <- mergeWindows(GRanges(), tol=10)
+    expect_identical(out$id, integer(0))
+    expect_identical(out$region, GRanges())
+
+    out <- mergeWindows(GRanges(), tol=10, max.width=1000)
     expect_identical(out$id, integer(0))
     expect_identical(out$region, GRanges())
 
