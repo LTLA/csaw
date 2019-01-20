@@ -57,7 +57,8 @@ Note that intron overlaps are only reported if the region does not overlap an ex
 For annotated features flanking the region within a distance of \code{dist}, the \code{TYPE} is instead the distance to the feature.
 This represents the gap between the edge of the region and the closest exon for that gene.
 Flanking promoters are not reported, as it is more informative to report the distance to the exon directly;
-and flanking an intron should be impossible without overlapping them directly.
+and flanking an intron should be impossible without overlapping an exon directly (and thus should not be reported, see above).
+Note that exons directly overlapping the supplied region are not considered for flanking annotation, as the distance would be negative.
 
 The strand information is often useful in conjunction with the left/right flanking features.
 For example, if an exon for a negative-strand gene is to the left, the current region must be upstream of that exon.
