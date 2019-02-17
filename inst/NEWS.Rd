@@ -6,6 +6,8 @@
 \item Deprecated the type= argument in normOffsets().
 
 \item Removed the deprecated consolidateSizes() function.
+
+\item Modified csawUsersGuide() to point to the workflow package.
 }}
 
 \section{Version 1.16.0}{\itemize{
