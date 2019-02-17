@@ -34,7 +34,7 @@ It can be obtained by typing:
 
 ```{r}
 library(csaw)
-csawUsersGuide()
+if (interactive()) csawUsersGuide()
 ```
 
 In addition, several end-to-end usage examples are provided by the `r Biocpkg("chipseqDB")` workflow package.
