@@ -13,6 +13,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}    
 ---
 
+```{r, echo=FALSE, results="hide"}
+require(knitr)
+opts_chunk$set(error=FALSE, message=FALSE, warning=FALSE)
+```
+
 # Introduction
 
 The `r Biocpkg("csaw")` package is designed for the _de novo_ detection of differentially bound regions from ChIP-seq data. 
