@@ -1,8 +1,6 @@
 # This tests the basic internal input functions.
 # library(testthat); library(csaw); source("test-int_input.R")
 
-source("simsam.R")
-
 set.seed(320000)
 test_that(".activeChrs works correctly", {
     chromos <- c(chrA=1000L, chrB=3000L)

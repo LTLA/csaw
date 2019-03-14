@@ -1,8 +1,6 @@
 # This tests the mergeWindows function, separately from the combineTests function.
 # library(csaw); library(testthat); source("test-merge.R")
 
-source("simsam.R")
-
 nativemerge <- function(reg, tol, sign=NULL) {
     n <- length(reg)
     o <- order(reg)

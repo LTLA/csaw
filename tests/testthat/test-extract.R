@@ -1,8 +1,6 @@
 # This tests the extractReads function.
 # library(csaw); library(testthat); source("test-extract.R")
 
-source("simsam.R")
-
 set.seed(2000)
 test_that("extractReads works correctly without extension", {
     chromos <- c(chrA=1000, chrB=3000, chrC=2000)

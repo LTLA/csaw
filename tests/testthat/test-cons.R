@@ -2,7 +2,6 @@
 # test function below doesn't really do much except repeat the function itself.
 # library(csaw); library(testthat); source("test-cons.R")
 
-source("simsam.R")
 chromos <- c(chrA=12332, chrB=34892)
 
 set.seed(200000)

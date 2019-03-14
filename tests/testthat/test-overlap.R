@@ -1,7 +1,6 @@
 # This checks the overlap summarization functions, relative to the expected values.
 # library(testthat); library(csaw); source("test-overlap.R")
 
-source("simsam.R")
 chromos <- c(A=1000, B=2000)
 
 set.seed(130000)

@@ -1,8 +1,6 @@
 # This script tests the regionCounts function.
 # library(csaw); library(testthat); source("test-region.R")
 
-source("simsam.R")
-
 library(Rsamtools)
 CHECKFUN <- function(bam.files, regions, param, fraglen=200, final.len=NA) {
     y <- regionCounts(bam.files, regions=regions, ext=fraglen, param=param)

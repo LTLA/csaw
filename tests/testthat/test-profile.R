@@ -1,8 +1,6 @@
 # This tests the profileSites command, to ensure that it's actually giving proper advice.
 # library(csaw); library(testthat); source("test-profile.R")
 
-source("simsam.R")
-
 # Running the reference analysis.
 CHECKFUN <- function(bam, regions, param, ext, range, use.strand=FALSE, match.strand=FALSE) {
     chromos <- scanBamHeader(bam)[[1]][[1]]

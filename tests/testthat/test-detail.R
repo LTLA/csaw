@@ -1,8 +1,6 @@
 # Tests the detailRanges() function.
 # library(csaw); library(testthat); source("test-detail.R")
 
-source("simsam.R")
-
 library(org.Mm.eg.db)
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 X <- detailRanges(orgdb=org.Mm.eg.db, txdb=TxDb.Mmusculus.UCSC.mm10.knownGene, promoter=c(3000, 1000))

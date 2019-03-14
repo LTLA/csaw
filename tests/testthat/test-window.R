@@ -1,8 +1,6 @@
 # This script tests the windowCounts function.
 # library(csaw); library(testthat); source("test-window.R")
 
-source("simsam.R")
-
 expected_ranges <- function(width, shift, spacing, bam.files, param) {
     spacing <- as.integer(spacing)
     width <- as.integer(width)

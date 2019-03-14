@@ -1,8 +1,6 @@
 # Testing the correlateReads function.
 # library(csaw); library(testthat); source("test-ccf.R")
 
-source("simsam.R")
-
 library(Rsamtools)
 CHECKFUN <- function(bam.files, max.dist, param, cross=FALSE) {
 	chromos <- scanBamHeader(bam.files[1])[[1]][[1]]

@@ -1,8 +1,6 @@
 # This tests the basic internal read extraction functions.
 # library(testthat); library(csaw); source("test-int_extract.R")
 
-source("simsam.R")
-
 ######################################################################
 # Single-end read extraction.
 

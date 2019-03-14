@@ -1,7 +1,6 @@
 # This script tests the getPESizes function.
 # library(csaw); library(testthat); source("test-pet.R")
 
-source("simsam.R")
 tempdir <- tempfile()
 dir.create(tempdir)
 chromos <- c(chrA=1000, chrB=5000)

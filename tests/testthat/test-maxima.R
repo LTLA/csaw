@@ -1,8 +1,6 @@
 # This script tests the findMaxima function.
 # library(testthat); library(csaw); source("test-maxima.R")
 
-source("simsam.R")
-
 set.seed(7000)
 test_that("findMaxima works correctly", {
     chromos=c(chrA=1000, chrB=2000, chrC=500)
