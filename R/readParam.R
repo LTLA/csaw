@@ -9,40 +9,40 @@ setClass("readParam", representation(
     pe="character", max.frag="integer",
     dedup="logical", minq="integer", forward="logical", 
 	restrict="character", 
-    discard="GRanges", processed.discard="list",
-    BPPARAM="BiocParallelParam"))
+    discard="GRanges", 
+    processed.discard="list"))
 
 setValidity("readParam", function(object) {
+    msg <- NULL
+
     if (length(object@pe)!=1L || ! object@pe %in%c("none", "both", "first", "second")) { 
-		return("PE specification must be a character scalar of 'none', 'both', 'first' or 'second'") 
+		msg <- c(msg, "PE specification must be a character scalar of 'none', 'both', 'first' or 'second'") 
 	}
    	if (length(object@max.frag)!=1L || object@max.frag <= 0L) {
-		return("maximum fragment specifier must be a positive integer")
+		msg <- c(msg, "maximum fragment specifier must be a positive integer")
 	} 
 
 	if (length(object@dedup)!=1L || !is.logical(object@dedup)) { 
-		return("duplicate removal specification must be a logical scalar")
+		msg <- c(msg, "duplicate removal specification must be a logical scalar")
 	}
 	if (length(object@minq)!=1L || !is.numeric(object@minq)) { 
-		return("minimum mapping quality must be a numeric scalar")
+		msg <- c(msg, "minimum mapping quality must be a numeric scalar")
 	}
 
 	if (length(object@forward)>1L || !is.logical(object@forward)) { 
-		return("forward strand specification must be a logical scalar or NULL")
+		msg <- c(msg, "forward strand specification must be a logical scalar or NULL")
 	} else if ((length(object@forward)==0L || !is.na(object@forward)) && object@pe == "both") {
-		stop("strand-specific extraction is not supported for paired-end data")
+		msg <- c(msg, "strand-specific extraction is not supported for paired-end data")
 	}
 
     if (length(object@processed.discard)==0L && length(object@discard)!=0) {
-        stop("discard ranges has not been properly processed")
+        msg <- c(msg, "discard ranges has not been properly processed")
+    }
+
+    if (length(msg)) {
+        return(msg)
     }
 	return(TRUE)
-})
-
-setMethod("initialize", signature("readParam"), function(.Object, ...) {
-	value <- callNextMethod()
-	validObject(value)
-	value
 })
 
 #' @export
@@ -91,14 +91,11 @@ setMethod("show", signature("readParam"), function(object) {
 	} else {
 		cat("    No regions are specified to discard reads\n")
 	}
-
-    nc <- bpnworkers(object@BPPARAM)
-    cat("    Using", class(object@BPPARAM)[1], "with", nc, ifelse(nc>1L, "workers", "worker\n"))
 })
 
 #' @export
 #' @importFrom BiocParallel SerialParam
-readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=SerialParam())
+readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=NULL)
 # This creates a list of parameters, formally represented as a readParam
 # object, specifying how reads should be extracted from the BAM files. The
 # aim is to synchronize read loading throughout the package, such that
@@ -107,6 +104,10 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 # written by Aaron Lun
 # created 1 September 2014
 {
+    if (!is.null(BPPARAM)) {
+        .Deprecated(msg="Setting BPPARAM= in readParam() is deprecated.\nPlease set it in individual functions instead.")
+    }
+
 	max.frag <- as.integer(max.frag)
 	dedup <- as.logical(dedup)
 	forward <- as.logical(forward)
@@ -115,15 +116,13 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 	new("readParam", pe=pe, max.frag=max.frag, 
 		dedup=dedup, forward=forward, minq=minq, 
 		restrict=restrict, 
-        discard=discard, processed.discard=.setupDiscard(discard),
-        BPPARAM=BPPARAM)
+        discard=discard, 
+        processed.discard=.setupDiscard(discard))
 }
 
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics start end
-.setupDiscard <- function(discard)
-# Returns a modified param object with processed ranges in the metadata of 'discard'.
-{
+.setupDiscard <- function(discard) {
     by.chr <- split(discard, seqnames(discard))
     output <- vector("list", length(by.chr))
     names(output) <- names(by.chr)

@@ -22,7 +22,6 @@ Slots are defined as:
 	\item{\code{forward}:}{A logical scalar indicating whether only forward reads should be extracted.}
 	\item{\code{restrict}:}{A character vector containing the names of allowable chromosomes from which reads will be extracted.}
 	\item{\code{discard}:}{A \linkS4class{GRanges} object containing intervals in which any alignments will be discarded.}
-    \item{\code{BPPARAM}:}{A \linkS4class{BiocParallelParam} object specifying if and how parallelization is performed.}
 }
 }
 
@@ -80,23 +79,12 @@ Thus, in this package, any references to the length or 5'/3' ends of the read wi
 This is often more appropriate, e.g., the 5' end of the alignment represents the end of the fragment after clipping of the artifacts.
 }
 
-\section{Parallelization options}{
-Parallelization can be turned on in several functions by setting \code{BPPARAM} appropriately.
-This will usually extract reads from multiple files simultaneously to speed up processing.
-Users are referred to \code{?\link{BiocParallelParam}} for more details on how to set \code{BPPARAM}.
-By default, a \code{SerialParam} object is used, i.e., no parallelization is performed.
-This is because it provides little benefit for small files or on systems with I/O bottlenecks. 
-
-% Strictly speaking, small files being files with few reads per chromosome. 
-% If you had a file with relatively few reads but all on one chromosome, that might provide a benefit.
-% This is because the cost of forking would be offset by the gains of parallel loading/processing per chromosome.
-}
-
 \section{Constructor}{
 \describe{
-	\item{}{\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=SerialParam())}:
+	\item{}{\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=NULL)}:
 		Creates a readParam object. 
 		Each argument is placed in the corresponding slot, with coercion into the appropriate type.
+        Note that \code{BPPARAM} is deprecated and should not be set.
 	}
 }
 }
