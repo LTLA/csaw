@@ -11,19 +11,19 @@ windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 }
 
 \arguments{
-	\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
-	\item{spacing}{an integer scalar specifying the distance between consecutive windows}
-	\item{width}{an integer scalar specifying the width of the window}
-	\item{ext}{an integer scalar or a list of two integer scalars/vectors, containing the average length(s) of the sequenced fragments in each library}
-	\item{shift}{an integer scalar specifying how much the start of each window should be shifted to the left}
-	\item{filter}{an integer scalar for the minimum count sum across libraries for each window}
-	\item{bin}{a logical scalar indicating whether binning should be performed}
-	\item{param}{a \code{readParam} object containing read extraction parameters}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{spacing}{An integer scalar specifying the distance between consecutive windows.}
+\item{width}{An integer scalar specifying the width of the window.}
+\item{ext}{An integer scalar or a list of two integer scalars/vectors, containing the average length(s) of the sequenced fragments in each library.}
+\item{shift}{An integer scalar specifying how much the start of each window should be shifted to the left.}
+\item{filter}{An integer scalar for the minimum count sum across libraries for each window.}
+\item{bin}{A logical scalar indicating whether binning should be performed.}
+\item{param}{A \linkS4class{readParam} object containing read extraction parameters.}
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \value{
-A \code{RangedSummarizedExperiment} object is returned containing one integer matrix. 
+A \linkS4class{RangedSummarizedExperiment} object is returned containing one integer matrix. 
 Each entry of the matrix contains the count for each library (column) at each window (row).
 The coordinates of each window are stored as the \code{rowRanges}.
 The total number of reads in each library are stored as \code{totals} in the \code{colData}, along with the read (\code{rlen}) and extension lengths (\code{ext}) for each library.

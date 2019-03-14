@@ -11,15 +11,15 @@ regionCounts(bam.files, regions, ext=100, param=readParam(),
 }
 
 \arguments{
-	\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
-	\item{regions}{a \code{GRanges} object containing the regions over which reads are to be counted}
-	\item{ext}{an integer scalar or list describing the average length of the sequenced fragment in each library, see \code{?\link{windowCounts}}}
-	\item{param}{a \code{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file)}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{regions}{A \linkS4class{GenomicRanges} object containing the regions over which reads are to be counted.}
+\item{ext}{An integer scalar or list describing the average length of the sequenced fragment in each library, see \code{?\link{windowCounts}}.}
+\item{param}{A \linkS4class{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file).}
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \value{
-A \code{RangedSummarizedExperiment} object is returned containing one integer matrix.
+A \linkS4class{RangedSummarizedExperiment} object is returned containing one integer matrix.
 Each entry of the matrix contains the count for each library (column) at each region (row).
 The coordinates of each region are stored as the \code{rowRanges}.
 The total number of reads, read length and extension length used in each library are stored in the \code{colData}.

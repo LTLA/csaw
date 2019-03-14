@@ -11,10 +11,10 @@ correlateReads(bam.files, max.dist=1000, cross=TRUE, param=readParam(),
 }
 
 \arguments{
-	\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
-	\item{max.dist}{integer scalar specifying the maximum delay distance over which correlation coefficients will be calculated}
-	\item{cross}{a logical scalar specifying whether cross-correlations should be computed}
-	\item{param}{a \code{readParam} object containing read extraction parameters}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{max.dist}{An integer scalar specifying the maximum delay distance over which correlation coefficients will be calculated.}
+\item{cross}{A logical scalar specifying whether cross-correlations should be computed.}
+\item{param}{A \linkS4class{readParam} object containing read extraction parameters.}
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 

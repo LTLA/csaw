@@ -11,14 +11,14 @@ profileSites(bam.files, regions, param=readParam(), range=5000, ext=100,
 }
 
 \arguments{
-	\item{bam.files}{a character vector containing paths to one or more BAM files}
-	\item{regions}{a \code{GRanges} object over which profiles are to be aggregated}
-	\item{param}{a \code{readParam} object containing read extraction parameters}
-	\item{range}{an integer scalar specifying the range over which the profile will be collected}
-	\item{ext}{an integer scalar or list specifying the average fragment length for single-end data}
-	\item{average}{a logical scalar specifying whether the profiles should be averaged across regions}
-    \item{normalize}{a string specifying how normalization of each region's profile should be performed prior to averaging}
-	\item{strand}{a string indicating how stranded \code{regions} should be handled}
+\item{bam.files}{A character vector containing paths to one or more BAM files.}
+\item{regions}{A \linkS4class{GenomicRanges} object over which profiles are to be aggregated.}
+\item{param}{A \linkS4class{readParam} object containing read extraction parameters.}
+\item{range}{An integer scalar specifying the range over which the profile will be collected.}
+\item{ext}{An integer scalar or list specifying the average fragment length for single-end data.}
+\item{average}{A logical scalar specifying whether the profiles should be averaged across regions.}
+\item{normalize}{A string specifying how normalization of each region's profile should be performed prior to averaging.}
+\item{strand}{A string indicating how stranded \code{regions} should be handled.}
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 

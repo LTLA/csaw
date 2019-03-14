@@ -11,12 +11,12 @@ checkBimodality(bam.files, regions, width=100, param=readParam(),
 }
 
 \arguments{
-\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
-\item{regions}{a \code{GRanges} object specifying the regions over which bimodality is to be calculated}
-\item{width}{an integer scalar or list indicating the span with which to compute bimodality}
-\item{param}{a \code{readParam} object containing read extraction parameters}
-\item{prior.count}{a numeric scalar specifying the prior count to compute bimodality scores}
-\item{invert}{a logical scalar indicating whether bimodality score should be inverted}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{regions}{A \linkS4class{GenomicRanges} object specifying the regions over which bimodality is to be calculated.}
+\item{width}{An integer scalar or list indicating the span with which to compute bimodality.}
+\item{param}{A \linkS4class{readParam} object containing read extraction parameters.}
+\item{prior.count}{A numeric scalar specifying the prior count to compute bimodality scores.}
+\item{invert}{A logical scalar indicating whether bimodality score should be inverted.}
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
