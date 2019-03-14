@@ -3,7 +3,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom GenomeInfoDb seqlevels<- seqlengths<-
-#' @importFrom BiocParallel bpmapply
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
 windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, param=readParam())
 # Gets counts from BAM files at each position of the sliding window. 
 # Appliesa gentle filter to remove the bulk of window positions with low counts.
@@ -28,9 +28,14 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
     if (shift >= spacing) { stop("shift must be less than the spacing") } # avoid redundant windows, see POINT 1 below.
     at.start <- .is_pt_at_start(shift, width) # see POINT 2
 
-    # Setting up all other parameters.
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
+
+    BPPARAM <- param$BPPARAM
+    if (!bpisup(BPPARAM)) {
+        bpstart(BPPARAM)
+        on.exit(bpstop(BPPARAM))
+    }
 
     # Initializing various collectable containers. These are non-empty so the class 
     # will be right even if no chromosomes are around and the loop is empty.
@@ -50,11 +55,11 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 
         # Parallelized loading.
         bp.out <- bpmapply(FUN=.window_counts, bam.file=bam.files, init.ext=ext.data$ext, 
-                           MoreArgs=list(where=where, param=param, 
-                                         final.ext=ext.data$final, outlen=outlen, bin=bin, 
-                                         shift=shift, width=width, spacing=spacing, 
-                                         total.pts=total.pts, at.start=at.start),
-                           BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
+            MoreArgs=list(where=where, param=param, 
+                final.ext=ext.data$final, outlen=outlen, bin=bin, 
+                shift=shift, width=width, spacing=spacing, 
+                total.pts=total.pts, at.start=at.start),
+            BPPARAM=BPPARAM, SIMPLIFY=FALSE)
 
         outcome <- matrix(0L, total.pts, nbam)
         for (bf in seq_along(bp.out)) {

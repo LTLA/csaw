@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom BiocParallel bpmapply
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
 correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam()) 
 # Calculates the cross-correlation between reads of different strands (or autocorrelations between reads in general)
 # Note that the BAM files must be sorted, and usually duplicate reads should be removed for best performance.
@@ -17,6 +17,12 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
     total.cor <- numeric(max.dist+1L)
     total.read.num <- 0L
 
+    BPPARAM <- param$BPPARAM
+    if (!bpisup(BPPARAM)) {
+        bpstart(BPPARAM)
+        on.exit(bpstop(BPPARAM))
+    }
+
     extracted.chrs <- .activeChrs(bam.files, param$restrict)
     for (i in seq_along(extracted.chrs)) {
         chr <- names(extracted.chrs)[i]
@@ -27,8 +33,9 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
         } 
 
         # Reading in the reads for the current chromosome for all the BAM files.
-        bp.out <- bpmapply(FUN=.correlate_reads, bam.file=bam.files, MoreArgs=list(where=where, param=param, total.len=total.len),
-                BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
+        bp.out <- bpmapply(FUN=.correlate_reads, bam.file=bam.files, 
+            MoreArgs=list(where=where, param=param, total.len=total.len),
+            BPPARAM=BPPARAM, SIMPLIFY=FALSE)
 
         all.f <- lapply(bp.out, "[[", "forward")
         all.r <- lapply(bp.out, "[[", "reverse")

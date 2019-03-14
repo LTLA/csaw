@@ -30,6 +30,12 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 	indices <- split(seq_len(nx), seqnames(regions))
     all.extras <- rep(list(list()), nbam)
 
+    BPPARAM <- param$BPPARAM
+    if (!bpisup(BPPARAM)) {
+        bpstart(BPPARAM)
+        on.exit(bpstop(BPPARAM))
+    }
+
     extracted.chrs <- .activeChrs(bam.files, param$restrict)
 	for (chr in names(extracted.chrs)) {
 		chosen <- indices[[chr]]
@@ -38,10 +44,10 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 
 		# Pulling out reads as previously described.
         bp.out <- bpmapply(FUN=.region_counts, bam.file=bam.files, init.ext=ext.data$ext, 
-                           MoreArgs=list(where=where, param=param, 
-                                         final.ext=ext.data$final, outlen=outlen, 
-                                         regions=regions, chosen=chosen),
-                           BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
+            MoreArgs=list(where=where, param=param, 
+                final.ext=ext.data$final, outlen=outlen, 
+                regions=regions, chosen=chosen),
+            BPPARAM=BPPARAM, SIMPLIFY=FALSE)
 
         for (bf in seq_along(bp.out)) {
             counts[chosen, bf] <- bp.out[[bf]]$counts

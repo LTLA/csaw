@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom BiocGenerics start end strand start<-
 #' @importFrom S4Vectors split
-#' @importFrom BiocParallel bpmapply 
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom GenomeInfoDb seqnames
@@ -73,6 +73,12 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
         total.profile <- matrix(0L, length(regions), range*2 + 1)
     }
     indices <- split(seq_along(regions), seqnames(regions))
+
+    BPPARAM <- param$BPPARAM
+    if (!bpisup(BPPARAM)) {
+        bpstart(BPPARAM)
+        on.exit(bpstop(BPPARAM))
+    }
 
     # Running through the chromosomes.
     extracted.chrs <- .activeChrs(bam.files, param$restrict)
