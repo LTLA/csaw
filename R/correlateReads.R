@@ -1,8 +1,8 @@
 #' @export
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
-correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam()) 
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
+correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam(), BPPARAM=SerialParam()) 
 # Calculates the cross-correlation between reads of different strands (or autocorrelations between reads in general)
 # Note that the BAM files must be sorted, and usually duplicate reads should be removed for best performance.
 # I haven't used R's native acf/ccf() function because it doesn't handle the large inputs from BAM efficiently.
@@ -17,7 +17,6 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
     total.cor <- numeric(max.dist+1L)
     total.read.num <- 0L
 
-    BPPARAM <- param$BPPARAM
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
         on.exit(bpstop(BPPARAM))

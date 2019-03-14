@@ -3,8 +3,9 @@
 #' @importFrom IRanges IRanges
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom GenomeInfoDb seqlevels<- seqlengths<-
-#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
-windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, param=readParam())
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
+windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, 
+     param=readParam(), BPPARAM=SerialParam())
 # Gets counts from BAM files at each position of the sliding window. 
 # Appliesa gentle filter to remove the bulk of window positions with low counts.
 # Returns a RangedSummarizedExperiment object with counts and genomic coordinates.
@@ -31,7 +32,6 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
 
-    BPPARAM <- param$BPPARAM
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
         on.exit(bpstop(BPPARAM))

@@ -7,7 +7,7 @@
 
 \usage{
 checkBimodality(bam.files, regions, width=100, param=readParam(), 
-    prior.count=2, invert=FALSE) 
+    prior.count=2, invert=FALSE, BPPARAM=SerialParam()) 
 }
 
 \arguments{
@@ -17,6 +17,7 @@ checkBimodality(bam.files, regions, width=100, param=readParam(),
 \item{param}{a \code{readParam} object containing read extraction parameters}
 \item{prior.count}{a numeric scalar specifying the prior count to compute bimodality scores}
 \item{invert}{a logical scalar indicating whether bimodality score should be inverted}
+\item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \details{

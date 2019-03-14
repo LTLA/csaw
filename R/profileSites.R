@@ -1,12 +1,12 @@
 #' @export
 #' @importFrom BiocGenerics start end strand start<-
 #' @importFrom S4Vectors split
-#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom GenomeInfoDb seqnames
 profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=100, 
-    average=TRUE, normalize="none", strand=c("ignore", "use", "match")) 
+    average=TRUE, normalize="none", strand=c("ignore", "use", "match"), BPPARAM=SerialParam()) 
 # Computes the coverage profile around putative binding sites. The 5' edge of the
 # binding site is identified by counting reads into a window of size `width`, on the left and
 # right of a given position, and determining if the right/left ratio is greater than 5. It then
@@ -31,11 +31,16 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
             rregs <- regions[reverse]
             start(rregs) <- end(rregs) # Using the 5' end of the reverse-stranded region.
 
-            rprof <- Recall(bam.files=bam.files, regions=rregs, range=range, ext=ext, average=average, normalize=normalize,
-                param=reform(param, forward=ifelse(match.strand, FALSE, NA)), strand="ignore") 
+            rprof <- Recall(bam.files=bam.files, regions=rregs, 
+                param=reform(param, forward=ifelse(match.strand, FALSE, NA)), 
+                range=range, ext=ext, average=average, normalize=normalize,
+                strand="ignore", BPPARAM=BPPARAM) 
+
             if (any(!reverse)) { 
-                fprof <- Recall(bam.files=bam.files, regions=regions[!reverse], range=range, ext=ext, average=average, 
-                    normalize=normalize, param=reform(param, forward=ifelse(match.strand, TRUE, NA)), strand="ignore") 
+                fprof <- Recall(bam.files=bam.files, regions=regions[!reverse], 
+                    param=reform(param, forward=ifelse(match.strand, TRUE, NA)), 
+                    range=range, ext=ext, average=average, normalize=normalize, 
+                    strand="ignore", BPPARAM=BPPARAM)
             } else { 
                 fprof <- 0 
             }
@@ -74,7 +79,6 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
     }
     indices <- split(seq_along(regions), seqnames(regions))
 
-    BPPARAM <- param$BPPARAM
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
         on.exit(bpstop(BPPARAM))
@@ -94,9 +98,8 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
 
         # Reading in the reads for the current chromosome for all the BAM files.
         bp.out <- bpmapply(FUN=.profile_sites, bam.file=bam.files, init.ext=ext.data$ext, 
-                           MoreArgs=list(where=where, param=param,
-                                         final.ext=ext.data$final, outlen=outlen),
-                           BPPARAM=param$BPPARAM, SIMPLIFY=FALSE)
+            MoreArgs=list(where=where, param=param, final.ext=ext.data$final, outlen=outlen),
+            BPPARAM=BPPARAM, SIMPLIFY=FALSE)
 
         starts <- lapply(bp.out, "[[", "starts")
         ends <- lapply(bp.out, "[[", "ends")

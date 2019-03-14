@@ -2,11 +2,11 @@
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom BiocParallel bpmapply
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom S4Vectors SimpleList split
 #' @importFrom BiocGenerics strand<-
-regionCounts <- function(bam.files, regions, ext=100, param=readParam())
+regionCounts <- function(bam.files, regions, ext=100, param=readParam(), BPPARAM=SerialParam())
 # This just counts reads over regions. The only reason I'm using this and not
 # some other package, is because (a) I want to avoid loading in more packages
 # than I need, and (b) I need to count using the same reads (i.e., same values
@@ -30,7 +30,6 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam())
 	indices <- split(seq_len(nx), seqnames(regions))
     all.extras <- rep(list(list()), nbam)
 
-    BPPARAM <- param$BPPARAM
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
         on.exit(bpstop(BPPARAM))

@@ -7,7 +7,7 @@
 
 \usage{
 windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
-	filter=10, bin=FALSE, param=readParam())
+	filter=10, bin=FALSE, param=readParam(), BPPARAM=SerialParam())
 }
 
 \arguments{
@@ -19,6 +19,7 @@ windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 	\item{filter}{an integer scalar for the minimum count sum across libraries for each window}
 	\item{bin}{a logical scalar indicating whether binning should be performed}
 	\item{param}{a \code{readParam} object containing read extraction parameters}
+\item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \value{

@@ -6,7 +6,8 @@
 
 \usage{
 profileSites(bam.files, regions, param=readParam(), range=5000, ext=100, 
-    average=TRUE, normalize="none", strand=c("ignore", "use", "match"))
+    average=TRUE, normalize="none", strand=c("ignore", "use", "match"),
+    BPPARAM=SerialParam())
 }
 
 \arguments{
@@ -18,6 +19,7 @@ profileSites(bam.files, regions, param=readParam(), range=5000, ext=100,
 	\item{average}{a logical scalar specifying whether the profiles should be averaged across regions}
     \item{normalize}{a string specifying how normalization of each region's profile should be performed prior to averaging}
 	\item{strand}{a string indicating how stranded \code{regions} should be handled}
+\item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \details{

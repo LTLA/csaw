@@ -6,7 +6,8 @@
 \description{Count the number of extended reads overlapping pre-specified regions}
 
 \usage{
-regionCounts(bam.files, regions, ext=100, param=readParam())
+regionCounts(bam.files, regions, ext=100, param=readParam(),
+    BPPARAM=SerialParam())
 }
 
 \arguments{
@@ -14,6 +15,7 @@ regionCounts(bam.files, regions, ext=100, param=readParam())
 	\item{regions}{a \code{GRanges} object containing the regions over which reads are to be counted}
 	\item{ext}{an integer scalar or list describing the average length of the sequenced fragment in each library, see \code{?\link{windowCounts}}}
 	\item{param}{a \code{readParam} object containing read extraction parameters, or a list of such objects (one for each BAM file)}
+\item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \value{

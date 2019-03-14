@@ -4,8 +4,8 @@
 #' @importFrom S4Vectors split
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop
-checkBimodality <- function(bam.files, regions, width=100, param=readParam(), prior.count=2, invert=FALSE) 
+#' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
+checkBimodality <- function(bam.files, regions, width=100, param=readParam(), prior.count=2, invert=FALSE, BPPARAM=SerialParam()) 
 # Gives the maximum strand bimodality score for any base pair in each region. 
 # The idea is to try to distinguish between genuine TF binding sites and read stacks or other artifacts.
 #
@@ -22,7 +22,6 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
     indices <- split(seq_len(nx), seqnames(regions))
     prior.count <- as.double(prior.count)
 
-    BPPARAM <- param$BPPARAM
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
         on.exit(bpstop(BPPARAM))
@@ -37,9 +36,8 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 
         # Pulling out read data.
         collected <- bpmapply(FUN=.check_bimodality, bam.file=bam.files, init.ext=ext.data$ext, 
-                              MoreArgs=list(where=where, param=param,
-                                            final.ext=ext.data$final, outlen=outlen),
-                              BPPARAM=BPPARAM, SIMPLIFY=FALSE)
+             MoreArgs=list(where=where, param=param, final.ext=ext.data$final, outlen=outlen),
+             BPPARAM=BPPARAM, SIMPLIFY=FALSE)
 
         # Checking region order.
         rstarts <- start(regions)[chosen]

@@ -6,7 +6,8 @@
 \description{Computes the auto- or cross-correlation coefficients between read positions across a set of delay intervals.}
 
 \usage{
-correlateReads(bam.files, max.dist=1000, cross=TRUE, param=readParam())
+correlateReads(bam.files, max.dist=1000, cross=TRUE, param=readParam(),
+    BPPARAM=SerialParam())
 }
 
 \arguments{
@@ -14,6 +15,7 @@ correlateReads(bam.files, max.dist=1000, cross=TRUE, param=readParam())
 	\item{max.dist}{integer scalar specifying the maximum delay distance over which correlation coefficients will be calculated}
 	\item{cross}{a logical scalar specifying whether cross-correlations should be computed}
 	\item{param}{a \code{readParam} object containing read extraction parameters}
+\item{BPPARAM}{A \linkS4class{BiocParallelParam} specifying how parallelization is to be performed across files.}
 }
 
 \value{
