@@ -5,5 +5,5 @@ csawUsersGuide <- function()
 # 
 # written by Aaron Lun.
 {
-    browseURL(sprintf("http://bioconductor.org/%s/workflows/vignettes/csawUsersGuide/inst/doc/csawUsersGuide.pdf", BiocManager::version()))
+    browseURL(sprintf("https://bioconductor.org/packages/%s/csawUsersGuide/vignettes/csaw.pdf", BiocManager::version()))
 }
