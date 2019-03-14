@@ -67,8 +67,14 @@ test_that("extractReads works correctly with extension", {
             element <- extractor[idx]
             out <- extractReads(obam, element, ext=ext.strat, param=readParam())
 
-            ref <- extractReads(obam, genome[idx], ext=NA, param=readParam())
-            suppressWarnings(ref <- resize(ref, fix="start", width=ext.strat, ignore.strand=FALSE))
+            ref <- csaw:::.extractSE(obam, genome[idx], param=readParam())
+            ref <- GRanges(as.character(seqnames(genome)[idx]), 
+                IRanges(c(ref$forward$pos, ref$reverse$pos), 
+                    width=c(ref$forward$qwidth, ref$reverse$qwidth)),
+                strand=rep(c("+", "-"), c(length(ref$forward$pos), length(ref$reverse$pos))))
+
+            ref <- resize(ref, fix="start", width=ext.strat, ignore.strand=FALSE)
+            suppressWarnings(seqinfo(ref) <- seqinfo(out))
             ref <- trim(ref)
             ref <- ref[overlapsAny(ref, element)]
 
