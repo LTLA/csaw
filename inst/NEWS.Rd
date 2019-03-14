@@ -7,6 +7,9 @@
 
 \item Removed the deprecated consolidateSizes() function.
 
+\item Deprecated the use of BPPARAM= in readParam().
+Added the BPPARAM= argument to all relevant functions.
+
 \item Modified csawUsersGuide() to point to the workflow package.
 }}
 

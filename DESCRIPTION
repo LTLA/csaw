@@ -1,6 +1,6 @@
 Package: csaw
-Version: 1.17.6
-Date: 2019-02-21
+Version: 1.17.7
+Date: 2019-03-13
 Title: ChIP-Seq Analysis with Windows
 Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
         "infinite.monkeys.with.keyboards@gmail.com"),
