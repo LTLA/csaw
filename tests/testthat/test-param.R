@@ -39,13 +39,10 @@ test_that("readParam discard setup works as expected", {
     gr <- GRanges(c("chrA", "chrB"), IRanges(1:2, 10:11))
 
     X <- readParam(discard=gr)
-    expect_identical(X$processed.discard$chrA$pos, c(1L, 11L))
-    expect_identical(X$processed.discard$chrA$id, c(0L, 0L))
-    expect_identical(X$processed.discard$chrB$pos, c(2L, 12L))
-    expect_identical(X$processed.discard$chrB$id, c(0L, 0L))
+    expect_identical(X$discard, gr)
 
     Y <- readParam()
-    expect_identical(unname(Y$processed.discard), list())
+    expect_identical(Y$discard, GRanges())
     Y <- reform(Y, discard=gr)
-    expect_identical(X$processed.discard, Y$processed.discard)
+    expect_identical(Y$discard, gr)
 })
