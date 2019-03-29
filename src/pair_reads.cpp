@@ -1,6 +1,5 @@
 #include "bam_utils.h"
 #include "utils.h"
-#include "intersector.h"
 
 struct AlignData {
     AlignData() : len(0), is_reverse(false) {}
@@ -51,7 +50,6 @@ struct valid_pairs {
 SEXP extract_pair_data(SEXP bam, SEXP index, 
         SEXP chr, SEXP start, SEXP end, 
         SEXP mapq, SEXP dedup, 
-        SEXP discard_pos, SEXP discard_id,
         SEXP diagnostics)
 {
     BEGIN_RCPP
@@ -60,7 +58,6 @@ SEXP extract_pair_data(SEXP bam, SEXP index,
     const int minqual=check_integer_scalar(mapq, "minimum mapping quality");
     const bool rmdup=check_logical_scalar(dedup, "duplicate removal specification");
     const bool storediags=check_logical_scalar(diagnostics, "diagnostics specification");
-    intersector discarder(discard_pos, discard_id);
 
     // Initializing odds and ends.
     BamFile bf(bam, index);
@@ -87,10 +84,7 @@ SEXP extract_pair_data(SEXP bam, SEXP index,
         ++totals;
         const int curpos = br.get_aln_pos() + 1; // Getting 1-indexed position.
         const AlignData algn_data(br.get_aln_len(), br.is_reverse());
-
-        discarder.advance_to_start(curpos);
-        const bool am_mapped=br.is_well_mapped(minqual, rmdup) & 
-            !discarder.end_is_within(curpos + algn_data.len);
+        const bool am_mapped=br.is_well_mapped(minqual, rmdup);
 
         /* Reasons to not add a read: */
        

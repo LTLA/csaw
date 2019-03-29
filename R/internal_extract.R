@@ -24,26 +24,35 @@
         use.first <- NA
     }
 
-    cur.discard <- .getDiscard(param, cur.chr)
-
     out <- .Call(cxx_extract_single_data, bam.file, bam.index, 
         cur.chr, start(where), end(where), 
-        param$minq, param$dedup, param$forward, use.first,
-        cur.discard$pos, cur.discard$id)
+        param$minq, param$dedup, param$forward, use.first)
 
     names(out) <- c("forward", "reverse")
     names(out$forward) <- names(out$reverse) <- c("pos", "qwidth")
-    return(out)
-}
 
-.getDiscard <- function(param, chr) {    
-    cur.discard <- param$processed.discard[[chr]]
-    if (is.null(cur.discard)) {
-        cur.discard <- list(pos=integer(0), id=integer(0))
+    disc <- param$discard
+    if (length(disc)) {
+        for (i in seq_along(out)) {
+            curdata <- out[[i]]
+            keep <- .filter_blacklist(cur.chr, curdata$pos, curdata$qwidth, disc)
+            out[[i]] <- list_subset(curdata, keep)
+        }
     }
-    cur.discard
+
+    out
 }
 
+#' @importFrom IRanges overlapsAny IRanges
+#' @importFrom GenomicRanges GRanges
+.filter_blacklist <- function(chr, pos, size, disc) {
+    if (!length(pos)) { return(logical(0)) } # avoid non-parallel errors with 'chr'.
+    gr <- GRanges(chr, IRanges(pos, width=size))
+    !overlapsAny(gr, disc, type="within")
+}
+
+#' @importFrom GenomicsRanges GRanges
+#' @importFrom IRanges overlapsAny IRanges
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics start end
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
@@ -64,31 +73,49 @@
         stop("cannot specify read strand when 'pe=\"both\"'") 
     }
 
-    cur.discard <- .getDiscard(param, cur.chr)
-
     out <- .Call(cxx_extract_pair_data, bam.file, bam.index, 
         cur.chr, start(where), end(where), 
         param$minq, param$dedup, 
-        cur.discard$pos, cur.discard$id, 
         diagnostics)
+
+    # Filtering out *fragments* by region.
+    disc <- param$discard
+    if (length(disc)) {
+        starts <- out[[1]][[1]]
+        sizes <- out[[2]][[1]] + out[[2]][[2]] - starts
+        keep <- .filter_blacklist(cur.chr, starts, sizes, disc)
+        out <- list_subset(out, keep)
+    }
 
     if (diagnostics) {
         names(out) <- c("forward", "reverse", "total", "single", "unoriented", "one.unmapped", "inter.chr")
         return(out)
     }
 
+    # Filtering out by size.
     left.pos <- out[[1]][[1]]
     left.len <- out[[1]][[2]]
     right.pos <- out[[2]][[1]]
     right.len <- out[[2]][[2]]
-
-    # Computing fragment sizes.
     all.sizes <- right.pos + right.len - left.pos
+
     keep <- all.sizes <= param$max.frag 
     output <- list(pos=left.pos[keep], size=all.sizes[keep])
     if (with.reads) {
         output$forward <- list(pos=left.pos[keep], qwidth=left.len[keep])
         output$reverse <- list(pos=right.pos[keep], qwidth=right.len[keep])
     }
-    return(output)
+
+    output
 }
+
+list_subset <- function(x, keep) {
+    if (!is.list(x)) {
+        return(x[keep])
+    } 
+    for (i in seq_along(x)) {
+        x[[i]] <- list_subset(x[[i]], keep)
+    }
+    x
+}
+

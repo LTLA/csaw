@@ -9,8 +9,8 @@ setClass("readParam", representation(
     pe="character", max.frag="integer",
     dedup="logical", minq="integer", forward="logical", 
 	restrict="character", 
-    discard="GRanges", 
-    processed.discard="list"))
+    discard="GRanges"))
+
 
 setValidity("readParam", function(object) {
     msg <- NULL
@@ -34,10 +34,6 @@ setValidity("readParam", function(object) {
 	} else if ((length(object@forward)==0L || !is.na(object@forward)) && object@pe == "both") {
 		msg <- c(msg, "strand-specific extraction is not supported for paired-end data")
 	}
-
-    if (length(object@processed.discard)==0L && length(object@discard)!=0) {
-        msg <- c(msg, "discard ranges has not been properly processed")
-    }
 
     if (length(msg)) {
         return(msg)
@@ -116,8 +112,7 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 	new("readParam", pe=pe, max.frag=max.frag, 
 		dedup=dedup, forward=forward, minq=minq, 
 		restrict=restrict, 
-        discard=discard, 
-        processed.discard=.setupDiscard(discard))
+        discard=discard)
 }
 
 #' @importFrom GenomeInfoDb seqnames
@@ -157,12 +152,5 @@ setMethod("reform", signature("readParam"), function(x, ...) {
 			val)
 	}
 
-    # Strictly internal.
-    incoming$processed.discard <- NULL
-    if (!is.null(incoming$discard)) {
-        incoming$processed.discard <- .setupDiscard(incoming$discard)
-    }
-
 	do.call(initialize, c(x, incoming))
 })
-

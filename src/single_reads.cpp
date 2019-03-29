@@ -1,11 +1,8 @@
 #include "bam_utils.h"
 #include "utils.h"
-#include "intersector.h"
 
-SEXP extract_single_data(SEXP bam, SEXP index, 
-        SEXP chr, SEXP start, SEXP end, 
-        SEXP mapq, SEXP dedup, SEXP use_forward, SEXP use_first, 
-        SEXP discard_pos, SEXP discard_id) 
+SEXP extract_single_data(SEXP bam, SEXP index, SEXP chr, SEXP start, SEXP end, 
+    SEXP mapq, SEXP dedup, SEXP use_forward, SEXP use_first)
 {
     BEGIN_RCPP
 
@@ -43,8 +40,6 @@ SEXP extract_single_data(SEXP bam, SEXP index,
         }
     }
 
-    intersector discarder(discard_pos, discard_id);
-
     // Initializing odds and ends.
     BamFile bf(bam, index);
     BamRead br;
@@ -60,9 +55,6 @@ SEXP extract_single_data(SEXP bam, SEXP index,
 
         int curpos = br.get_aln_pos() + 1;
         int curlen = br.get_aln_len();
-
-        discarder.advance_to_start(curpos);
-        if (discarder.end_is_within(curpos + curlen)) { continue; }
 
         if (br.is_reverse()) { 
             reverse_pos.push_back(curpos);
