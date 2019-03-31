@@ -16,10 +16,6 @@ static const R_CallMethodDef all_call_entries[] = {
     REGISTER(get_profile, 6), 
     REGISTER(find_maxima, 5), 
     REGISTER(check_bimodality, 5), 
-
-    REGISTER(extract_pair_data, 8), 
-    REGISTER(get_leftovers, 3), 
-    REGISTER(extract_single_data, 9), 
     {NULL, NULL, 0}
 };
 
