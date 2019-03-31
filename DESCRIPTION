@@ -8,7 +8,7 @@ Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
 Depends: GenomicRanges, SummarizedExperiment
 Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures, 
         AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats,
-        BiocParallel, utils
+        BiocParallel, utils, GenomicAlignments
 Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat,
         GenomicAlignments, knitr, BiocStyle, rmarkdown, BiocManager
 biocViews: MultipleComparison, ChIPSeq, Normalization, Sequencing,
@@ -18,7 +18,7 @@ Description: Detection of differentially bound regions in ChIP-seq data
         FDR control.
 License: GPL-3
 NeedsCompilation: yes
-LinkingTo: Rhtslib, zlibbioc, Rcpp
+LinkingTo: Rcpp
 SystemRequirements: C++11
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
