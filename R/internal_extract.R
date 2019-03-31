@@ -60,7 +60,7 @@
 #' @importFrom BiocGenerics start end strand
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom GenomicAlignments readGAlignmentPairs first last
-.extractPE <- function(bam.file, where, param, with.reads=FALSE)
+.extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
 # A function to extract PE data for a particular chromosome. 
 # 
 # written by Aaron Lun
@@ -68,17 +68,18 @@
 {
     sbp <- .generate_sbp(where, param)
     reads <- readGAlignmentPairs(bam.file, param=sbp)
-
     first.read <- first(reads)
     second.read <- last(reads)
 
-    # Checking that reads in a pair are (i) on the same chromosome,
-    # and (ii) on opposite strands.
+    # Checking that reads in a pair are on the same chromosome and different strands.
     cur.chr <- as.character(seqnames(where))
-    keep <- seqnames(first.read)==cur.chr & seqnames(second.read)==cur.chr & strand(first.read) != strand(second.read)
+    same.chr <- seqnames(first.read) == cur.chr & seqnames(second.read) == cur.chr
+    oriented <- strand(first.read) != strand(second.read)
+    keep <- oriented & same.chr
     first.read <- first.read[keep]
     second.read <- second.read[keep]
 
+    # Reorganizing the objects in terms of forward and reverse reads.
     first.forward <- strand(first.read)=="+"
     second.forward <- strand(second.read)=="+"
     forward.read <- c(first.read[first.forward], second.read[second.forward])
@@ -87,7 +88,9 @@
     # Insert size from forward start to reverse end.
     frag.starts <- start(forward.read)
     frag.sizes <- end(reverse.read) - frag.starts + 1L
-    keep <- frag.sizes > 0L & frag.sizes <= param$max.frag 
+    inward <- frag.sizes > 0L
+
+    keep <- inward & frag.sizes <= param$max.frag 
     frag.starts <- frag.starts[keep]
     frag.sizes <- frag.sizes[keep]
 
@@ -98,6 +101,8 @@
         frag.starts <- frag.starts[!blacklisted]
         frag.sizes <- frag.sizes[!blacklisted]
         keep[keep] <- !blacklisted
+    } else {
+        blacklisted <- NULL
     }
 
     output <- list(pos=frag.starts, size=frag.sizes)
@@ -107,6 +112,12 @@
         reverse.read <- reverse.read[keep]
         output$forward <- list(pos=start(forward.read), qwidth=width(forward.read))
         output$reverse <- list(pos=start(reverse.read), qwidth=width(reverse.read))
+    }
+
+    if (diagnostics) {
+        output$diagnostics <- c(inter.chr=sum(!same.chr), 
+            unoriented=sum(same.chr & !oriented) + sum(!inward), 
+            discarded=sum(blacklisted))
     }
 
     output
