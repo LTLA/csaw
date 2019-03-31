@@ -21,7 +21,7 @@ Slots are defined as:
 	\item{\code{minq}:}{An integer scalar, specifying the minimum mapping quality score for an aligned read.}
 	\item{\code{forward}:}{A logical scalar indicating whether only forward reads should be extracted.}
 	\item{\code{restrict}:}{A character vector containing the names of allowable chromosomes from which reads will be extracted.}
-	\item{\code{discard}:}{A \linkS4class{GRanges} object containing intervals in which any alignments will be discarded.}
+	\item{\code{discard}:}{A \linkS4class{GenomicRanges} object containing intervals in which any alignments will be discarded.}
 }
 }
 
@@ -38,41 +38,63 @@ If \code{minq=NA}, no filtering on the score will be performed.
 
 If \code{restrict} is supplied, reads will only be extracted for the specified chromosomes. 
 This is useful to restrict the analysis to interesting chromosomes, e.g., no contigs/scaffolds or mitochondria. 
-Conversely, if \code{discard} is set, a read will be removed if the corresponding alignment is wholly contained within the supplied ranges. 
-This is useful for removing reads in repeat regions. 
 
-Note that secondary or supplementary alignments are ignored in all functions.
+Note that unmapped, secondary or supplementary alignments are ignored in all functions.
 The former usually refer to alternative mapping locations for the same read, while the latter refer to chimeric reads.
 Neither are of much use in a typical ChIP-seq analysis and will be discarded if they are present in the BAM file.
 }
 
-\section{Parameter settings for paired-end data}{
-For \code{pe="both"}, reads are extracted with the previously described filters, i.e., \code{discard}, \code{minq}, \code{dedup}.
-Extracted reads are then grouped into proper pairs.
-Proper pairs are those where the two reads are close together (on the same chromosome, obviously) and in an inward-facing orientation. 
-The fragment interval is defined as that bounded by the 5' ends of the two reads in a proper pair.
+\section{Parameter settings for single-end data}{
+If \code{pe="none"}, data are assumed to be single-end.
+Read extraction from BAM files is performed as described above via the \code{\link{readGAlignments}} function.
 
-The fragment size is defined as the length of the interval bounded by the 5' ends of two inward-facing reads.
-Those pairs with fragment sizes above \code{max.frag} are removed, as they are more likely to be the result of mapping errors than genuinely large fragment sizes.
-Users should run \code{\link{getPESizes}} to pick an appropriate value for their data sets, though thresholds of around 500-1000 bp are usually fine.
+If \code{forward} is \code{NA}, reads are extracted from all strands.
+Otherwise, reads are only extracted from the forward or reverse strands for \code{TRUE} or \code{FALSE}, respectively.
+This may be useful for applications requiring strand-specific counting.
+A special case is \code{forward=NULL} - see \code{\link{strandedCounts}} for more details.
+
+If \code{discard} is non-empty, reads that fall within the specified regions are removed.
+This is useful for removing reads in repeat regions. 
+A read is only removed if its alignment is wholly nested within one of the supplied regions.
+}
+
+\section{Parameter settings for paired-end data}{
+For \code{pe="both"}, reads are extracted with \code{\link{readGAlignmentPairs}}.
+In addition to the pairing requirements described in \code{?"\link{readGAlignments}"}, we also require that:
+\itemize{
+    \item Paired reads are on the same chromosome.
+    Inter-chromosomal pairs are often ligation artifacts (or a different data modality altogether, e.g., Hi-C).
+    \item Paired reads are inward-facing.
+    This is the expected strand orientation for paired-end reads generated from DNA fragments.
+    \item The fragment size is less than \code{max.frag}.
+    Larger fragments are likely to be the result of mapping errors than genuinely large fragment sizes.
+}
+
+The fragment interval is defined as that bounded by the 5' ends of the two reads in a proper pair,
+and the fragment size is defined as the length of this interval.
+Users should run \code{\link{getPESizes}} to pick an appropriate value for their data sets, 
+though thresholds of around 500-1000 bp are usually fine.
+Setting \code{max.frag=Inf} turns off any filtering by fragment size.
+
+Note that the 3' end of one read is allowed to overrun the 5' end of the other.
+This avoids being too stringent in the presence of sequencing errors, untrimmed adaptors, etc. at the start or ends of reads.
+
+For paired-end data, the use of \code{discard} is slightly different to that of the single-end case.
+A read pair is only discarded if the corresponding fragment interval is nested within one of the supplied regions.
+This is because the correct alignment of one read of a pair is enough to locate the corresponding fragment,
+even if its mate falls within a repeat or some other problematic region.
 
 Paired-end data can also be treated as single-end data by only using one read from each pair with \code{pe="first"} or \code{"second"}.  
-This is useful for poor-quality data where the paired-end procedure has obviously failed, e.g., with many interchromosomal read pairs or pairs with large fragment lengths.
+This is useful for poor-quality data where the paired-end procedure has obviously failed, 
+e.g., with many interchromosomal read pairs or pairs with large fragment lengths.
 Treating the data as single-end may allow the analysis to be salvaged.
 
 In all cases, users should ensure that each BAM file containing paired-end data is properly synchronized prior to count loading.
 This can be done using standard tools like FixMateInformation from the Picard suite (http://broadinstitute.github.io/picard).
 }
 
-\section{Parameter settings for single-end data}{
-If \code{pe="none"}, reads are assumed to be single-end.
-Read extraction from BAM files is performed with the same quality filters described above.
-If \code{forward} is \code{NA}, reads are extracted from all strands.
-Otherwise, reads are only extracted from the forward or reverse strands for \code{TRUE} or \code{FALSE}, respectively.
-This may be useful for applications requiring strand-specific counting.
-A special case is \code{forward=NULL} - see \code{\link{strandedCounts}} for more details.
-
-Any soft clipping in alignments are ignored during extraction (this is also true for paired-end data).
+\section{Clipping comments}{
+Any soft clipping in alignments are ignored when considering the length of the alignment relative to the reference.
 Soft clips are presumed to be sequencing artifacts, e.g., when the adaptor or barcodes are not properly removed from the read sequence.
 They are not relevant to computing genomic coverage.
 Thus, in this package, any references to the length or 5'/3' ends of the read will actually refer to that of the \emph{alignment}.
