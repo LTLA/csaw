@@ -57,7 +57,7 @@
 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges overlapsAny IRanges
-#' @importFrom BiocGenerics start end strand
+#' @importFrom BiocGenerics start end strand table
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom GenomicAlignments readGAlignmentPairs first last
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)

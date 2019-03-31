@@ -4,14 +4,14 @@
 test_that("readParam constructor works as expected", {
     expect_s4_class(X <- readParam(), "readParam")
     expect_identical(X$dedup, FALSE)
-    expect_identical(X$max.frag, 500L)
+    expect_identical(X$max.frag, 500)
     expect_identical(X$minq, NA_integer_)
     expect_identical(X$forward, NA)
     expect_identical(X$restrict, character(0))
     
     expect_s4_class(X <- readParam(dedup=TRUE, max.frag=200L, minq=10, forward=TRUE, restrict="chrB"), "readParam")
     expect_identical(X$dedup, TRUE)
-    expect_identical(X$max.frag, 200L)
+    expect_identical(X$max.frag, 200)
     expect_identical(X$minq, 10L)
     expect_identical(X$forward, TRUE)
     expect_identical(X$restrict, "chrB")
@@ -26,7 +26,7 @@ test_that("readParam reform works as expected", {
     expect_identical(Y$dedup, TRUE)
 
     Y <- reform(X, max.frag=250L)
-    expect_identical(Y$max.frag, 250L)
+    expect_identical(Y$max.frag, 250)
 
     Y <- reform(X, forward=FALSE)
     expect_identical(Y$forward, FALSE)

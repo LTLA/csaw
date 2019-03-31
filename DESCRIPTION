@@ -10,7 +10,7 @@ Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures,
         AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats,
         BiocParallel, utils, GenomicAlignments
 Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat,
-        GenomicAlignments, knitr, BiocStyle, rmarkdown, BiocManager
+        knitr, BiocStyle, rmarkdown, BiocManager
 biocViews: MultipleComparison, ChIPSeq, Normalization, Sequencing,
         Coverage, Genetics, Annotation, DifferentialPeakCalling
 Description: Detection of differentially bound regions in ChIP-seq data
