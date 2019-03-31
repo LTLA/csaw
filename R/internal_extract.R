@@ -73,7 +73,14 @@
 
     # Checking that reads in a pair are on the same chromosome and different strands.
     cur.chr <- as.character(seqnames(where))
-    same.chr <- seqnames(first.read) == cur.chr & seqnames(second.read) == cur.chr
+    same.chr1 <- seqnames(first.read) == cur.chr
+    same.chr2 <- seqnames(second.read) == cur.chr
+    same.chr <- same.chr1 & same.chr2
+
+    if (diagnostics) {
+        inter.set <- table(seqnames(first.read)[!same.chr1]) + table(seqnames(second.read)[!same.chr2])
+    }
+
     oriented <- strand(first.read) != strand(second.read)
     keep <- oriented & same.chr
     first.read <- first.read[keep]
@@ -115,9 +122,11 @@
     }
 
     if (diagnostics) {
-        output$diagnostics <- c(inter.chr=sum(!same.chr), 
+        output$diagnostics <- list(
+            inter.chr=inter.set,
             unoriented=sum(same.chr & !oriented) + sum(!inward), 
-            discarded=sum(blacklisted))
+            discarded=sum(blacklisted)
+        )
     }
 
     output
