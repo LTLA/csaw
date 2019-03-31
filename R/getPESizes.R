@@ -26,7 +26,7 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
     }
 
     # Need to halve as each iteration picks up inter.chr's from the other iterations.
-    diagnostics[["integer.chr"]] <- diagnostics[["integer.chr"]] / 2L
+    diagnostics[["inter.chr"]] <- as.integer(diagnostics[["inter.chr"]] / 2L)
 
     # Returning sizes and some diagnostic data.
     list(sizes=unlist(norm.list), diagnostics=diagnostics)

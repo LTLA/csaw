@@ -27,7 +27,6 @@ CHECKFUN <- function(npairs, nsingles, chromosomes, param) {
     everything <- do.call(DataFrame, scanBam(PE)[[1]])
     if (!is.na(param$minq)) everything <- everything[everything$mapq >= param$minq,]    
     if (param$dedup) everything <- everything[bitwAnd(everything$flag, 0x400)==0,]
-    if (length(param$restrict)) everything <- everything[everything$rname %in% param$restrict,]
 
     everything <- everything[order(everything$qname),]
     first <- everything[bitwAnd(everything$flag, 0x40)!=0,]
@@ -36,6 +35,13 @@ CHECKFUN <- function(npairs, nsingles, chromosomes, param) {
     paired <- intersect(first$qname, second$qname)
     first <- first[match(paired, first$qname),]
     second <- second[match(paired, second$qname),]
+
+    if (length(param$restrict)) {
+        # Keep all pairs with at least one read on the restricted chromosomes.
+        keep <- first$rname %in% chrs.to.use | second$rname %in% chrs.to.use
+        first <- first[keep,]
+        second <- second[keep,]
+    }
 
     inter.chr <- first$rname!=second$rname
     expect_identical(stuff$diagnostics[["inter.chr"]], sum(inter.chr)) 
