@@ -4,6 +4,7 @@
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom GenomeInfoDb seqlevels<- seqlengths<-
 #' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
+#' @importFrom Rsamtools BamFile
 windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, 
      param=readParam(), BPPARAM=SerialParam())
 # Gets counts from BAM files at each position of the sliding window. 
@@ -31,6 +32,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
+    bam.handles <- lapply(bam.files, BamFile, asMates=param$pe=="both")
 
     if (!bpisup(BPPARAM)) {
         bpstart(BPPARAM)
@@ -54,7 +56,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
         total.pts <- .get_total_pts(outlen, shift, spacing, at.start) # see POINT 3
 
         # Parallelized loading.
-        bp.out <- bpmapply(FUN=.window_counts, bam.file=bam.files, init.ext=ext.data$ext, 
+        bp.out <- bpmapply(FUN=.window_counts, bam.file=bam.handles, init.ext=ext.data$ext, 
             MoreArgs=list(where=where, param=param, 
                 final.ext=ext.data$final, outlen=outlen, bin=bin, 
                 shift=shift, width=width, spacing=spacing, 
