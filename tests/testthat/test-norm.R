@@ -8,7 +8,7 @@ test_that("testing scaling normalization", {
     data$totals <- rpois(10, lambda=10000)
     
     nf <- normFactors(data, se.out=FALSE)
-    ref <- calcNormFactors(DGEList(assay(data), lib.size=data$totals), doWeighting=FALSE)$samples$norm.factors
+    ref <- calcNormFactors(DGEList(assay(data), lib.size=data$totals), doWeighting=FALSE, method="TMM")$samples$norm.factors
     expect_identical(nf, ref)
     
     data2 <- normFactors(data, se.out=TRUE)
