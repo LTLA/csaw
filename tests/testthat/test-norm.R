@@ -47,7 +47,7 @@ test_that("testing what happens with undersampling", {
     data <- SummarizedExperiment(list(counts=counts))
     data$totals <- c(sum(mu1), sum(mu2))
     truth <- sqrt(c(1/undersamp, undersamp)) 
-    expect_true(all(abs(normFactors(data)$norm.factors - truth) < 0.05))
+    expect_true(all(abs(normFactors(data)$norm.factors - truth) < 0.1))
 
     # Testing what happens with weighting, after adding some high-abundance DB regions. 
     # The errors should be larger than the unweighted version.

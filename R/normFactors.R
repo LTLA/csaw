@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom edgeR calcNormFactors
 #' @importFrom SummarizedExperiment assay
-normFactors <- function(object, weighted=FALSE, ..., assay.id="counts", se.out=TRUE) 
+normFactors <- function(object, method="TMM", weighted=FALSE, ..., assay.id="counts", se.out=TRUE) 
 # This provides a wrapper to perform TMM normalization with non-standard
 # library sizes (e.g. due to filtering) and weighting turned off.
 # Alternatively, it can do a form a fast loess-like normalization which uses
@@ -17,7 +17,7 @@ normFactors <- function(object, weighted=FALSE, ..., assay.id="counts", se.out=T
     }
 
 	out <- calcNormFactors(assay(object, i=assay.id, withDimnames=FALSE), 
-        lib.size=lib.sizes, doWeighting=weighted, ...)
+        lib.size=lib.sizes, doWeighting=weighted, method=method, ...)
 
 	# Choosing to put these values in a different location, if requested. 
     if (!is.logical(se.out)) { 

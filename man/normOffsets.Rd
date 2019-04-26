@@ -9,12 +9,14 @@
 \usage{
 normOffsets(object, type=NULL, ..., assay.id="counts", se.out=TRUE)
 
-normFactors(object, weighted=FALSE, ..., assay.id="counts", se.out=TRUE)
+normFactors(object, method="TMM", weighted=FALSE, ..., 
+    assay.id="counts", se.out=TRUE)
 }
 
 \arguments{
   \item{object}{A SummarizedExperiment object containing a count matrix.}
   \item{type}{Deprecated; a character string indicating what type of normalization is to be performed.}
+  \item{method}{String specifying the type of scaling normalization method to use.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
   \item{assay.id}{An integer scalar or string specifying the assay values to use for normalization.}
