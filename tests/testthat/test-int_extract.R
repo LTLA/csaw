@@ -1,5 +1,5 @@
 # This tests the basic internal read extraction functions.
-# library(testthat); library(csaw); source("test-int_extract.R")
+# library(testthat); library(csaw); source("setup.R"); source("test-int_extract.R")
 
 ######################################################################
 # Single-end read extraction.
@@ -35,7 +35,7 @@ SREF <- function(bam, param) {
         out <- lapply(out, "[", keep)
     }
 
-    return(out)
+    out
 }
 
 set.seed(1000)
@@ -89,6 +89,11 @@ test_that(".extractSE works correctly in the single-end case", {
 # Paired-end read extraction.
 
 PREF <- function(bam, param) {
+    disc <- param$discard
+    if (param$pe=="both") { # Blacklist filtering is handled later.
+        param <- reform(param, discard=GRanges())
+    }
+
     raw <- SREF(bam, param)
 
     fkeep <- bitwAnd(raw$flag, 0x40)!=0L
@@ -115,7 +120,15 @@ PREF <- function(bam, param) {
     size <- upper - lower 
 
     is.valid <- first$rname==second$rname & first$strand!=second$strand & size > 0L & size <= param$max.frag
-    return(list(chr=first$rname[is.valid], pos=lower[is.valid], size=size[is.valid]))
+    out <- list(chr=first$rname[is.valid], pos=lower[is.valid], size=size[is.valid])
+
+    # Further filtering out the blacklisted regions.
+    if (length(disc)) {
+        keep <- !overlapsAny(GRanges(out$chr, IRanges(out$pos, width=out$size)), disc, type="within")
+        out <- lapply(out, "[", keep)
+    }
+
+    out
 }
 
 set.seed(1001)
@@ -141,7 +154,7 @@ test_that(".extractPE works correctly in the paired-end case", {
                 element <- genome[idx]
                 out <- csaw:::.extractPE(obam, element, rparam)
 
-                cur.chr <- as.logical(seqnames(element)==ref$chr)
+                cur.chr <- as.character(seqnames(element))==ref$chr
                 ref.pos <- ref$pos[cur.chr]
                 ref.size <- ref$size[cur.chr]
 

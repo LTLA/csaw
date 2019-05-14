@@ -1,5 +1,7 @@
+#' @importFrom GenomicAlignments readGAlignments
+#' @importFrom BiocGenerics start width 
+#' @importFrom IRanges overlapsAny
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics start end
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
 # duplicate and poorly mapped/non-unique reads. We also discard reads in the
@@ -8,87 +10,124 @@
 # written by Aaron Lun
 # created 8 December 2013
 {
-    cur.chr <- as.character(seqnames(where)) 
-    bam.file <- path.expand(bam.file)
-    bam.index <- paste0(bam.file, ".bai")
+    sbp <- .generate_sbp(where, param)
+    reads <- readGAlignments(bam.file, param=sbp)
+
+    is.forward <- strand(reads)=="+"
+    forwards <- reads[is.forward]
+    reverses <- reads[!is.forward]
+
+    if (any(seqnames(param$discard) == as.character(seqnames(where)))) {
+        forwards <- forwards[!overlapsAny(forwards, param$discard, type="within")]
+        reverses <- reverses[!overlapsAny(reverses, param$discard, type="within")]
+    }
+
+    list(
+        forward=list(pos=start(forwards), qwidth=width(forwards)),
+        reverse=list(pos=start(reverses), qwidth=width(reverses))
+    )
+}
+
+#' @importFrom Rsamtools ScanBamParam scanBamFlag
+.generate_sbp <- function(where, param) {
+    flags <- list(isUnmappedQuery=FALSE,
+        isSecondaryAlignment=FALSE,
+        isSupplementaryAlignment=FALSE)
+
+    if (param$pe=="first" || param$pe=="second") {
+        flags$isFirstMateRead <- param$pe=="first"
+        flags$isSecondMateRead <- param$pe=="second"
+    } else if (param$pe=="second") {
+        flags$isPaired <- TRUE
+        flags$hasUnmappedMate <- FALSE
+    }
 
     if (length(param$forward)==0L) { 
         stop("read strand extraction must be specified") 
+    } else if (!is.na(param$forward)) {
+        flags$isMinusStrand <- !param$forward
     }
 
-    if (param$pe=="first") {
-        use.first <- TRUE
-    } else if (param$pe=="second") { 
-        use.first <- FALSE
-    } else {
-        use.first <- NA
+    if (param$dedup) {
+        flags$isDuplicate <- FALSE
     }
 
-    cur.discard <- .getDiscard(param, cur.chr)
-
-    out <- .Call(cxx_extract_single_data, bam.file, bam.index, 
-        cur.chr, start(where), end(where), 
-        param$minq, param$dedup, param$forward, use.first,
-        cur.discard$pos, cur.discard$id)
-
-    names(out) <- c("forward", "reverse")
-    names(out$forward) <- names(out$reverse) <- c("pos", "qwidth")
-    return(out)
+    ScanBamParam(flag=do.call(scanBamFlag, flags), mapqFilter=param$minq, which=where)
 }
 
-.getDiscard <- function(param, chr) {    
-    cur.discard <- param$processed.discard[[chr]]
-    if (is.null(cur.discard)) {
-        cur.discard <- list(pos=integer(0), id=integer(0))
-    }
-    cur.discard
-}
-
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges overlapsAny IRanges
+#' @importFrom BiocGenerics start end strand table
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics start end
+#' @importFrom GenomicAlignments readGAlignmentPairs first last
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
-# A function to extract PE data for a particular chromosome. Synchronisation
-# is expected.  We avoid sorting by name  as it'd mean we have to process the
-# entire genome at once (can't go chromosome-by-chromosome).  This probably
-# results in increased memory usage across the board, and it doesn't fit in
-# well with the rest of the pipelines which assume coordinate sorting.
+# A function to extract PE data for a particular chromosome. 
 # 
 # written by Aaron Lun
 # created 8 December 2013
 {
-    cur.chr <- as.character(seqnames(where)) 
-    bam.file <- path.expand(bam.file)
-    bam.index <- paste0(bam.file, ".bai")
+    sbp <- .generate_sbp(where, param)
+    reads <- readGAlignmentPairs(bam.file, param=sbp)
+    first.read <- first(reads)
+    second.read <- last(reads)
 
-    if (!identical(param$forward, NA)) { 
-        stop("cannot specify read strand when 'pe=\"both\"'") 
-    }
-
-    cur.discard <- .getDiscard(param, cur.chr)
-
-    out <- .Call(cxx_extract_pair_data, bam.file, bam.index, 
-        cur.chr, start(where), end(where), 
-        param$minq, param$dedup, 
-        cur.discard$pos, cur.discard$id, 
-        diagnostics)
+    # Checking that reads in a pair are on the same chromosome and different strands.
+    cur.chr <- as.character(seqnames(where))
+    same.chr1 <- seqnames(first.read) == cur.chr
+    same.chr2 <- seqnames(second.read) == cur.chr
+    same.chr <- same.chr1 & same.chr2
 
     if (diagnostics) {
-        names(out) <- c("forward", "reverse", "total", "single", "unoriented", "one.unmapped", "inter.chr")
-        return(out)
+        inter.set <- table(seqnames(first.read)[!same.chr1]) + table(seqnames(second.read)[!same.chr2])
     }
 
-    left.pos <- out[[1]][[1]]
-    left.len <- out[[1]][[2]]
-    right.pos <- out[[2]][[1]]
-    right.len <- out[[2]][[2]]
+    oriented <- strand(first.read) != strand(second.read)
+    keep <- oriented & same.chr
+    first.read <- first.read[keep]
+    second.read <- second.read[keep]
 
-    # Computing fragment sizes.
-    all.sizes <- right.pos + right.len - left.pos
-    keep <- all.sizes <= param$max.frag 
-    output <- list(pos=left.pos[keep], size=all.sizes[keep])
+    # Reorganizing the objects in terms of forward and reverse reads.
+    first.forward <- strand(first.read)=="+"
+    second.forward <- strand(second.read)=="+"
+    forward.read <- c(first.read[first.forward], second.read[second.forward])
+    reverse.read <- c(second.read[first.forward], first.read[second.forward])
+
+    # Insert size from forward start to reverse end.
+    frag.starts <- start(forward.read)
+    frag.sizes <- end(reverse.read) - frag.starts + 1L
+    inward <- frag.sizes > 0L
+
+    keep <- inward & frag.sizes <= param$max.frag 
+    frag.starts <- frag.starts[keep]
+    frag.sizes <- frag.sizes[keep]
+
+    # Discarding *fragments* in blacklist regions.
+    if (any(seqnames(param$discard) == as.character(seqnames(where))) && length(frag.sizes)) {
+        cur.ranges <- GRanges(cur.chr, IRanges(frag.starts, width=frag.sizes))
+        blacklisted <- overlapsAny(cur.ranges, param$discard, type="within")
+        frag.starts <- frag.starts[!blacklisted]
+        frag.sizes <- frag.sizes[!blacklisted]
+        keep[keep] <- !blacklisted
+    } else {
+        blacklisted <- NULL
+    }
+
+    output <- list(pos=frag.starts, size=frag.sizes)
+
     if (with.reads) {
-        output$forward <- list(pos=left.pos[keep], qwidth=left.len[keep])
-        output$reverse <- list(pos=right.pos[keep], qwidth=right.len[keep])
+        forward.read <- forward.read[keep]
+        reverse.read <- reverse.read[keep]
+        output$forward <- list(pos=start(forward.read), qwidth=width(forward.read))
+        output$reverse <- list(pos=start(reverse.read), qwidth=width(reverse.read))
     }
-    return(output)
+
+    if (diagnostics) {
+        output$diagnostics <- list(
+            inter.chr=inter.set,
+            unoriented=sum(same.chr & !oriented) + sum(!inward), 
+            discarded=sum(blacklisted)
+        )
+    }
+
+    output
 }

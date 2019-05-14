@@ -3,14 +3,11 @@
 # there are continuous validity checks on the list values.
 
 #' @export
-#' @importClassesFrom BiocParallel BiocParallelParam
 #' @importClassesFrom GenomicRanges GRanges
 setClass("readParam", representation(
-    pe="character", max.frag="integer",
+    pe="character", max.frag="numeric",
     dedup="logical", minq="integer", forward="logical", 
-	restrict="character", 
-    discard="GRanges", 
-    processed.discard="list"))
+	restrict="character", discard="GRanges"))
 
 setValidity("readParam", function(object) {
     msg <- NULL
@@ -18,7 +15,7 @@ setValidity("readParam", function(object) {
     if (length(object@pe)!=1L || ! object@pe %in%c("none", "both", "first", "second")) { 
 		msg <- c(msg, "PE specification must be a character scalar of 'none', 'both', 'first' or 'second'") 
 	}
-   	if (length(object@max.frag)!=1L || object@max.frag <= 0L) {
+    if (length(object@max.frag)!=1L || object@max.frag <= 0) {
 		msg <- c(msg, "maximum fragment specifier must be a positive integer")
 	} 
 
@@ -35,10 +32,6 @@ setValidity("readParam", function(object) {
 		msg <- c(msg, "strand-specific extraction is not supported for paired-end data")
 	}
 
-    if (length(object@processed.discard)==0L && length(object@discard)!=0) {
-        msg <- c(msg, "discard ranges has not been properly processed")
-    }
-
     if (length(msg)) {
         return(msg)
     }
@@ -51,7 +44,6 @@ setMethod("$", signature("readParam"), function(x, name) {
 })
 
 #' @export
-#' @importFrom BiocParallel bpnworkers
 setMethod("show", signature("readParam"), function(object) {
 	cat("    ", switch(object@pe,
  	   none="Extracting reads in single-end mode",
@@ -94,7 +86,6 @@ setMethod("show", signature("readParam"), function(object) {
 })
 
 #' @export
-#' @importFrom BiocParallel SerialParam
 readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=NULL)
 # This creates a list of parameters, formally represented as a readParam
 # object, specifying how reads should be extracted from the BAM files. The
@@ -108,16 +99,14 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
         .Deprecated(msg="Setting BPPARAM= in readParam() is deprecated.\nPlease set it in individual functions instead.")
     }
 
-	max.frag <- as.integer(max.frag)
+	max.frag <- as.double(max.frag)
 	dedup <- as.logical(dedup)
 	forward <- as.logical(forward)
 	minq <- as.integer(minq)
 	restrict <- as.character(restrict) 
 	new("readParam", pe=pe, max.frag=max.frag, 
 		dedup=dedup, forward=forward, minq=minq, 
-		restrict=restrict, 
-        discard=discard, 
-        processed.discard=.setupDiscard(discard))
+		restrict=restrict, discard=discard)
 }
 
 #' @importFrom GenomeInfoDb seqnames
@@ -149,7 +138,7 @@ setMethod("reform", signature("readParam"), function(x, ...) {
 		val <- incoming[[sx]]
 		sx <- match.arg(sx, sn)
 		incoming[[sx]] <- switch(sx, 
-			max.frag=as.integer(val),
+			max.frag=as.double(val),
 			dedup=as.logical(val),
 			forward=as.logical(val),
 			minq=as.integer(val),
@@ -157,12 +146,5 @@ setMethod("reform", signature("readParam"), function(x, ...) {
 			val)
 	}
 
-    # Strictly internal.
-    incoming$processed.discard <- NULL
-    if (!is.null(incoming$discard)) {
-        incoming$processed.discard <- .setupDiscard(incoming$discard)
-    }
-
 	do.call(initialize, c(x, incoming))
 })
-
