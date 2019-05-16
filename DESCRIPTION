@@ -1,24 +1,55 @@
 Package: csaw
-Version: 1.19.0
-Date: 2019-04-25
+Version: 1.19.1
+Date: 2019-05-15
 Title: ChIP-Seq Analysis with Windows
-Authors@R: c(person("Aaron", "Lun", role=c("aut", "cre"), email =
-        "infinite.monkeys.with.keyboards@gmail.com"),
-        person("Gordon", "Smyth", role="aut"))
-Depends: GenomicRanges, SummarizedExperiment
-Imports: Rcpp, BiocGenerics, Rsamtools, edgeR, limma, GenomicFeatures, 
-        AnnotationDbi, methods, S4Vectors, IRanges, GenomeInfoDb, stats,
-        BiocParallel, utils
-Suggests: org.Mm.eg.db, TxDb.Mmusculus.UCSC.mm10.knownGene, testthat,
-        GenomicAlignments, knitr, BiocStyle, rmarkdown, BiocManager
-biocViews: MultipleComparison, ChIPSeq, Normalization, Sequencing,
-        Coverage, Genetics, Annotation, DifferentialPeakCalling
-Description: Detection of differentially bound regions in ChIP-seq data
-        with sliding windows, with methods for normalization and proper
-        FDR control.
+Authors@R:
+    c(person("Aaron", "Lun", role=c("aut", "cre"), email = "infinite.monkeys.with.keyboards@gmail.com"),
+    person("Gordon", "Smyth", role="aut"))
+Depends:
+    GenomicRanges,
+    SummarizedExperiment
+Imports:
+    Rcpp,
+    BiocGenerics,
+    Rsamtools,
+    edgeR,
+    limma,
+    GenomicFeatures,
+    AnnotationDbi,
+    methods,
+    S4Vectors,
+    IRanges,
+    GenomeInfoDb,
+    stats,
+    BiocParallel,
+    utils
+Suggests:
+    org.Mm.eg.db,
+    TxDb.Mmusculus.UCSC.mm10.knownGene,
+    testthat,
+    GenomicAlignments,
+    knitr,
+    BiocStyle,
+    rmarkdown,
+    BiocManager
+LinkingTo:
+    Rhtslib,
+    zlibbioc,
+    Rcpp
+biocViews:
+    MultipleComparison,
+    ChIPSeq,
+    Normalization,
+    Sequencing,
+    Coverage,
+    Genetics,
+    Annotation,
+    DifferentialPeakCalling
+Description:
+    Detection of differentially bound regions in ChIP-seq data with sliding windows,
+    with methods for normalization and proper FDR control.
 License: GPL-3
 NeedsCompilation: yes
-LinkingTo: Rhtslib, zlibbioc, Rcpp
 SystemRequirements: C++11
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1

@@ -2,6 +2,10 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.20.0}{\itemize{
+\item Removed deprecated functionality in normOffsets(), readParam(), scaledAverage().
+}}
+
 \section{Version 1.18.0}{\itemize{
 \item Deprecated the type= argument in normOffsets().
 
@@ -35,7 +39,7 @@ Deprecated consolidateSizes() itself.
 \section{Version 1.14.0}{\itemize{
 \item Fully removed support for paramList objects. 
 
-\item Removed support for normalize(), modified default option for se.out= in normOffsert().
+\item Removed support for normalize(), modified default option for se.out= in normOffsets().
 }}
 
 \section{Version 1.12.0}{\itemize{
