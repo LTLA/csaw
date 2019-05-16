@@ -9,8 +9,7 @@ scaledAverage(y, scale=1, prior.count=NULL, dispersion=NULL, assay.id="counts")
 }
 
 \arguments{
-\item{y}{A SummarizedExperiment object containing a count matrix.
-Previous versions accepted a \code{DGEList} object, this is now deprecated.}
+\item{y}{A \linkS4class{SummarizedExperiment} object containing a count matrix.}
 \item{scale}{a numeric scalar vector indicating the magnitude with which each abundance is to be downscaled}
 \item{prior.count}{a numeric scalar specifying the prior count to add}
 \item{dispersion}{a numeric scalar or vector specifying the dispersion for GLM fitting.}

@@ -81,10 +81,9 @@ This is often more appropriate, e.g., the 5' end of the alignment represents the
 
 \section{Constructor}{
 \describe{
-	\item{}{\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=NULL)}:
+	\item{}{\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges())}:
 		Creates a readParam object. 
 		Each argument is placed in the corresponding slot, with coercion into the appropriate type.
-        Note that \code{BPPARAM} is deprecated and should not be set.
 	}
 }
 }

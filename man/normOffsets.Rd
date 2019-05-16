@@ -7,7 +7,7 @@
 \description{Calculate normalization factors or offsets using count data from multiple libraries.}
 
 \usage{
-normOffsets(object, type=NULL, ..., assay.id="counts", se.out=TRUE)
+normOffsets(object, ..., assay.id="counts", se.out=TRUE)
 
 normFactors(object, method="TMM", weighted=FALSE, ..., 
     assay.id="counts", se.out=TRUE)
@@ -15,7 +15,6 @@ normFactors(object, method="TMM", weighted=FALSE, ...,
 
 \arguments{
   \item{object}{A SummarizedExperiment object containing a count matrix.}
-  \item{type}{Deprecated; a character string indicating what type of normalization is to be performed.}
   \item{method}{String specifying the type of scaling normalization method to use.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
   \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
@@ -51,7 +50,7 @@ For \code{normFactors}, the normalization factors are always computed from \code
 However, if \code{se.out} is a (different) SummarizedExperiment object, these factors are stored and returned in \code{se.out}.
 This is useful when \code{se.out} contains counts for windows, but the normalization factors are computed using larger bins in \code{object}.
 
-For \code{normOffsets} with \code{type="loess"}, the trend fits are always computed from \code{object}.
+For \code{normOffsets}, the trend fits are always computed from \code{object}.
 However, if \code{se.out} is a (different) SummarizedExperiment object, the trend fits will be used to compute offsets for each entry in \code{se.out} using spline interpolation.
 This is useful when \code{se.out} contains counts for windows in an endogenous genome, but the trend fits are computed using spike-in chromatin regions.
 

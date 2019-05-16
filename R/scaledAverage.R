@@ -12,18 +12,11 @@ scaledAverage <- function(y, scale=1, prior.count=NULL, dispersion=NULL, assay.i
 # written by Aaron Lun
 # created 5 November 2014
 {
-    if (is(y, "DGEList")) {
-        .Deprecated(msg="DGEList inputs to scaledAverage are deprecated.\nUse SummarizedExperiment inputs instead.")
-        counts <- y$counts
-        common.disp <- y$common.dispersion 
-        lib.size <- y$samples$lib.size * y$samples$norm.factors
-    } else if (is(y, "SummarizedExperiment")) {
-        counts <- assay(y, i=assay.id, withDimnames=FALSE)
-        common.disp <- NULL
-        lib.size <- y$totals
-        if (!is.null(y$norm.factors)) {
-            lib.size <- lib.size * y$norm.factors
-        }
+    counts <- assay(y, i=assay.id, withDimnames=FALSE)
+    common.disp <- NULL
+    lib.size <- y$totals
+    if (!is.null(y$norm.factors)) {
+        lib.size <- lib.size * y$norm.factors
     }
 
     # Setting values.

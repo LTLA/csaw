@@ -27,7 +27,7 @@ test_that("testing scaling normalization", {
     expect_error(normFactors(data, se.out=data3), "library sizes")
 
     # Checking other errors.
-    expect_error(normFactors(data, type="loess", se.out=data[,1]), "number of libraries")
+    expect_error(normFactors(data, se.out=data[,1]), "number of libraries")
 
     # Behaves when empty.
     # 1 is correct, as calcNormFactors() just diverts to that.
@@ -73,14 +73,14 @@ test_that("testing what happens with loess normalization", {
     data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=means), ncol=10)))
     data$totals <- rpois(10, lambda=10000)
     
-    offs <- normOffsets(data, type="loess", se.out=FALSE)
-    data <- normOffsets(data, type="loess", se.out=TRUE)
+    offs <- normOffsets(data, se.out=FALSE)
+    data <- normOffsets(data, se.out=TRUE)
     expect_equal(offs, assay(data, "offset", withDimnames=FALSE))
    
     # Checking that overwriting se.out works.
     shuffler <- sample(nrow(data))
     data2 <- data[shuffler,]
-    data2 <- normOffsets(data, type="loess", se.out=data2)
+    data2 <- normOffsets(data, se.out=data2)
     expect_equal(assay(data2, "offset"), assay(data, "offset")[shuffler,])
     
     # Reference calculation, after subtracting the reference 'ab' from the observed values.
@@ -103,9 +103,9 @@ test_that("testing what happens with loess normalization", {
     # Breaks when the library sizes are different.
     data3 <- data
     data3$totals <- rpois(10, lambda=10000)
-    expect_error(normOffsets(data, type="loess", se.out=data3), "library sizes")
-    expect_error(normOffsets(data, type="loess", se.out=data[,1]), "number of libraries")
+    expect_error(normOffsets(data, se.out=data3), "library sizes")
+    expect_error(normOffsets(data, se.out=data[,1]), "number of libraries")
 
     # Behaves when empty.
-    expect_identical(dim(normOffsets(data[0,], type="loess", se.out=FALSE)), c(0L, 10L))
+    expect_identical(dim(normOffsets(data[0,], se.out=FALSE)), c(0L, 10L))
 })

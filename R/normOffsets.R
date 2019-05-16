@@ -4,7 +4,7 @@
 #' @importFrom edgeR aveLogCPM
 #' @importFrom methods is
 #' @importFrom SummarizedExperiment assay assay<-
-normOffsets <- function(object, type=NULL, ..., assay.id="counts", se.out=TRUE) 
+normOffsets <- function(object, ..., assay.id="counts", se.out=TRUE) 
 # Perform a fast loess normalization which uses the average count as the covariate, 
 # rather than the typical A-value-based methods to avoid instability at low abundances.
 #
@@ -18,9 +18,6 @@ normOffsets <- function(object, type=NULL, ..., assay.id="counts", se.out=TRUE)
     lib.sizes <- object$totals
     if (is.null(lib.sizes)) {
         stop("library sizes not present in 'object$totals'")
-    }
-    if (!is.null(type)) {
-        .Deprecated(msg="any non-NULL value for 'type' is deprecated.")
     }
 
     # Scaled corrections squeeze offsets towards relative log-library sizes.

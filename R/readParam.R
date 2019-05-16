@@ -95,7 +95,7 @@ setMethod("show", signature("readParam"), function(object) {
 
 #' @export
 #' @importFrom BiocParallel SerialParam
-readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges(), BPPARAM=NULL)
+readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges())
 # This creates a list of parameters, formally represented as a readParam
 # object, specifying how reads should be extracted from the BAM files. The
 # aim is to synchronize read loading throughout the package, such that
@@ -104,10 +104,6 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
 # written by Aaron Lun
 # created 1 September 2014
 {
-    if (!is.null(BPPARAM)) {
-        .Deprecated(msg="Setting BPPARAM= in readParam() is deprecated.\nPlease set it in individual functions instead.")
-    }
-
 	max.frag <- as.integer(max.frag)
 	dedup <- as.logical(dedup)
 	forward <- as.logical(forward)
