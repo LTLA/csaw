@@ -9,75 +9,32 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
 # written by Aaron Lun
 # created 26 February 2015
 {
-	nset <- length(data.list)
-	for (x in seq_len(nset)) {
-        data.list[[x]] <- .toGRanges(data.list[[x]])
-	}
-    rel.weights <- NULL
-
 	if (is.null(region)) { 
-        # Determining tolerance.
-        merge.call <- do.call(call, c("mergeWindows", merge.args))
-        merge.call <- match.call(mergeWindows, merge.call)
-        merge.args <- as.list(merge.call)[-1]
-        if (is.null(merge.args$tol)) { 
-            merge.args$tol <- 100
-            warning("'tol' for 'mergeWindows' set to a default of 100 bp")
-        }
-
-        # Determining sign.
-        if (!is.null(sign.list)) {
-            slen <- lengths(sign.list)
-            dlen <- lengths(data.list)
-            if (length(slen)!=length(dlen) || any(slen!=dlen)) { 
-                stop("vector lengths of 'sign.list' and 'data.list' are not identical")
-            }
-            merge.args$sign <- unlist(sign.list)
-        }
-
-		all.ranges <- do.call(c, data.list)
-		merged <- do.call(mergeWindows, c(merge.args, regions=all.ranges)) 
-
-		# Formatting for nice output.
-		final.ids <- vector("list", nset)
-		last <- 0L
-		for (x in seq_len(nset)) { 
-            currows <- length(data.list[[x]])
-			final.ids[[x]] <- merged$id[last + seq_len(currows)]
-			last <- last + currows
-		}
-
-        if (equiweight) {
-            # Computing weights inversely proportional to the number of windows of each width in each cluster.
-    		rel.weights <- vector("list", nset)
-            for (x in seq_len(nset)) {
-                curid <- final.ids[[x]]
-                rel.weights[[x]] <- (1/tabulate(curid))[curid]	
-            }
-            names(rel.weights) <- names(data.list)
-		}
-        
-        names(final.ids) <- names(data.list)
-        return(list(id=final.ids, weight=rel.weights, region=merged$region))
+        .Deprecated(new="consolidateByMerge")
+        output <- do.call(consolidateByMerge, c(list(data.list, equiweight=equiweight, sign.list=sign.list), merge.args))
+        list(
+            id=split(output$original$id, output$original$origin), 
+            weight=split(output$original$weight, output$original$origin),
+            region=output$region
+        )
 
 	} else {
-		final.olaps <- vector("list", nset)
-		for (x in seq_len(nset)) {
-			final.olaps[[x]] <- do.call(findOverlaps, c(query=region, subject=data.list[[x]], overlap.args))
-		}
+        .Deprecated(new="consolidateByOverlap")
+        output <- do.call(consolidateByOverlap, c(list(data.list, equiweight=equiweight, region=region), overlap.args))
 
-        if (equiweight) {
-            # Computing weights inversely proportional to the number of windows of each width in each region.
-    		rel.weights <- vector("list", nset)
-            for (x in seq_len(nset)) {
-                curlap <- final.olaps[[x]]
-                curid <- queryHits(curlap)
-                rel.weights[[x]] <- (1/tabulate(curid))[curid]	
-            }
-            names(rel.weights) <- names(data.list)
+        original.index <- unlist(lapply(data.list, seq_along))
+        subject.origin <- output$original$origin[subjectHits(output$olap)]
+
+        by.original <- split(output$olap, subject.origin)
+        for (i in seq_along(by.original)) {
+            current <- by.original[[i]]
+            by.original[[i]] <- Hits(queryHits(current), original.index[subjectHits(current)],
+                nLnode=nLnode(current), nRnode=nRnode(current), sort.by.query=TRUE)
         }
-	
-        names(final.olaps) <- names(data.list)
-        return(list(olap=final.olaps, weight=rel.weights))
+
+        list(
+            olap=by.original,
+            weight=split(output$weight, subject.origin)
+        )
 	}
 }
