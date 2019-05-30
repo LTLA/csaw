@@ -1,11 +1,10 @@
-# This tests the consolidateSizes function. As that function is basically written in fairly easy R, the
-# test function below doesn't really do much except repeat the function itself.
-# library(csaw); library(testthat); source("test-cons.R")
+# This tests the various functions related to consolidation.
+# library(csaw); library(testthat); source("setup.R"); source("test-cons.R")
 
 chromos <- c(chrA=12332, chrB=34892)
 
 set.seed(200000)
-test_that("consolidateWindows works correctly with mergeWindows", {
+test_that("mergeWindowsList works correctly", {
     for (nwin in c(5, 50, 500)) {
         for (sizes in list(c(10, 50), c(50, 50), c(100, 50))) {
 	        data.list <- list()
@@ -15,85 +14,60 @@ test_that("consolidateWindows works correctly with mergeWindows", {
         		data.list[[s]] <- SummarizedExperiment(list(counts=counts), rowRanges=windows)
         	}
 
-        	# Running consolidation and checking the output.
-        	expect_warning(cons <- consolidateWindows(data.list), "default")
             all.win <- lapply(data.list, rowRanges)
-            ref <- mergeWindows(do.call(c, all.win), tol=100)
-            expect_identical(unlist(cons$id), ref$id)
-            expect_identical(cons$region, ref$region)
+            combined.win <- do.call(c, all.win)
+            ref <- mergeWindows(combined.win, tol=100)
 
-            cons2 <- consolidateWindows(data.list, merge.args=list(tol=50))
-            ref2 <- mergeWindows(do.call(c, all.win), tol=50)
-            expect_identical(unlist(cons2$id), ref2$id)
-            expect_identical(cons2$region, ref2$region)
+        	cons <- mergeWindowsList(data.list, tol=100)
+            expect_identical(cons$id, ref$id)
+            expect_identical(cons$merged, ref$region)
+            expect_true(all(combined.win==cons$ranges))
 
-            expect_warning(cons3 <- consolidateWindows(all.win), "default") # Works with GRanges objects.
-            expect_identical(cons, cons3)
-            expect_warning(cons3 <- consolidateWindows(all.win, merge.args=list(tol=100)), NA) # shuts up the warning.
-            expect_identical(cons, cons3)
+            # Works with GRanges objects.
+            cons2 <- mergeWindowsList(all.win, tol=100)
+            expect_identical(cons, cons2)
 
             # Weights are computed correctly.
-            for (i in seq_along(cons$weight)) {
-                curid <- cons$id[[i]]
-                summed <- by(cons$weight[[i]], INDICES=curid, FUN=sum)
-                expect_identical(as.numeric(summed), rep(1, length(unique(curid))))
-            }
-
-            cons4 <- consolidateWindows(all.win, equiweight=FALSE, merge.args=list(tol=100))
-            expect_identical(cons[c("id", "region")], cons4[c("id", "region")])
-            expect_identical(cons4$weight, NULL)
+            origins <- rep(seq_along(all.win), lengths(all.win))
+            f <- paste0(cons$id, ".", origins)
+            summed <- by(cons$weight, INDICES=f, FUN=sum)
+            expect_equal(as.numeric(summed), rep(1, length(unique(f))))
 
             # Responds to the sign.
             sign.list <- list()
             for (s in seq_along(sizes)) {
                 sign.list[[s]] <- rbinom(length(data.list[[s]]), 1, 0.5)==1
             }
-            cons5 <- consolidateWindows(data.list, merge.args=list(tol=100), sign.list=sign.list)
-            ref3 <- mergeWindows(do.call(c, all.win), tol=100, sign=unlist(sign.list))
-            expect_identical(unlist(cons5$id), ref3$id)
-            expect_identical(cons5$region, ref3$region)
+            cons3 <- mergeWindowsList(data.list, tol=100, sign.list=sign.list)
+            ref2 <- mergeWindows(combined.win, tol=100, sign=unlist(sign.list))
+            expect_identical(cons3$id, ref2$id)
+            expect_identical(cons3$merged, ref2$region)
         }
     }
 
      # Responds correctly to empty inputs.
-     cons.E <- consolidateWindows(list(all.win[[1]], all.win[[2]][0]), merge.args=list(tol=100))
+     cons.E <- mergeWindowsList(list(all.win[[1]], all.win[[2]][0]), tol=100)
      ref <- mergeWindows(all.win[[1]], tol=100)
-     expect_identical(cons.E$id[[1]], ref$id)
-     expect_identical(cons.E$id[[2]], integer(0))
-     expect_identical(cons.E$region, ref$region)
+     expect_identical(cons.E$id, ref$id)
+     expect_identical(cons.E$merged, ref$region)
 
-     cons.E <- consolidateWindows(list(all.win[[1]][0], all.win[[2]]), merge.args=list(tol=100))
+     cons.E <- mergeWindowsList(list(all.win[[1]][0], all.win[[2]]), tol=100)
      ref <- mergeWindows(all.win[[2]], tol=100)
-     expect_identical(cons.E$id[[1]], integer(0))
-     expect_identical(cons.E$id[[2]], ref$id)
-     expect_identical(cons.E$region, ref$region)
+     expect_identical(cons.E$id, ref$id)
+     expect_identical(cons.E$merged, ref$region)
 
-     cons.E <- consolidateWindows(list(all.win[[1]][0], all.win[[2]][0]), merge.args=list(tol=100))
-     expect_identical(lengths(cons.E$id), integer(2))
+     cons.E <- mergeWindowsList(list(all.win[[1]][0], all.win[[2]][0]), tol=100)
+     expect_identical(cons.E$id, integer(0))
      expect_identical(length(cons.E$region), 0L)
-     expect_identical(lengths(cons.E$weight), integer(2))
+     expect_identical(cons.E$weight, numeric(0))
 
      # Throws an error when expected.
-     expect_error(consolidateWindows(all.win, merge.args=list(tol=100), sign.list=list()), "are not identical")
-     expect_error(consolidateWindows(all.win, merge.args=list(tol=100), sign.list=vector("list", length(all.win))), "are not identical")
+     expect_error(mergeWindowsList(all.win, tol=100, sign.list=list()), "are not identical")
+     expect_error(mergeWindowsList(all.win, tol=100, sign.list=vector("list", length(all.win))), "are not identical")
 })
 
-# Defining a function that unpacks and sorts the query/subject hits.
-unpack <- function(cons.olap) {
-    comp.Q <- unlist(lapply(cons.olap, queryHits))
-    o <- order(comp.Q)
-    comp.Q <- comp.Q[o]
-
-    comp.S <- lapply(cons.olap, subjectHits)
-    for (x in 2:length(comp.S)) {
-        comp.S[[x]] <- comp.S[[x]] + nRnode(cons.olap[[x-1]])
-    }
-    comp.S <- unlist(comp.S)[o]
-    return(list(Q=comp.Q, S=comp.S))
-}
-
 set.seed(200001)
-test_that("consolidateWindows works correctly with findOverlaps", {
+test_that("findOverlapsList works correctly", {
     for (nwin in c(5, 50, 500)) {
         for (sizes in list(c(10, 50), c(50, 50), c(100, 50))) {
 	    	data.list <- list()
@@ -104,52 +78,42 @@ test_that("consolidateWindows works correctly with findOverlaps", {
 	        	data.list[[s]] <- SummarizedExperiment(list(counts=counts), rowRanges=windows)
 	        }
 
-            # Running consolidation and checking the output.
-	        cons <- consolidateWindows(data.list, region=regions)
-            unpacked <- unpack(cons$olap)
-
             all.win <- lapply(data.list, rowRanges)
-            ref <- findOverlaps(regions, do.call(c, all.win))
-            expect_identical(unpacked$Q, queryHits(ref))
-            expect_identical(unpacked$S, subjectHits(ref))
+            combined.win <- do.call(c, all.win)
+            ref <- findOverlaps(regions, combined.win)
+
+	        cons <- findOverlapsList(data.list, ref=regions)
+            expect_identical(cons$olap, ref)
+            expect_true(all(combined.win==cons$ranges))
+
+            # Works with GRanges objects.
+            cons2 <- findOverlapsList(all.win, ref=regions)
+            expect_identical(cons, cons2)
 
             # Checking that we respond to arguments.
-            cons2 <- consolidateWindows(data.list, region=regions, overlap.args=list(type="within"))
-            unpacked2 <- unpack(cons2$olap)
-
-            ref <- findOverlaps(regions, do.call(c, all.win), type="within")
-            expect_identical(unpacked2$Q, queryHits(ref))
-            expect_identical(unpacked2$S, subjectHits(ref))
-
-            cons3 <- consolidateWindows(all.win, region=regions) # Works with GRanges objects.
-            expect_identical(cons, cons3)
+            ref <- findOverlaps(regions, combined.win, type="within")
+            cons2 <- findOverlapsList(data.list, ref=regions, type="within")
+            expect_identical(cons2$olap, ref)
+            expect_identical(cons$ranges, cons2$ranges)
 
             # Weights are computed correctly.
-            for (i in seq_along(cons$weight)) {
-                curid <- queryHits(cons$olap[[i]])
-                summed <- by(cons$weight[[i]], INDICES=curid, FUN=sum)
-                expect_identical(as.numeric(summed), rep(1, length(unique(curid))))
-            }
-
-            cons4 <- consolidateWindows(all.win, region=regions, equiweight=FALSE)
-            expect_identical(cons[c("olap", "region")], cons4[c("olap", "region")])
-            expect_identical(cons4$weight, NULL)
+            origins <- rep(seq_along(all.win), lengths(all.win))
+            f <- paste0(queryHits(cons$olap), ".", origins[subjectHits(cons$olap)])
+            summed <- by(cons$weight, INDICES=f, FUN=sum)
+            expect_identical(as.numeric(summed), rep(1, length(unique(f))))
         }
     }
 
     # Responds correctly to empty inputs.
-    cons.E <- consolidateWindows(list(all.win[[1]], all.win[[2]][0]), region=regions)
-    expect_identical(cons.E$olap[[1]], findOverlaps(regions, all.win[[1]]))
-    expect_identical(length(cons.E$olap[[2]]), 0L)
+    cons.E <- findOverlapsList(list(all.win[[1]], all.win[[2]][0]), ref=regions)
+    expect_identical(cons.E$olap, findOverlaps(regions, all.win[[1]]))
 
-    cons.E <- consolidateWindows(list(all.win[[1]][0], all.win[[2]]), region=regions)
-    expect_identical(cons.E$olap[[2]], findOverlaps(regions, all.win[[2]]))
-    expect_identical(length(cons.E$olap[[1]]), 0L)
+    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]]), ref=regions)
+    expect_identical(cons.E$olap, findOverlaps(regions, all.win[[2]]))
 
-    cons.E <- consolidateWindows(list(all.win[[1]][0], all.win[[2]][0]), region=regions)
-    expect_identical(lengths(cons.E$olap), integer(2))
-    expect_identical(length(cons.E$region), 0L)
-    expect_identical(lengths(cons.E$weight), integer(2))
+    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]][0]), ref=regions)
+    expect_identical(length(cons.E$olap), 0L)
+    expect_identical(cons.E$weight, numeric(0))
 })
 
 set.seed(200002)
