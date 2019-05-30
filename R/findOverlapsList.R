@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits subjectHits
-consolidateByOverlap <- function(x, ref, ...) {
+findOverlapsList <- function(x, ref, ...) {
 	all.ranges <- do.call(c, lapply(x, .toGRanges))
     mcols(all.ranges) <- NULL
     all.ranges$origin <- rep(seq_along(x), lengths(x))
@@ -16,7 +16,6 @@ consolidateByOverlap <- function(x, ref, ...) {
         rel.weights[indices] <- (1/tabulate(curid))[curid]	
     }
 
-    mcols(olaps)$weight <- rel.weights
-    list(ranges=all.ranges, olap=olaps)
+    list(ranges=all.ranges, olap=olaps, weight=rel.weights)
 }
 
