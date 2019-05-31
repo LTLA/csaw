@@ -1,6 +1,5 @@
 #' @importFrom S4Vectors queryLength queryHits subjectHits
-.overlapStats <- function(olap, tab, o.weight=NULL, i.weight=NULL, 
-                          type=c("combine", "best", "empirical", "mixed"), ...) {
+.overlapStats <- function(olap, tab, o.weight=NULL, i.weight=NULL, FUN, ...) { 
 	region.dex <- queryHits(olap)
 	win.dex <- subjectHits(olap)
 
@@ -11,37 +10,19 @@
 		}
 	}
 
-	type <- match.arg(type)
-	if (type=="combine") { 
-		output <- combineTests(region.dex, tab[win.dex,], weight=o.weight, ...)
-	} else if (type=="best") { 
-		output <- getBestTest(region.dex, tab[win.dex,], weight=o.weight, ...)
-		output$best <- win.dex[output$best]
-	} else if (type=="empirical") {
-        output <- empiricalFDR(region.dex, tab[win.dex,], weight=o.weight, ...)
-   	} else if (type=="mixed") {
-        output <- mixedClusters(region.dex, tab[win.dex,], weight=o.weight, ...)
-    } else {
-        stop("invalid type")
-    }
+    output <- FUN(region.dex, tab[win.dex,], weight=o.weight, ...)
 
-	# Filling in empties with NA's.
-	nregions <- queryLength(olap)
-	output <- .expandNA(output, nregions)
-
-	return(output)
-}
-
-.expandNA <- function(tab, N) {
+	N <- queryLength(olap)
     expand.vec <- rep(NA_integer_, N)
-    row.dex <- as.integer(rownames(tab))
+    row.dex <- as.integer(rownames(output))
     if (any(N <= 0L | row.dex > N)) { 
-        stop("cluster IDs are not within [1, nregions]") 
+        stop("IDs are not within [1, nregions]") 
     }
+
     expand.vec[row.dex] <- seq_along(row.dex)
-    tab <- tab[expand.vec,,drop=FALSE]
-    rownames(tab) <- as.character(seq_len(N))
-    return(tab)
+    output <- output[expand.vec,,drop=FALSE]
+    rownames(output) <- as.character(seq_len(N))
+    output
 }
 
 #' @export
@@ -53,7 +34,7 @@ combineOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="combine", ...)
+	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=combineTests, ...)
 }
 
 #' @export
@@ -65,7 +46,7 @@ getBestOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="best", ...)
+	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=getBestTest, ...)
 }
 
 #' @export
@@ -76,7 +57,7 @@ empiricalOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # written by Aaron Lun
 # created 7 January 2017
 {
-    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="empirical", ...)
+    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=empiricalFDR, ...)
 }
 
 #' @export
@@ -87,7 +68,7 @@ mixedOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # written by Aaron Lun
 # created 7 January 2017
 {
-    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, type="mixed", ...)
+    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=mixedClusters, ...)
 }
 
 #' @export
