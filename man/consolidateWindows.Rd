@@ -34,7 +34,7 @@ For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverla
 \code{mergeWindowsList} returns a named list containing:
 \describe{
 \item{\code{ranges}:}{A \linkS4class{GRanges} object containing the concatenated intervals from all elements of \code{x}.
-The element-wise metadata of this GRanges contains \item \code{origin}, 
+The element-wise metadata of this GRanges contains \code{origin}, 
 an integer field specifying the index of \code{x} from which each interval was obtained.}
 \item{\code{id}:}{An integer vector of length equal to \code{ranges}. 
 This specifies the cluster (i.e., entry of \code{merged}) to which each interval in \code{ranges} was assigned.}
