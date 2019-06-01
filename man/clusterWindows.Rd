@@ -6,13 +6,13 @@
 \description{Clusters significant windows into clusters while controlling the cluster-level FDR.}
 
 \usage{
-clusterWindows(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
+clusterWindows(ranges, tab, target, pval.col=NULL, fc.col=NA, tol, 
     ..., weights=NULL, grid.length=21, iterations=4)
 }
 
 \arguments{
-	\item{regions}{A GRanges or RangedSummarizedExperiment object containing window coordinates.}
-    \item{tab}{A dataframe of results with a \code{PValue} field for each window.}
+    \item{ranges}{A \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} object containing window coordinates.}
+    \item{tab}{A data.frame of results with a \code{PValue} field for each window.}
     \item{target}{A numeric scalar indicating the desired cluster-level FDR.}
     \item{pval.col}{A string or integer scalar specifying the column of \code{tab} with the p-values.}
     \item{fc.col}{A string or integer scalar specifying the column of \code{tab} with the log-fold changes.}
@@ -21,8 +21,9 @@ clusterWindows(regions, tab, target, pval.col=NULL, fc.col=NA, tol,
 }
 
 \value{
-A named list similar to that reported by \code{\link{mergeWindows}} with an ID vector in \code{id} and region coordinates of each cluster in \code{region}.
-Non-significant windows are marked with \code{NA} values in \code{ids}.
+A named list similar to that reported by \code{\link{mergeWindows}},
+with an integer vector of cluster IDs in \code{ids} and region coordinates of each cluster in \code{regions}.
+Non-significant windows that were not used to construct \code{regions} are marked with \code{NA} values in \code{ids}.
 An additional element \code{FDR} is also included, representing the estimate of the cluster-level FDR for the returned regions.
 }
 
