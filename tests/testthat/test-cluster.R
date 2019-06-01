@@ -164,7 +164,7 @@ test_that("clusterWindows works as expected", {
     expect_identical(out$region, windows[0])
     expect_identical(out$FDR, 0)
 
-    expect_error(clusterWindows(windows[0], data.frame(PValue=test.p), target=target, tol=0), "number of regions")
+    expect_error(clusterWindows(windows[0], data.frame(PValue=test.p), target=target, tol=0), "number of ranges")
     expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), target=target), "'tol'")
     expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), tol=100), "set to 0.05")
 })
@@ -172,14 +172,14 @@ test_that("clusterWindows works as expected", {
 ##################################################
 
 checkResults <- function(data.list, result.list, target, pval.col="PValue", ..., true.pos) {
-    out <- consolidateClusters(data.list, result.list, pval.col=pval.col, target=target, ...)
+    out <- clusterWindowsList(data.list, result.list, pval.col=pval.col, target=target, ...)
     expect_true(out$FDR <= target)
 
     # Checking that the clustering is fine.
-    all.ids <- unlist(out$id)
+    all.ids <- out$ids
     ref <- splitAsList(do.call(c, data.list), all.ids)
     names(ref) <- NULL
-    expect_identical(unlist(range(ref)), out$region)
+    expect_identical(unlist(range(ref)), out$regions)
 
     # Checking that the right windows were chosen.
     all.ps <- unlist(lapply(result.list, FUN=function(x) { x[,pval.col] }))
@@ -196,30 +196,39 @@ checkResults <- function(data.list, result.list, target, pval.col="PValue", ...,
 }
 
 set.seed(104)
-test_that("consolidateClusters works as expected", {
+test_that("clusterWindowsList works as expected", {
     windows <- GRanges("chrA", IRanges(1:2000, 1:2000))
     test.p <- runif(2000)
     test.p[rep(1:2, 50) + rep(0:49, each=2) * 40] <- 0  
     
     true.pos <- windows[test.p==0]
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=0, target=0.05, true.pos=true.pos) 
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), equiweight=FALSE, tol=0, target=0.05, true.pos=true.pos)
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=5, target=0.05, true.pos=true.pos)
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), tol=0, target=0.1, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), 
+        tol=0, target=0.05, true.pos=true.pos) 
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), 
+        equiweight=FALSE, tol=0, target=0.05, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), 
+        tol=5, target=0.05, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p[1:10])), 
+        tol=0, target=0.1, true.pos=true.pos)
  
     # Adding sign information.
     signs <- ifelse(rbinom(1000, 1, 0.5)!=0L, 1, -1)
-    checkResults(list(windows, windows[1:10]), list(data.frame(PValue=test.p, logFC=signs), data.frame(PValue=test.p[1:10], logFC=signs[1:10])), 
-                 tol=0, fc.col="logFC", target=0.05, true.pos=true.pos)
+    checkResults(list(windows, windows[1:10]), 
+        list(data.frame(PValue=test.p, logFC=signs), data.frame(PValue=test.p[1:10], logFC=signs[1:10])), 
+        tol=0, fc.col="logFC", target=0.05, true.pos=true.pos)
     
     # Checking behaviour when empty.
-    out <- consolidateClusters(list(windows[0]), list(data.frame(PValue=numeric(0))), tol=0, target=0.05)
-    expect_identical(out$id, list())
+    out <- clusterWindowsList(list(windows[0]), list(data.frame(PValue=numeric(0))), tol=0, target=0.05)
+    expect_identical(out$ids, integer(0))
     expect_identical(out$FDR, 0)
     expect_s4_class(out$region, "GRanges")
     expect_identical(length(out$region), 0L)
 
-    expect_error(consolidateClusters(list(windows, windows[1:10]), list(data.frame(PValue=test.p)), tol=0, target=0.1), "must have same length")
-    expect_error(consolidateClusters(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p)), tol=0, target=0.1), "number of entries")
+    expect_error(
+        clusterWindowsList(list(windows, windows[1:10]), list(data.frame(PValue=test.p)), tol=0, target=0.1), 
+        "should have equal length")
+    expect_error(
+        clusterWindowsList(list(windows, windows[1:10]), list(data.frame(PValue=test.p), data.frame(PValue=test.p))),  
+        "elements of .* should have equal length")
 })
 
