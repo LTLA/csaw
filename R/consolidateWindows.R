@@ -9,7 +9,7 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
 # written by Aaron Lun
 # created 26 February 2015
 {
-	if (is.null(region)) { 
+	if (is.null(regions)) { 
         .Deprecated(new="mergeWindowsList")
         output <- do.call(mergeWindowsList, c(list(data.list, signs=unlist(sign.list)), merge.args))
 
@@ -27,7 +27,7 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
 
 	} else {
         .Deprecated(new="findOverlapsList")
-        output <- do.call(findOverlapsList, c(list(data.list, regions=region), overlap.args))
+        output <- do.call(findOverlapsList, c(list(data.list, regions=regions), overlap.args))
 
         ranges.index <- unlist(lapply(data.list, seq_along))
         subject.origin <- output$ranges$origin[subjectHits(output$overlaps)]
