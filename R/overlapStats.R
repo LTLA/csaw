@@ -1,18 +1,18 @@
 #' @importFrom S4Vectors queryLength queryHits subjectHits
-.overlapStats <- function(olap, tab, o.weight=NULL, i.weight=NULL, FUN, ...) { 
-	region.dex <- queryHits(olap)
-	win.dex <- subjectHits(olap)
+.overlapStats <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, FUN, ...) { 
+	region.dex <- queryHits(overlaps)
+	win.dex <- subjectHits(overlaps)
 
 	# Setting up weights.
-	if (is.null(o.weight)) { 
-		if (!is.null(i.weight)) {
-			o.weight <- i.weight[win.dex]
+	if (is.null(o.weights)) { 
+		if (!is.null(i.weights)) {
+			o.weights <- i.weights[win.dex]
 		}
 	}
 
-    output <- FUN(region.dex, tab[win.dex,], weight=o.weight, ...)
+    output <- FUN(region.dex, tab[win.dex,], weight=o.weights, ...)
 
-	N <- queryLength(olap)
+	N <- queryLength(overlaps)
     expand.vec <- rep(NA_integer_, N)
     row.dex <- as.integer(rownames(output))
     if (any(N <= 0L | row.dex > N)) { 
@@ -26,7 +26,7 @@
 }
 
 #' @export
-combineOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
+combineOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...) 
 # Wrapper around combineTests for Hits from findOverlaps,
 # when windows are overlapped with regions.
 #
@@ -34,11 +34,11 @@ combineOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=combineTests, ...)
+	.overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=combineTests, ...)
 }
 
 #' @export
-getBestOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
+getBestOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...) 
 # Wrapper around getBestTest for Hits from findOverlaps,
 # when windows are overlapped with regions.
 #
@@ -46,42 +46,42 @@ getBestOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	.overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=getBestTest, ...)
+	.overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=getBestTest, ...)
 }
 
 #' @export
-empiricalOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
+empiricalOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...) 
 # Wrapper around empiricalFDR for Hits from findOverlaps,
 # when windows are overlapped with regions
 #
 # written by Aaron Lun
 # created 7 January 2017
 {
-    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=empiricalFDR, ...)
+    .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=empiricalFDR, ...)
 }
 
 #' @export
-mixedOverlaps <- function(olap, tab, o.weight=NULL, i.weight=NULL, ...) 
+mixedOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...) 
 # Wrapper around mixedClusters for Hits from findOverlaps,
 # when windows are overlapped with regions
 #
 # written by Aaron Lun
 # created 7 January 2017
 {
-    .overlapStats(olap, tab, o.weight=o.weight, i.weight=i.weight, FUN=mixedClusters, ...)
+    .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=mixedClusters, ...)
 }
 
 #' @export
 #' @importFrom S4Vectors queryHits subjectHits 
-summitOverlaps <- function(olap, region.best, o.summit=NULL, i.summit=NULL)
+summitOverlaps <- function(overlaps, region.best, o.summit=NULL, i.summit=NULL)
 # Wrapper around upweightSummits for Hits from findOverlaps.
 #
 # written by Aaron Lun
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	region.dex <- queryHits(olap)
-	win.dex <- subjectHits(olap)
+	region.dex <- queryHits(overlaps)
+	win.dex <- subjectHits(overlaps)
 
 	if (!missing(region.best)) { 
 		summit.dex <- region.best[region.dex]
@@ -89,11 +89,11 @@ summitOverlaps <- function(olap, region.best, o.summit=NULL, i.summit=NULL)
 
 	} else if (!is.null(o.summit)) {
 		if (is.integer(o.summit)) { 
-			out <- logical(length(olap))
+			out <- logical(length(overlaps))
 			out[o.summit] <- TRUE
 			o.summit <- out
 		} else {
-			stopifnot(length(o.summit)==length(olap))
+			stopifnot(length(o.summit)==length(overlaps))
 		}	
 		summits <- o.summit
 

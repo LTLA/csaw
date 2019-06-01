@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom S4Vectors DataFrame
 #' @importFrom stats p.adjust
-getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.col=NULL)
+getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, cpm.col=NULL)
 # This uses Holms' method to provide strong control of the FWER within each
 # cluster. The idea is that it returns the test with the lowest p-value in the
 # cluster. You can then use one test as the representative of the entire cluster,
@@ -12,16 +12,16 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.
 # created 17 April 2014
 # last modified 8 January 2017
 {
-    input <- .check_test_inputs(ids, tab, weight)
+    input <- .check_test_inputs(ids, tab, weights)
     ids <- input$ids
     tab <- input$tab
     groups <- input$groups
-    weight <- input$weight
+    weights <- input$weight
 
     pval.col <- .getPValCol(pval.col, tab)
 	if (by.pval) { 
 		# Identifying the minimum P-value, and Bonferroni-correcting it.
-		out <- .Call(cxx_best_in_cluster, tab[,pval.col], ids, weight)
+		out <- .Call(cxx_best_in_cluster, tab[,pval.col], ids, weights)
 		pval <- out[[1]]
 		best <- out[[2]]
 
