@@ -38,6 +38,7 @@ combineOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...)
 }
 
 #' @export
+#' @importFrom S4Vectors subjectHits
 getBestOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...) 
 # Wrapper around getBestTest for Hits from findOverlaps,
 # when windows are overlapped with regions.
@@ -46,7 +47,9 @@ getBestOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	.overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=getBestTest, ...)
+	output <- .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=getBestTest, ...)
+    output$best <- subjectHits(overlaps)[output$best]
+    output
 }
 
 #' @export
