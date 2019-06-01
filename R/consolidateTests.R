@@ -5,6 +5,7 @@ consolidateTests <- function(id.list, result.list, weight.list, FUN=combineTests
 # written by Aaron Lun
 # created 19 May 2018
 {
+    .Deprecated("mergeResultsList")
     if (length(id.list)!=length(result.list)) {
         stop("lengths of 'id.list' and 'result.list' should be the same")
     }
@@ -56,6 +57,7 @@ consolidateOverlaps <- function(olap.list, result.list, weight.list=NULL, FUN=co
 # written by Aaron Lun
 # created 19 May 2018
 {
+    .Deprecated("overlapResultsList")
     if (length(olap.list)!=length(result.list)) {
         stop("lengths of 'olap.list' and 'result.list' should be the same")
     }
