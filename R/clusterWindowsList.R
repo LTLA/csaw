@@ -6,16 +6,8 @@ clusterWindowsList <- function(ranges.list, tab.list, equiweight=TRUE, ...)
 # written by Aaron Lun
 # created 8 January 2016
 {
-    nset <- length(ranges.list)
-    set.it.vec <- seq_len(nset)
-    if (nset!=length(tab.list)) { stop("ranges.list must have same length as tab.list") }
-    
-    for (x in set.it.vec) {
-        ranges.list[[x]] <- .toGRanges(ranges.list[[x]])
-        currows <- length(ranges.list[[x]])
-        ntab <- nrow(tab.list[[x]])
-        if (currows!=ntab) { stop("corresponding entries of data and tab.lists must have same number of entries") }
-    }
+    .verify_ranges_tabs(ranges.list, tab.list)
+    ranges.list <- lapply(ranges.list, .toGRanges)
     
     # Merging everyone together.
     all.data <- do.call(c, ranges.list)

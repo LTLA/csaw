@@ -3,6 +3,7 @@
 mergeResultsList <- function(ranges.list, tab.list, tol, equiweight=TRUE, get.best=TRUE, 
     merge.args=list(), combine.args=list(), best.args=list()) 
 {
+    .verify_ranges_tabs(ranges.list, tab.list)
     m.out <- do.call(mergeWindowsList, c(list(ranges.list, tol=tol), merge.args))
     tab <- do.call(rbind, tab.list)
 
@@ -23,3 +24,13 @@ mergeResultsList <- function(ranges.list, tab.list, tol, equiweight=TRUE, get.be
     output
 }
 
+.verify_ranges_tabs <- function(ranges.list, tab.list) {
+    all.len <- vapply(ranges.list, length, FUN.VALUE=0L)
+    all.nrow <- vapply(tab.list, nrow, FUN.VALUE=0L)
+    if (!identical(length(all.len), length(all.nrow))) {
+        stop("'ranges.list' and 'tab.list' should have equal length")
+    }
+    if (!identical(all.len, all.nrow)) {
+        stop("elements of 'ranges.list' and 'tab.list' should have equal length")
+    }
+}

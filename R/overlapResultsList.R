@@ -4,6 +4,7 @@
 overlapResultsList <- function(ranges.list, tab.list, regions, equiweight=TRUE, get.best=TRUE, 
     overlap.args=list(), combine.args=list(), best.args=list()) 
 {
+    .verify_ranges_tabs(ranges.list, tab.list)
     olap.out <- do.call(findOverlapsList, c(list(ranges.list, regions), overlap.args))
     tab <- do.call(rbind, tab.list)
 
