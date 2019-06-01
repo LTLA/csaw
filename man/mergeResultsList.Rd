@@ -20,7 +20,7 @@ overlapResultsList(ranges.list, tab.list, regions, equiweight=TRUE,
 \arguments{
 \item{ranges.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} containing genomic intervals, 
 usually containing windows of varying sizes from separate calls to \code{\link{windowCounts}}.}
-\item{tab}{A list of data.frames of differential binding results, usually from separate analyses at differing window sizes.
+\item{tab.list}{A list of data.frames of differential binding results, usually from separate analyses at differing window sizes.
 Each should contain one row per interval for the corresponding entry of \code{ranges.list}.}
 \item{tol}{A numeric scalar to be passed to \code{\link{mergeWindows}}.}
 \item{equiweight}{A logical scalar indicating whether windows should be weighted
