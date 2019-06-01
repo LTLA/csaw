@@ -30,7 +30,7 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
     }
 
     # Controlling the cluster-level FDR
-    FUN <- function(sig) { mergeWindows(regions[sig], tol=tol, sign=sign[sig], ...) }
+    FUN <- function(sig) { mergeWindows(regions[sig], tol=tol, signs=sign[sig], ...) }
     out <- controlClusterFDR(target=target, adjp=adjp, FUN=function(sig) { FUN(sig)$id }, 
                              weights=weights, grid.length=grid.length, iterations=iterations)
     sig <- adjp <= out$threshold

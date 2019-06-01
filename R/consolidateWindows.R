@@ -10,29 +10,29 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
 # created 26 February 2015
 {
 	if (is.null(region)) { 
-        .Deprecated(new="consolidateByMerge")
-        output <- do.call(consolidateByMerge, c(list(data.list, sign.list=sign.list), merge.args))
+        .Deprecated(new="mergeWindowsList")
+        output <- do.call(mergeWindowsList, c(list(data.list, signs=unlist(sign.list)), merge.args))
 
         weight <- if (equiweight) {
-            split(output$ranges$weight, output$ranges$origin)
+            split(output$weights, output$ranges$origin)
         } else {
             NULL
         }
 
         list(
-            id=split(output$ranges$id, output$ranges$origin), 
+            id=split(output$ids, output$ranges$origin), 
             weight=weight, 
-            region=output$merged
+            region=output$regions
         )
 
 	} else {
-        .Deprecated(new="consolidateByOverlap")
-        output <- do.call(consolidateByOverlap, c(list(data.list, equiweight=equiweight, region=region), overlap.args))
+        .Deprecated(new="findOverlapsList")
+        output <- do.call(findOverlapsList, c(list(data.list, regions=region), overlap.args))
 
         ranges.index <- unlist(lapply(data.list, seq_along))
-        subject.origin <- output$ranges$origin[subjectHits(output$olap)]
+        subject.origin <- output$ranges$origin[subjectHits(output$overlaps)]
 
-        by.ranges <- split(output$olap, subject.origin)
+        by.ranges <- split(output$overlaps, subject.origin)
         for (i in seq_along(by.ranges)) {
             current <- by.ranges[[i]]
             by.ranges[[i]] <- Hits(queryHits(current), ranges.index[subjectHits(current)],
@@ -40,7 +40,7 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
         }
 
         weight <- if (equiweight) {
-            split(output$olap$weight, subject.origin)
+            split(output$olap$weights, subject.origin)
         } else {
             NULL
         }
