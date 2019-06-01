@@ -1,11 +1,11 @@
 #' @export
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits subjectHits
-findOverlapsList <- function(x, ref, ...) {
-	all.ranges <- do.call(c, lapply(x, .toGRanges))
+findOverlapsList <- function(ranges.list, regions, ...) {
+	all.ranges <- do.call(c, lapply(ranges.list, .toGRanges))
     mcols(all.ranges) <- NULL
-    all.ranges$origin <- rep(seq_along(x), lengths(x))
-    olaps <- findOverlaps(query=ref, subject=all.ranges, ...)
+    all.ranges$origin <- rep(seq_along(ranges.list), lengths(ranges.list))
+    olaps <- findOverlaps(query=regions, subject=all.ranges, ...)
 
     # Computing weights inversely proportional to the number of windows of each width in each region.
     by.origin <- split(seq_along(olaps), all.ranges$origin[subjectHits(olaps)])
@@ -16,6 +16,6 @@ findOverlapsList <- function(x, ref, ...) {
         rel.weights[indices] <- (1/tabulate(curid))[curid]	
     }
 
-    list(ranges=all.ranges, olap=olaps, weight=rel.weights)
+    list(ranges=all.ranges, overlaps=olaps, weights=rel.weights)
 }
 
