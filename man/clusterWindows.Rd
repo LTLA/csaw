@@ -7,7 +7,7 @@
 
 \usage{
 clusterWindows(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
-    ..., weight=NULL, grid.length=21, iterations=4)
+    ..., weights=NULL, grid.length=21, iterations=4)
 }
 
 \arguments{
@@ -17,7 +17,7 @@ clusterWindows(regions, tab, target, pval.col=NULL, fc.col=NA, tol,
     \item{pval.col}{A string or integer scalar specifying the column of \code{tab} with the p-values.}
     \item{fc.col}{A string or integer scalar specifying the column of \code{tab} with the log-fold changes.}
 	\item{tol, ...}{Arguments to be passed to \code{\link{mergeWindows}}.}
-    \item{weight, grid.length, iterations}{Arguments to be passed to \code{\link{controlClusterFDR}}.}
+    \item{weights, grid.length, iterations}{Arguments to be passed to \code{\link{controlClusterFDR}}.}
 }
 
 \value{

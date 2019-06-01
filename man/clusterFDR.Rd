@@ -6,9 +6,9 @@
 \description{Compute the FDR across clusters based on the test-level FDR threshold}
 
 \usage{
-clusterFDR(ids, threshold, weight=NULL)
+clusterFDR(ids, threshold, weights=NULL)
 
-controlClusterFDR(target, adjp, FUN, ..., weight=NULL, 
+controlClusterFDR(target, adjp, FUN, ..., weights=NULL, 
     grid.length=21, iterations=4)
 }
 
@@ -19,7 +19,7 @@ controlClusterFDR(target, adjp, FUN, ..., weight=NULL,
 \item{adjp}{A numeric vector of window-level adjusted p-values.}
 \item{FUN}{A clustering function that takes a logical vector indicating which windows are significant, and returns an integer vector of cluster IDs (see below).}
 \item{...}{Additional arguments to be passed to \code{FUN}.}
-\item{weight}{A numeric vector of frequency weights, for internal use.}
+\item{weights}{A numeric vector of frequency weights, for internal use.}
 \item{grid.length}{Integer scalar specifying the number of points to use in the grid search.}
 \item{iterations}{Integer scalar specifying the number of iterations of the grid search.}
 } 
@@ -64,7 +64,7 @@ This protects against scenarios where very large thresholds yield low cluster-le
 }
 
 \section{Note about weights}{ 
-In both functions, the \code{weight} argument is assumed to contain frequency weights of significant tests/windows.
+In both functions, the \code{weights} argument is assumed to contain frequency weights of significant tests/windows.
 For example, a weight of 2 for a test would be equivalent to repeating that test (i.e., repeating the same window so it shows up twice in your analysis).
 These weights should be the same as those used during weighted FDR control to compute adjusted p-values.
 In general, you should not set this argument unless you know what you're doing.

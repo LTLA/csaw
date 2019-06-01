@@ -6,19 +6,19 @@
 \description{Intersects two one-sided tests to determine if a cluster contains DB events in both directions.}
 
 \usage{
-mixedClusters(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL) 
+mixedClusters(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL) 
 }
 
 \arguments{
-\item{ids}{an integer vector or factor containing the cluster ID for each test}
-\item{tab}{a dataframe of results with \code{PValue} and at least one \code{logFC} field for each test}
-\item{weight}{a numeric vector of weights for each window, defaults to 1 for each test}
-\item{pval.col}{an integer scalar or string specifying the column of \code{tab} containing the p-values}
-\item{fc.col}{an integer scalar or string specifying the columns of \code{tab} containing the log-fold changes}
+\item{ids}{An integer vector or factor containing the cluster ID for each test.}
+\item{tab}{A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.}
+\item{weights}{A numeric vector of weights for each window, defaults to 1 for each test.}
+\item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.}
+\item{fc.col}{An integer scalar or string specifying the columns of \code{tab} containing the log-fold changes.}
 }
 
 \value{
-A DataFrame containing one row per cluster, with various fields:
+A \linkS4class{DataFrame} containing one row per cluster, with various fields:
 \itemize{
 \item A numeric field containing the IUT p-value for each cluster.
 This field is named \code{PValue} if \code{pval.col=NULL}, otherwise its name is set to \code{colnames(tab[,pval.col]}.

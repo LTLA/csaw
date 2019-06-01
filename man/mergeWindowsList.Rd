@@ -7,9 +7,9 @@
 \description{Consolidate windows of different sizes into a common set of regions.}
 
 \usage{
-mergeWindowsList(ranges.list, tol, equiweight=TRUE, ...)
+mergeWindowsList(ranges.list, tol, ...)
 
-findOverlapsList(ranges.list, regions, equiweight=TRUE, ...)
+findOverlapsList(ranges.list, regions, ...)
 
 # Deprecated.
 consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
@@ -23,8 +23,12 @@ consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
 
 For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverlaps}}.}
 \item{regions}{A GRanges object specifying reference regions of interest for overlapping with windows.}
+\item{equiweight}{A logical scalar indicating whether contributions from each set of windows should be weighted equally.}
 \item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
 \item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}
+\item{sign.list}{A list of logical vectors, where each vector corresponds to and is of the same length as an object in \code{x}.
+Each value of the vector should indicate whether the log-fold change is positive for the corresponding window.
+Use of this argument is not recommended, see \code{?\link{mergeWindows}} for details.}
 }
 
 \value{
@@ -93,7 +97,7 @@ cons$merged
 
 of.interest <- GRanges(c('chrA', 'chrA', 'chrB', 'chrC'), 
     IRanges(c(1, 500, 100, 1000), c(200, 1000, 700, 1500)))
-cons <- findOverlapsList(list(low, med, high), ref=of.interest)
+cons <- findOverlapsList(list(low, med, high), regions=of.interest)
 cons$ranges
 cons$olap
 }

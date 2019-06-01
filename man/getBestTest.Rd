@@ -6,14 +6,14 @@
 \description{Find the test with the strongest evidence for rejection of the null in each cluster.}
 
 \usage{
-getBestTest(ids, tab, by.pval=TRUE, weight=NULL, pval.col=NULL, cpm.col=NULL)
+getBestTest(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, cpm.col=NULL)
 }
 
 \arguments{
 	\item{ids}{an integer vector or factor containing the cluster ID for each test}
 	\item{tab}{a table of results with a \code{PValue} field for each test}
 	\item{by.pval}{a logical scalar, indicating whether selection should be performed on corrected p-values}
-	\item{weight}{a numeric vector of weights for each window, defaults to 1 for each test}
+	\item{weights}{a numeric vector of weights for each window, defaults to 1 for each test}
 	\item{pval.col}{an integer scalar or string specifying the column of \code{tab} containing the p-values}
 	\item{cpm.col}{an integer scalar or string specifying the column of \code{tab} containing the log-CPM values}
 }
@@ -35,7 +35,7 @@ This is necessary to obtain strong control of the family-wise error rate such th
 
 % i.e. The configuration, in this case, is taking the best test.
 
-The importance of each window in each cluster can be adjusted by supplying different relative \code{weight} values. 
+The importance of each window in each cluster can be adjusted by supplying different relative \code{weights} values. 
 Each weight is interpreted as a different threshold for each test in the cluster.
 Larger weights correspond to lower thresholds, i.e., less evidence is needed to reject the null for tests deemed to be more important. 
 This may be useful for upweighting particular tests, e.g., windows containing a motif for the TF of interest.

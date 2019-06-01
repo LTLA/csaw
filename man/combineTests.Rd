@@ -6,13 +6,13 @@
 \description{Combines p-values across clustered tests using Simes' method to control the cluster FDR.}
 
 \usage{
-combineTests(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
+combineTests(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL)
 }
 
 \arguments{
 	\item{ids}{an integer vector or factor containing the cluster ID for each test}
 	\item{tab}{a dataframe of results with \code{PValue} and at least one \code{logFC} field for each test}
-	\item{weight}{a numeric vector of weights for each window, defaults to 1 for each test}
+	\item{weights}{a numeric vector of weights for each window, defaults to 1 for each test}
 	\item{pval.col}{an integer scalar or string specifying the column of \code{tab} containing the p-values}
 	\item{fc.col}{an integer or character vector specifying the columns of \code{tab} containing the log-fold changes}
 }
@@ -36,7 +36,7 @@ Each combined p-value represents evidence against the global null hypothesis, i.
 This may be more relevant than examining each test individually when multiple tests in a cluster represent parts of the same underlying event, e.g., genomic regions consisting of clusters of windows.
 The BH method is also applied to control the FDR across all clusters.
 
-The importance of each test within a cluster can be adjusted by supplying different relative \code{weight} values. 
+The importance of each test within a cluster can be adjusted by supplying different relative \code{weights} values. 
 This may be useful for downweighting low-confidence tests, e.g., those in repeat regions. 
 In Simes' procedure, weights are interpreted as relative frequencies of the tests in each cluster. 
 Note that these weights have no effect between clusters and will not be used to adjust the computed FDR.
@@ -77,7 +77,7 @@ head(combined)
 
 # With window weighting.
 w <- round(runif(100, 1, 5))
-combined <- combineTests(ids, tab, weight=w)
+combined <- combineTests(ids, tab, weights=w)
 head(combined)
 
 # With multiple log-FCs.

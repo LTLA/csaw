@@ -6,13 +6,13 @@
 \description{Control the empirical FDR across clusters for comparisons to negative controls, based on tests that are significant in the wrong direction.}
 
 \usage{
-empiricalFDR(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
+empiricalFDR(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE)
 }
 
 \arguments{
 \item{ids}{Integer vector containing the cluster ID for each test.}
 \item{tab}{A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.}
-\item{weight}{A numeric vector of weights for each window, defaults to 1 for each test.}
+\item{weights}{A numeric vector of weights for each window, defaults to 1 for each test.}
 \item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.}
 \item{fc.col}{An integer scalar or string specifying the column of \code{tab} containing the log-fold changes.}
 \item{neg.down}{A logical scalar indicating if negative log-fold changes correspond to the \dQuote{wrong} direction.}
