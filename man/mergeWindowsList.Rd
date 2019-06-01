@@ -4,12 +4,12 @@
 \alias{findOverlapsList}
 
 \title{Consolidate window sizes}
-\description{Consolidate windows of different sizes into a common set of clusters.}
+\description{Consolidate windows of different sizes into a common set of regions.}
 
 \usage{
-mergeWindowsList(x, tol, equiweight=TRUE, sign.list=NULL, ...)
+mergeWindowsList(ranges.list, tol, equiweight=TRUE, ...)
 
-findOverlapsList(x, ref, equiweight=TRUE, sign.list=NULL, ...)
+findOverlapsList(ranges.list, regions, equiweight=TRUE, ...)
 
 # Deprecated.
 consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
@@ -17,15 +17,12 @@ consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
 }
 
 \arguments{
-\item{x, data.list}{A list of \linkS4class{RangedSummarizedExperiment} and/or \linkS4class{GRanges} objects.}
+\item{ranges.list, data.list}{A list of \linkS4class{RangedSummarizedExperiment} and/or \linkS4class{GRanges} objects.}
 \item{tol}{An integer scalar specifying the tolerance to use in \code{\link{mergeWindows}}.}
-\item{sign.list}{A list of logical vectors, where each vector corresponds to and is of the same length as an object in \code{x}.
-Each value of the vector should indicate whether the log-fold change is positive for the corresponding window.
-Use of this argument is not recommended, see \code{?\link{mergeWindows}} for details.}
 \item{...}{For \code{mergeWindowsList}, further arguments to pass to \code{\link{mergeWindows}}.
 
 For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverlaps}}.}
-\item{ref}{A GRanges object specifying reference regions of interest for overlapping with windows.}
+\item{regions}{A GRanges object specifying reference regions of interest for overlapping with windows.}
 \item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
 \item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}
 }
@@ -36,11 +33,11 @@ For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverla
 \item{\code{ranges}:}{A \linkS4class{GRanges} object containing the concatenated intervals from all elements of \code{x}.
 The element-wise metadata of this GRanges contains \code{origin}, 
 an integer field specifying the index of \code{x} from which each interval was obtained.}
-\item{\code{id}:}{An integer vector of length equal to \code{ranges}. 
+\item{\code{ids}:}{An integer vector of length equal to \code{ranges}. 
 This specifies the cluster (i.e., entry of \code{merged}) to which each interval in \code{ranges} was assigned.}
-\item{\code{merged}:}{A GRanges object containing the genomic coordinates of the clusters of merged windows,
+\item{\code{regions}:}{A GRanges object containing the genomic coordinates of the clusters of merged windows,
 as computed by \code{\link{mergeWindows}}.}
-\item{\code{weight}:}{An numeric vector of length equal to \code{ranges}, specifying the weight of each interval.}
+\item{\code{weights}:}{An numeric vector of length equal to \code{ranges}, specifying the weight of each interval.}
 }
 
 \code{findOverlapsList} returns a named list containing:
@@ -48,7 +45,7 @@ as computed by \code{\link{mergeWindows}}.}
 \item{\code{ranges}:}{A \linkS4class{GRanges} object containing the concatenated intervals from all elements of \code{x}.
 The element-wise metadata of this object contains the integer field \code{origin}, as described above.}
 \item{\code{olap}:}{A \linkS4class{Hits} object containing the overlaps between \code{ref} (query) and \code{ranges} (subject).}
-\item{\code{weight}:}{A numeric vector of length equal to \code{olap}, containing the weight of each overlap.}
+\item{\code{weights}:}{A numeric vector of length equal to \code{olap}, containing the weight of each overlap.}
 }
 }
 
