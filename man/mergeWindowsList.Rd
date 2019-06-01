@@ -13,7 +13,7 @@ findOverlapsList(ranges.list, regions, ...)
 
 # Deprecated.
 consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
-    region=NULL, overlap.args=list(), sign.list=NULL) 
+    regions=NULL, overlap.args=list(), sign.list=NULL) 
 }
 
 \arguments{
@@ -22,7 +22,7 @@ consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
 \item{...}{For \code{mergeWindowsList}, further arguments to pass to \code{\link{mergeWindows}}.
 
 For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverlaps}}.}
-\item{regions}{A GRanges object specifying reference regions of interest for overlapping with windows.}
+\item{regions}{A \linkS4class{GRanges} object specifying reference regions of interest for overlapping with windows.}
 \item{equiweight}{A logical scalar indicating whether contributions from each set of windows should be weighted equally.}
 \item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
 \item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}

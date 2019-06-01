@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits
-consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), region=NULL, overlap.args=list(), sign.list=NULL) 
+consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), regions=NULL, overlap.args=list(), sign.list=NULL) 
 # Consolidates results for multiple window sizes into a result for the
 # genomic region over which those windows are tiled. Returns the combined
 # results, as well as ID vectors for cross-referencing and inspection.
