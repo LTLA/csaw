@@ -32,7 +32,7 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, cpm
 		} 
 
 		# Identifying the window with the maximum logCPM.
-		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weight)
+		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weights)
 		best <- out[[2]]
 		pval <- tab[best, pval.col]
 	}
