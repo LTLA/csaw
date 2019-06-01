@@ -4,6 +4,16 @@
 
 \section{Version 1.20.0}{\itemize{
 \item Removed deprecated functionality in normOffsets(), readParam(), scaledAverage().
+
+\item Added mergeResults(), overlapResults() wrapper functions to simplify getting region-level results.
+
+\item Added mergeWindowsList(), findOverlapsList() functions for consolidating windows from multiple analyses.
+Deprecated consolidateWindows().
+
+\item Added mergeResultsList(), overlapResultsList() wrapper functions to obtain consolidated region-level results.
+Deprecated consolidateTests(), consolidateOverlaps().
+
+\item Renamed regions= to ranges= in mergeWindows() for consistency. 
 }}
 
 \section{Version 1.18.0}{\itemize{
