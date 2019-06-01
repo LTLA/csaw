@@ -1,5 +1,5 @@
 #' @export
-clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, ..., weight=NULL, grid.length=21, iterations=4)
+clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, ..., weights=NULL, grid.length=21, iterations=4)
 # This does a search for the clusters based on DB windows. 
 # It aims to achieve a cluster-level FDR of 'target'.
 #
@@ -19,8 +19,8 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
 
     # Computing a frequency-weighted adjusted p-value.
     pval.col <- .getPValCol(pval.col, tab)
-    if (is.null(weight)) { weight <- rep(1, nrow(tab)) }
-    adjp <- .weightedFDR(tab[,pval.col], weight)
+    if (is.null(weights)) { weights <- rep(1, nrow(tab)) }
+    adjp <- .weightedFDR(tab[,pval.col], weights)
 
     # Getting the sign.
     if (is.na(fc.col)) { 
@@ -32,7 +32,7 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
     # Controlling the cluster-level FDR
     FUN <- function(sig) { mergeWindows(regions[sig], tol=tol, sign=sign[sig], ...) }
     out <- controlClusterFDR(target=target, adjp=adjp, FUN=function(sig) { FUN(sig)$id }, 
-                             weight=weight, grid.length=grid.length, iterations=iterations)
+                             weights=weights, grid.length=grid.length, iterations=iterations)
     sig <- adjp <= out$threshold
     clusters <- FUN(sig)
 
@@ -45,7 +45,7 @@ clusterWindows <- function(regions, tab, target, pval.col=NULL, fc.col=NA, tol, 
 }
 
 .weightedFDR <- function(p, w) {
-    if (length(p)!=length(w)) { stop("weight and p-value vector are not of same length") }
+    if (length(p)!=length(w)) { stop("weights and p-value vector are not of same length") }
     o <- order(p)
     p <- p[o]
     w <- w[o]

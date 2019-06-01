@@ -10,7 +10,7 @@
 		}
 	}
 
-    output <- FUN(region.dex, tab[win.dex,], weight=o.weights, ...)
+    output <- FUN(region.dex, tab[win.dex,], weights=o.weights, ...)
 
 	N <- queryLength(overlaps)
     expand.vec <- rep(NA_integer_, N)

@@ -1,6 +1,6 @@
 #' @export
 #' @importFrom stats p.adjust
-mixedClusters <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL) 
+mixedClusters <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL) 
 # Tests for mixed clusters, by performing an IUT on the one-sided combined p-values 
 # in each direction for each cluster.
 #
@@ -15,13 +15,13 @@ mixedClusters <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL)
     # Combining the one-sided p-values.
     up.tab <- tab
     up.tab[,pval.col] <- all.p$up
-    up.com <- combineTests(ids, up.tab, weight=weight, pval.col=pval.col, fc.col=fc.col)
+    up.com <- combineTests(ids, up.tab, weights=weights, pval.col=pval.col, fc.col=fc.col)
     up.com$direction <- NULL
     
     # Repeating in the other direction.
     down.tab <- tab
     down.tab[,pval.col] <- all.p$down
-    down.com <- combineTests(ids, down.tab, weight=weight, pval.col=pval.col, fc.col=integer(0))
+    down.com <- combineTests(ids, down.tab, weights=weights, pval.col=pval.col, fc.col=integer(0))
     
     # Taking the IUT p-value.
     up.com[,pval.colname] <- pmax(up.com[,pval.colname], down.com[,pval.colname])

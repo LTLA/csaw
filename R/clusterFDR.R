@@ -1,5 +1,5 @@
 #' @export
-clusterFDR <- function(ids, threshold, weight=NULL)
+clusterFDR <- function(ids, threshold, weights=NULL)
 # This computes an informal estimate of the cluster-level FDR,
 # given the cluster IDs for all significant windows. The idea
 # is to allow clustering of significant windows to explicitly
@@ -12,18 +12,18 @@ clusterFDR <- function(ids, threshold, weight=NULL)
     o <- order(ids)
 	ids <- ids[o]
 
-    if (is.null(weight)) { 
-        weight <- rep(1, length(ids)) 
+    if (is.null(weights)) { 
+        weights <- rep(1, length(ids)) 
     } else {
-        if (length(weight)!=length(ids)) { 
-            stop("lengths of 'weight' and 'ids' must be the same")
+        if (length(weights)!=length(ids)) { 
+            stop("lengths of 'weights' and 'ids' must be the same")
         }
-        weight <- as.double(weight)
-        weight <- weight[o]
+        weights <- as.double(weights)
+        weights <- weights[o]
     }
 
-	num.fp <- sum(weight) * threshold
-	cluster.sizes <- tapply(weight, INDEX=ids, FUN=sum)
+	num.fp <- sum(weights) * threshold
+	cluster.sizes <- tapply(weights, INDEX=ids, FUN=sum)
 	num.fp.cluster <- sum(cumsum(sort(cluster.sizes)) <= num.fp)
 
     if (length(cluster.sizes)) { 
@@ -34,7 +34,7 @@ clusterFDR <- function(ids, threshold, weight=NULL)
 }
 
 #' @export
-controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.length=21, iterations=4)
+controlClusterFDR <- function(target, adjp, FUN, ..., weights=NULL, grid.length=21, iterations=4)
 # Identifies the window-level FDR threshold that is required to 
 # control the cluster-level threshold at 'target', given the 
 # window-level adjusted p-values and the clustering function FUN.
@@ -42,8 +42,8 @@ controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.length=2
 # written by Aaron Lun
 # created 5 January 2016
 {
-    if (is.null(weight)) { 
-        weight <- rep(1, length(adjp)) 
+    if (is.null(weights)) { 
+        weights <- rep(1, length(adjp)) 
     } 
 
     # Doesn't make sense to have window-level FDR > cluster-level FDR. 
@@ -59,7 +59,7 @@ controlClusterFDR <- function(target, adjp, FUN, ..., weight=NULL, grid.length=2
         for (tx in seq_along(grid)) { 
             threshold <- grid[tx]
             is.sig <- adjp <= threshold
-            fdrs[tx] <- clusterFDR(FUN(is.sig, ...), threshold, weight=weight[is.sig])
+            fdrs[tx] <- clusterFDR(FUN(is.sig, ...), threshold, weights=weights[is.sig])
         }
 
         # Picking the highest grid point above which the FDR > target.

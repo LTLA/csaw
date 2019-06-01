@@ -1,5 +1,5 @@
 #' @export
-empiricalFDR <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
+empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
 # Converts two-tailed p-values to one-tailed p-values, combines them 
 # and takes the number of rejections in the "wrong" direction as an 
 # estimate of the number of false positives.
@@ -22,14 +22,14 @@ empiricalFDR <- function(ids, tab, weight=NULL, pval.col=NULL, fc.col=NULL, neg.
     # Combining one-sided p-values.
     right.tab <- tab
     right.tab[,pval.col] <- all.p$right
-    right.com <- combineTests(ids, right.tab, weight=weight, pval.col=pval.col, fc.col=fc.col)
+    right.com <- combineTests(ids, right.tab, weights=weights, pval.col=pval.col, fc.col=fc.col)
     right.com$direction <- NULL
     right.com$FDR <- NULL
     
     # Repeating in the other direction.
     wrong.tab <- tab
     wrong.tab[,pval.col] <- all.p$wrong
-    wrong.com <- combineTests(ids, wrong.tab, weight=weight, pval.col=pval.col, fc.col=integer(0))
+    wrong.com <- combineTests(ids, wrong.tab, weights=weights, pval.col=pval.col, fc.col=integer(0))
     right.com[,paste0(pval.colname, ".neg")] <- wrong.com[,pval.colname]
 
     # Computing the empirical FDR.

@@ -30,7 +30,7 @@ consolidateClusters <- function(data.list, result.list, equiweight=TRUE, ...)
         weights <- NULL
     }   
 
-    out <- clusterWindows(all.data, all.result, weight=weights, ...)
+    out <- clusterWindows(all.data, all.result, weights=weights, ...)
     out$id <- split(out$id, groupings)
     names(out$id) <- names(data.list)
     return(out)
