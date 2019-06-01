@@ -1,24 +1,31 @@
-\name{consolidateClusters}
+\name{clusterWindowsList}
+\alias{clusterWindowsList}
 \alias{consolidateClusters}
 
 \title{Consolidate DB clusters}
 \description{Consolidate DB results from multiple analyses with cluster-level FDR control.}
 
 \usage{
+clusterWindowsList(ranges.list, tab.list, equiweight=TRUE, ...)
+
+# Deprecated equivalent.
 consolidateClusters(data.list, result.list, equiweight=TRUE, ...)
 }
 
 \arguments{
-\item{data.list}{a list of RangedSummarizedExperiment and/or GRanges objects}
-\item{result.list}{a list of data frames containing the DB test results for each entry of \code{data.list}}
+\item{ranges.list, data.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} objects,
+usually containing windows of varying sizes from separate calls to \code{\link{windowCounts}}.}
+\item{tab.list, result.list}{A list of data.frames of differential binding results, 
+usually from separate analyses at differing window sizes.
+Each should contain one row per interval for the corresponding entry of \code{ranges.list}.}
 \item{equiweight}{a logical scalar indicating whether equal weighting from each analysis should be enforced}
 \item{...}{arguments to be passed to \code{\link{clusterWindows}}}
 }
 
 \value{
 A named list is returned containing:
-\item{id}{a list of integer vectors indicating the cluster ID for each window in \code{data.list}}
-\item{region}{a GRanges object containing the coordinates for each cluster}
+\item{ids}{a list of integer vectors indicating the cluster ID for each window in \code{data.list}}
+\item{regions}{a GRanges object containing the coordinates for each cluster}
 \item{FDR}{a numeric scalar containing the cluster-level FDR estimate}
 }
 
@@ -26,7 +33,7 @@ A named list is returned containing:
 This function consolidates DB results from multiple analyses, typically involving different window sizes.
 The aim is to provide comprehensive detection of DB at a range of spatial resolutions.
 Significant windows from each analysis are identified and used for clustering with \code{\link{clusterWindows}}.
-This represents the post-hoc counterpart to \code{\link{consolidateWindows}}.
+This represents the post-hoc counterpart to \code{\link{mergeResultsList}}.
 
 Some effort is required to equalize the contribution of the results from each analysis.
 This is done by setting \code{equiweight=TRUE}, where the weight of each window is inversely proportional to the number of windows from that analysis.
