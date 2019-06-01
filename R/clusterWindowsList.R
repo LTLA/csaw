@@ -11,6 +11,7 @@ clusterWindowsList <- function(ranges.list, tab.list, equiweight=TRUE, ...)
     
     # Merging everyone together.
     all.data <- do.call(c, ranges.list)
+    all.data$origin <- rep(seq_along(ranges.list), lengths(ranges.list))
     all.result <- do.call(rbind, tab.list)
     
     # Computing weights based on number of windows; each analysis contributes same effective number of tests.

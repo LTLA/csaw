@@ -30,7 +30,7 @@ The element-wise metadata of this object contains the integer field \code{origin
 an integer field specifying the index of \code{x} from which each interval was obtained.}
 \item{\code{ids}:}{An integer vectors indicating the cluster ID for each window in \code{ranges}.
 Non-significant windows that were not assigned to a cluster have IDs of \code{NA}, as described in \code{?\link{clusterWindows}}.}
-\item{\code{regions}:}{A \linkS4class{}GRanges object containing the coordinates for each cluster.}
+\item{\code{regions}:}{A \linkS4class{GRanges} object containing the coordinates for each cluster.}
 \item{\code{FDR}:}{A numeric scalar containing the cluster-level FDR estimate.}
 }
 }
@@ -52,8 +52,9 @@ However, note that nested windows with opposite signs may give unintuitive resul
 }
 
 \seealso{
-\code{\link{clusterWindows}},
-\code{\link{consolidateWindows}}
+\code{\link{clusterWindows}}, the equivalent function for a single \linkS4class{GRanges} input.
+
+\code{\link{mergeResultsList}}, for a more rigorous approach to clustering windows.
 }
 
 \author{
