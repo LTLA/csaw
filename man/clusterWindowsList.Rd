@@ -24,9 +24,15 @@ Each should contain one row per interval for the corresponding entry of \code{ra
 
 \value{
 A named list is returned containing:
-\item{ids}{a list of integer vectors indicating the cluster ID for each window in \code{data.list}}
-\item{regions}{a GRanges object containing the coordinates for each cluster}
-\item{FDR}{a numeric scalar containing the cluster-level FDR estimate}
+\describe{
+\item{\code{ranges}:}{A \linkS4class{GRanges} object containing the concatenated intervals from all elements of \code{x}.
+The element-wise metadata of this object contains the integer field \code{origin}, 
+an integer field specifying the index of \code{x} from which each interval was obtained.}
+\item{\code{ids}:}{An integer vectors indicating the cluster ID for each window in \code{ranges}.
+Non-significant windows that were not assigned to a cluster have IDs of \code{NA}, as described in \code{?\link{clusterWindows}}.}
+\item{\code{regions}:}{A \linkS4class{}GRanges object containing the coordinates for each cluster.}
+\item{\code{FDR}:}{A numeric scalar containing the cluster-level FDR estimate.}
+}
 }
 
 \details{
@@ -36,7 +42,8 @@ Significant windows from each analysis are identified and used for clustering wi
 This represents the post-hoc counterpart to \code{\link{mergeResultsList}}.
 
 Some effort is required to equalize the contribution of the results from each analysis.
-This is done by setting \code{equiweight=TRUE}, where the weight of each window is inversely proportional to the number of windows from that analysis.
+This is done by setting \code{equiweight=TRUE}, 
+where the weight of each window is inversely proportional to the number of windows from that analysis.
 These weights are used as frequency weights for window-level FDR control (to identify DB windows prior to clustering).
 Otherwise, the final results would be dominated by large number of small windows.
 
@@ -66,17 +73,20 @@ dbh <- data.frame(logFC=rnorm(length(high)), PValue=rbeta(length(high), 1, 20))
 result.list <- list(dbl, dbm, dbh)
 
 # Consolidating.
-cons <- consolidateClusters(list(low, med, high), result.list, tol=20)
+cons <- clusterWindowsList(list(low, med, high), result.list, tol=20)
 cons$region
 cons$id
 cons$FDR
 
 # Without weights.
-cons <- consolidateClusters(list(low, med, high), result.list, tol=20, equiweight=FALSE)
+cons <- clusterWindowsList(list(low, med, high), result.list, tol=20, 
+    equiweight=FALSE)
 cons$FDR
 
 # Using the signs.
-cons <- consolidateClusters(list(low, med, high), result.list, tol=20, fc.col="logFC")
+cons <- clusterWindowsList(list(low, med, high), result.list, tol=20, 
+    fc.col="logFC")
+cons$FDR
 }
 
 \keyword{clustering}

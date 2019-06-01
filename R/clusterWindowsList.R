@@ -20,10 +20,9 @@ clusterWindowsList <- function(ranges.list, tab.list, equiweight=TRUE, ...)
     # Merging everyone together.
     all.data <- do.call(c, ranges.list)
     all.result <- do.call(rbind, tab.list)
-    groupings <- rep(seq_along(ranges.list), lengths(ranges.list)) 
     
     # Computing weights based on number of windows; each analysis contributes same effective number of tests.
-    # Not quite the same as consolidateWindows()'s weighting, but that can't be helped as the adjusted p-values \
+    # Not quite the same as consolidateWindows()'s weighting, but that can't be helped as the adjusted p-values
     # are computed before clustering.
     if (equiweight) { 
         weights <- rep(1/lengths(ranges.list), lengths(ranges.list))
@@ -32,15 +31,16 @@ clusterWindowsList <- function(ranges.list, tab.list, equiweight=TRUE, ...)
     }   
 
     out <- clusterWindows(all.data, all.result, weights=weights, ...)
-    out$id <- split(out$id, groupings)
-    names(out$id) <- names(ranges.list)
-    return(out)
+    c(list(ranges=all.data), out)
 }
 
 #' @export
 consolidateClusters <- function(data.list, result.list, equiweight=TRUE, ...) {
     .Deprecated("clusterWindowsList")
-    clusterWindowsList(ranges.list=data.list, tab.list=result.list, equiweight=equiweight, ...)
-
+    out <- clusterWindowsList(ranges.list=data.list, tab.list=result.list, equiweight=equiweight, ...)
+    groupings <- rep(seq_along(data.list), lengths(data.list)) 
+    out$ids <- split(out$ids, groupings)
+    names(out$ids) <- names(data.list)
+    out
 }
 
