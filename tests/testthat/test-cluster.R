@@ -25,7 +25,7 @@ test_that('clusterFDR works correctly', {
 
                 w <- runif(100)
                 out <- compCFDR(ids, threshold, w)
-                test.fdr <- clusterFDR(ids, threshold, weight=w)
+                test.fdr <- clusterFDR(ids, threshold, weights=w)
                 expect_identical(out, test.fdr)
             }
         }
@@ -33,7 +33,7 @@ test_that('clusterFDR works correctly', {
 
     # Silly input checks.
     expect_identical(clusterFDR(integer(0), 0.05), 0)
-    expect_error(clusterFDR(integer(0), 0.05, weight=1), "must be the same")
+    expect_error(clusterFDR(integer(0), 0.05, weights=1), "must be the same")
 
     expect_identical(clusterFDR(runif(100), 0), 0) # threshold of zero => FDR of zero.
     expect_identical(clusterFDR(1, numeric(0)), 0)
@@ -142,7 +142,7 @@ test_that("clusterWindows works as expected", {
     # Checking that the frequency weights work.
     weight <- sample(3, length(windows), replace=TRUE)
     expand <- rep(seq_along(weight), weight)
-    out <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0, weight=weight)
+    out <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0, weights=weight)
     ref <- clusterWindows(windows[expand], data.frame(PValue=test.p[expand]), target=target, tol=0)
 
     expect_identical(out$FDR, ref$FDR)

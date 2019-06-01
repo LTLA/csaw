@@ -19,8 +19,8 @@ test_that("mergeWindowsList works correctly", {
             ref <- mergeWindows(combined.win, tol=100)
 
         	cons <- mergeWindowsList(data.list, tol=100)
-            expect_identical(cons$id, ref$id)
-            expect_identical(cons$merged, ref$region)
+            expect_identical(cons$ids, ref$ids)
+            expect_identical(cons$regions, ref$regions)
             expect_true(all(combined.win==cons$ranges))
 
             # Works with GRanges objects.
@@ -30,7 +30,7 @@ test_that("mergeWindowsList works correctly", {
             # Weights are computed correctly.
             origins <- rep(seq_along(all.win), lengths(all.win))
             f <- paste0(cons$id, ".", origins)
-            summed <- by(cons$weight, INDICES=f, FUN=sum)
+            summed <- by(cons$weights, INDICES=f, FUN=sum)
             expect_equal(as.numeric(summed), rep(1, length(unique(f))))
 
             # Responds to the sign.
@@ -38,32 +38,28 @@ test_that("mergeWindowsList works correctly", {
             for (s in seq_along(sizes)) {
                 sign.list[[s]] <- rbinom(length(data.list[[s]]), 1, 0.5)==1
             }
-            cons3 <- mergeWindowsList(data.list, tol=100, sign.list=sign.list)
-            ref2 <- mergeWindows(combined.win, tol=100, sign=unlist(sign.list))
-            expect_identical(cons3$id, ref2$id)
-            expect_identical(cons3$merged, ref2$region)
+            cons3 <- mergeWindowsList(data.list, tol=100, signs=unlist(sign.list))
+            ref2 <- mergeWindows(combined.win, tol=100, signs=unlist(sign.list))
+            expect_identical(cons3$ids, ref2$ids)
+            expect_identical(cons3$regions, ref2$regions)
         }
     }
 
      # Responds correctly to empty inputs.
      cons.E <- mergeWindowsList(list(all.win[[1]], all.win[[2]][0]), tol=100)
      ref <- mergeWindows(all.win[[1]], tol=100)
-     expect_identical(cons.E$id, ref$id)
-     expect_identical(cons.E$merged, ref$region)
+     expect_identical(cons.E$ids, ref$ids)
+     expect_identical(cons.E$regions, ref$regions)
 
      cons.E <- mergeWindowsList(list(all.win[[1]][0], all.win[[2]]), tol=100)
      ref <- mergeWindows(all.win[[2]], tol=100)
-     expect_identical(cons.E$id, ref$id)
-     expect_identical(cons.E$merged, ref$region)
+     expect_identical(cons.E$ids, ref$ids)
+     expect_identical(cons.E$regions, ref$regions)
 
      cons.E <- mergeWindowsList(list(all.win[[1]][0], all.win[[2]][0]), tol=100)
-     expect_identical(cons.E$id, integer(0))
-     expect_identical(length(cons.E$region), 0L)
-     expect_identical(cons.E$weight, numeric(0))
-
-     # Throws an error when expected.
-     expect_error(mergeWindowsList(all.win, tol=100, sign.list=list()), "are not identical")
-     expect_error(mergeWindowsList(all.win, tol=100, sign.list=vector("list", length(all.win))), "are not identical")
+     expect_identical(cons.E$ids, integer(0))
+     expect_identical(length(cons.E$regions), 0L)
+     expect_identical(cons.E$weights, numeric(0))
 })
 
 set.seed(200001)
@@ -82,38 +78,38 @@ test_that("findOverlapsList works correctly", {
             combined.win <- do.call(c, all.win)
             ref <- findOverlaps(regions, combined.win)
 
-	        cons <- findOverlapsList(data.list, ref=regions)
-            expect_identical(cons$olap, ref)
+	        cons <- findOverlapsList(data.list, regions)
+            expect_identical(cons$overlaps, ref)
             expect_true(all(combined.win==cons$ranges))
 
             # Works with GRanges objects.
-            cons2 <- findOverlapsList(all.win, ref=regions)
+            cons2 <- findOverlapsList(all.win, regions)
             expect_identical(cons, cons2)
 
             # Checking that we respond to arguments.
             ref <- findOverlaps(regions, combined.win, type="within")
-            cons2 <- findOverlapsList(data.list, ref=regions, type="within")
-            expect_identical(cons2$olap, ref)
+            cons2 <- findOverlapsList(data.list, regions, type="within")
+            expect_identical(cons2$overlaps, ref)
             expect_identical(cons$ranges, cons2$ranges)
 
             # Weights are computed correctly.
             origins <- rep(seq_along(all.win), lengths(all.win))
-            f <- paste0(queryHits(cons$olap), ".", origins[subjectHits(cons$olap)])
-            summed <- by(cons$weight, INDICES=f, FUN=sum)
+            f <- paste0(queryHits(cons$overlaps), ".", origins[subjectHits(cons$overlaps)])
+            summed <- by(cons$weights, INDICES=f, FUN=sum)
             expect_identical(as.numeric(summed), rep(1, length(unique(f))))
         }
     }
 
     # Responds correctly to empty inputs.
-    cons.E <- findOverlapsList(list(all.win[[1]], all.win[[2]][0]), ref=regions)
-    expect_identical(cons.E$olap, findOverlaps(regions, all.win[[1]]))
+    cons.E <- findOverlapsList(list(all.win[[1]], all.win[[2]][0]), regions)
+    expect_identical(cons.E$overlaps, findOverlaps(regions, all.win[[1]]))
 
-    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]]), ref=regions)
-    expect_identical(cons.E$olap, findOverlaps(regions, all.win[[2]]))
+    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]]), regions)
+    expect_identical(cons.E$overlaps, findOverlaps(regions, all.win[[2]]))
 
-    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]][0]), ref=regions)
-    expect_identical(length(cons.E$olap), 0L)
-    expect_identical(cons.E$weight, numeric(0))
+    cons.E <- findOverlapsList(list(all.win[[1]][0], all.win[[2]][0]), regions)
+    expect_identical(length(cons.E$overlaps), 0L)
+    expect_identical(cons.E$weights, numeric(0))
 })
 
 set.seed(200002)

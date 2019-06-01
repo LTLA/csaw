@@ -42,12 +42,12 @@ test_that("mergeWindows works correctly in the basic case", {
 
                 # Checking the reported coordinates of each region.
                 ostarts <- aggregate(start(reg) ~ merged.ids, FUN=min, data=NULL)
-                expect_identical(ostarts[,2], start(out$region))
+                expect_identical(ostarts[,2], start(out$regions))
                 oends <- aggregate(end(reg) ~ merged.ids, FUN=max, data=NULL)
-                expect_identical(oends[,2], end(out$region))
-                expect_identical(seqnames(reg), seqnames(out$region[merged.ids]))
+                expect_identical(oends[,2], end(out$regions))
+                expect_identical(seqnames(reg), seqnames(out$regions[merged.ids]))
 
-                expect_true(all(strand(out$region)=="*"))
+                expect_true(all(strand(out$regions)=="*"))
             }
         }
     }
@@ -69,12 +69,12 @@ test_that("mergeWindows works correctly with signed non-nested windows", {
 
                 # Checking the reported value of each region.
                 ostarts <- aggregate(start(reg)~ merged.ids, FUN=min, data=NULL)
-                expect_identical(ostarts[,2], start(out$region))
+                expect_identical(ostarts[,2], start(out$regions))
                 oends <- aggregate(end(reg)~merged.ids, FUN=max, data=NULL)
-                expect_identical(oends[,2], end(out$region))
-                expect_identical(seqnames(reg), seqnames(out$region[merged.ids]))
+                expect_identical(oends[,2], end(out$regions))
+                expect_identical(seqnames(reg), seqnames(out$regions[merged.ids]))
 
-                expect_true(all(strand(out$region)=="*"))
+                expect_true(all(strand(out$regions)=="*"))
             }
         }
     }
@@ -169,7 +169,7 @@ test_that("mergeWindows works correctly for stranded input", {
                 # Checking that each set of IDs only has one strand, and it is the expected one.
                 by.id <- split(strand(reg), combo$id)
                 expect_true(all(lengths(lapply(by.id, FUN=runValue))==1))
-                expect_identical(strand(combo$region)[combo$id], strand(reg))
+                expect_identical(strand(combo$regions)[combo$id], strand(reg))
 
                 # Running separately on each strand, and checking that the boundaries are the same.
                 is.forward <- as.logical(strand(reg)=="+")
@@ -179,15 +179,15 @@ test_that("mergeWindows works correctly for stranded input", {
                 is.unstrand <- as.logical(strand(reg)=="*")
                 unstrand <- mergeWindows(reg[is.unstrand], tol=tol)
 
-                strand(forward$region) <- "+"
-                strand(reverse$region) <- "-"
-                strand(unstrand$region) <- "*"
-                expect_identical(c(forward$region, reverse$region, unstrand$region), combo$region)
+                strand(forward$regions) <- "+"
+                strand(reverse$regions) <- "-"
+                strand(unstrand$regions) <- "*"
+                expect_identical(c(forward$regions, reverse$regions, unstrand$regions), combo$regions)
 
                 final.out <- integer(length(reg))
                 final.out[is.forward] <- forward$id
-                final.out[is.reverse] <- reverse$id+length(forward$region) 
-                final.out[is.unstrand] <- unstrand$id+length(forward$region)+length(reverse$region)
+                final.out[is.reverse] <- reverse$id+length(forward$regions) 
+                final.out[is.unstrand] <- unstrand$id+length(forward$regions)+length(reverse$regions)
                 expect_identical(final.out, combo$id)
             }
         }
@@ -198,11 +198,11 @@ test_that("mergeWindows works correctly for silly inputs", {
     # empty inputs.
     out <- mergeWindows(GRanges(), tol=10)
     expect_identical(out$id, integer(0))
-    expect_identical(out$region, GRanges())
+    expect_identical(out$regions, GRanges())
 
     out <- mergeWindows(GRanges(), tol=10, max.width=1000)
     expect_identical(out$id, integer(0))
-    expect_identical(out$region, GRanges())
+    expect_identical(out$regions, GRanges())
 
     # mismatch inputs.
     expect_error(mergeWindows(GRanges("chrA:1-1000"), tol=10, sign=logical(5)), "must be the same")
