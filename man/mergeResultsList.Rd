@@ -18,7 +18,7 @@ overlapResultsList(ranges.list, tab.list, regions, equiweight=TRUE,
 }
 
 \arguments{
-\item{ranges.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} containing genomic intervals, 
+\item{ranges.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} objects,
 usually containing windows of varying sizes from separate calls to \code{\link{windowCounts}}.}
 \item{tab.list}{A list of data.frames of differential binding results, usually from separate analyses at differing window sizes.
 Each should contain one row per interval for the corresponding entry of \code{ranges.list}.}
