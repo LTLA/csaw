@@ -32,15 +32,15 @@ consolidateWindows <- function(data.list, equiweight=TRUE, merge.args=list(), re
         ranges.index <- unlist(lapply(data.list, seq_along))
         subject.origin <- output$ranges$origin[subjectHits(output$overlaps)]
 
-        by.ranges <- split(output$overlaps, subject.origin)
+        by.ranges <- vector("list", length(data.list))
         for (i in seq_along(by.ranges)) {
-            current <- by.ranges[[i]]
+            current <- output$overlaps[subject.origin==i]
             by.ranges[[i]] <- Hits(queryHits(current), ranges.index[subjectHits(current)],
-                nLnode=nLnode(current), nRnode=nRnode(current), sort.by.query=TRUE)
+                nLnode=nLnode(current), nRnode=length(data.list[[i]]), sort.by.query=TRUE)
         }
 
         weight <- if (equiweight) {
-            split(output$olap$weights, subject.origin)
+            split(output$weights, subject.origin)
         } else {
             NULL
         }
