@@ -7,21 +7,21 @@
 \description{Convenience wrappers around lower-level functions to easily obtain region-level results from window statistics.}
 
 \usage{
-mergeResults(regions, tab, tol, get.best=TRUE, merge.args=list(), 
+mergeResults(ranges, tab, tol, get.best=TRUE, merge.args=list(), 
     combine.args=list(), best.args=list())
 
-overlapResults(regions, tab, ref, get.best=TRUE, overlap.args=list(), 
+overlapResults(ranges, tab, regions, get.best=TRUE, overlap.args=list(), 
     combine.args=list(), best.args=list())
 }
 
 \arguments{
-\item{regions}{A \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment}
+\item{ranges}{A \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment}
 containing genomic intervals, usually for windows.}
-\item{tab}{A data.frame of differential binding results with one row per interval in \code{regions},
+\item{tab}{A data.frame of differential binding results with one row per interval in \code{ranges},
 to be passed to \code{\link{combineTests}} or \code{\link{combineOverlaps}}.}
 \item{tol}{A numeric scalar to be passed to \code{\link{mergeWindows}}.}
 \item{get.best}{A logical scalar indicating whether \code{\link{getBestTest}} or \code{\link{getBestOverlaps}} should be run.}
-\item{ref}{A \linkS4class{GRanges} class containing reference regions to overlap with the windows.}
+\item{regions}{A \linkS4class{GRanges} class containing reference regions to overlap with the windows.}
 \item{merge.args}{Further arguments to pass to \code{\link{mergeWindows}}.}
 \item{overlap.args}{Further arguments to pass to \code{\link{findOverlaps}}.}
 \item{combine.args}{Further arguments to pass to \code{\link{combineTests}} or \code{\link{combineOverlaps}}.}
@@ -36,17 +36,17 @@ and \code{best}, the DataFrame containing statistics for the best window in each
 
 \code{overlapResults} will return a \linkS4class{DataFrame} containing
 \code{regions}, the same as the input \linkS4class{GRanges} of the same name;
-\code{combined}, the DataFrame containing combined statistics for each reference region;
-and \code{best}, the DataFrame containing statistics for the best window in each reference region.
+\code{combined}, the DataFrame containing combined statistics for each regionserence region;
+and \code{best}, the DataFrame containing statistics for the best window in each regionserence region.
 }
 
 \details{
 \code{mergeResults} simply calls \code{\link{mergeWindows}} to identify clusters of windows corresponding to regions.
 These clusters are used in \code{\link{combineTests}} and (optionally) \code{\link{getBestTest}} to obtain per-region statistics.
 
-\code{overlapResults} simply calls \code{\link{findOverlaps}} to identify all windows overlapping each reference region.
+\code{overlapResults} simply calls \code{\link{findOverlaps}} to identify all windows overlapping each regionserence region.
 These overlaps are used in \code{\link{combineOverlaps}} and (optionally) \code{\link{getBestOverlaps}},
-where each set of overlapping windows for a reference region are used to define the latter's statistics.
+where each set of overlapping windows for a regionserence region are used to define the latter's statistics.
 
 These wrapper functions are simply for convenience.
 No other work is performed and so users are free to call the individual functions separately.
@@ -74,10 +74,10 @@ gr <- GRanges("chrA", IRanges(sample(1000, 20), width=40))
 merge.out$merged
 merge.out$combined
 
-# Overlapping windows with a reference.
-ref <- GRanges("chrA", IRanges(c(10, 500, 900), width=20))
-(olap.out <- overlapResults(gr, tab, ref=ref))
-olap.out$ref
+# Overlapping windows with a regionserence.
+regions <- GRanges("chrA", IRanges(c(10, 500, 900), width=20))
+(olap.out <- overlapResults(gr, tab, regions=regions))
+olap.out$regions
 olap.out$combined
 }
 
