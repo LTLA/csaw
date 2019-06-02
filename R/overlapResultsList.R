@@ -8,7 +8,7 @@ overlapResultsList <- function(ranges.list, tab.list, regions, equiweight=TRUE, 
     olap.out <- do.call(findOverlapsList, c(list(ranges.list, regions), overlap.args))
     tab <- do.call(rbind, tab.list)
 
-    combine.args$olap <- best.args$olap <- olap.out$overlap
+    combine.args$overlaps <- best.args$overlaps <- olap.out$overlaps
     combine.args$tab <- best.args$tab <- tab
     if (equiweight) {
         combine.args$o.weights <- best.args$o.weights <- olap.out$weights
