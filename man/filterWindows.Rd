@@ -1,37 +1,64 @@
 \name{filterWindows}
 \alias{filterWindows}
+\alias{filterWindowsProportion}
+\alias{filterWindowsGlobal}
+\alias{filterWindowsLocal}
+\alias{filterWindowsControl}
 \alias{scaleControlFilter}
 
 \title{Filtering methods for RangedSummarizedExperiment objects}
-\description{Convenience function to compute filter statistics for windows, based on proportions or using enrichment over background.}
+\description{Convenience functions to compute filter statistics for windows, 
+based on proportions or using enrichment over background.}
 
 \usage{
+filterWindowsGlobal(data, background, assay.data="counts", 
+    assay.back="counts", prior.count=2)
+
+filterWindowsLocal(data, background, assay.data="counts", 
+    assay.back="counts", prior.count=2)
+
+filterWindowsControl(data, background, assay.data="counts", 
+    assay.back="counts", prior.count=2, scale.info=NULL)
+
+filterWindowsProportion(data, assay.data="counts", prior.count=2)
+
+scaleControlFilter(data.bin, back.bin, assay.data="counts", 
+    assay.back="counts")
+
+# Deprecated.
 filterWindows(data, background, type="global", assay.data="counts",
     assay.back="counts", prior.count=2, scale.info=NULL) 
-
-scaleControlFilter(data, background)
 }
 
 \arguments{
-\item{data}{A RangedSummarizedExperiment object containing window-level counts for \code{filterWindows}, and bin-level counts for \code{scaleControlFilter}.}
-\item{background}{A RangedSummarizedExperiment object.
-    For \code{filterWindows}, this should contain counts for background regions when \code{type} is not \code{"proportion"}.
-    For \code{scaleControlFilter}, this should contain bin-level counts for negative control samples.
-}
-\item{type}{a character string specifying the type of filtering to perform; can be any of \code{c("global", "local", "control", "proportion")}}
+\item{data}{A \linkS4class{RangedSummarizedExperiment} object containing window-level counts.}
+\item{background}{A \linkS4class{RangedSummarizedExperiment} object to be used for estimating background enrichment.
+\itemize{
+    \item For \code{filterWindowsGlobal}, this should contain counts for large contiguous bins across the genome,
+    for the same samples used to construct \code{data}.
+    \item For \code{filterWindowsLocal}, this should contain counts for regions in which \code{rowRanges(data)} is nested,
+    for the same samples used to construct \code{data}.
+    \item For \code{filterWindowsControl}, this should contain count for the same regions as \code{rowRanges(data)}
+    for control samples.
+}}
 \item{assay.data}{A string or integer scalar specifying the assay containing window/bin counts in \code{data}.}
 \item{assay.back}{A string or integer scalar specifying the assay containing window/bin counts in \code{background}.}
-\item{prior.count}{a numeric scalar, specifying the prior count to use in \code{\link{aveLogCPM}}}
-\item{scale.info}{A list containing the output of \code{scaleControlFilter}, i.e., a normalization factor and library sizes for ChIP and control samples.}
+\item{prior.count}{A numeric scalar, specifying the prior count to use in \code{\link{scaledAverage}}.}
+\item{scale.info}{A list containing the output of \code{scaleControlFilter}, 
+i.e., a normalization factor and library sizes for ChIP and control samples.}
+\item{data.bin}{A RangedSummarizedExperiment containing bin-level counts for ChIP libraries.}
+\item{back.bin}{A RangedSummarizedExperiment containing bin-level counts for control libraries.}
+\item{type}{String specifying the type of filtering method to use.}
 }
 
 \value{
-For \code{filterWindows}, a named list is returned containing:
+All filtering functions return a named list containing:
 \itemize{
     \item \code{abundances}, a numeric vector containing the average abundance of each row in \code{data}.
     \item \code{filter}, a numeric vector containing the filter statistic for the given \code{type} for each row.
+        The definition of this filter statistic will vary across the different methods.
     \item \code{back.abundances}, a numeric vector containing the average abundance of each entry in \code{background}.
-        Only reported for \code{type!="proportion"}. 
+        Not reported for \code{filterWindowsProportion}.
 }
 
 For \code{scaleControlFilter}, a named list is returned containing:
@@ -43,67 +70,99 @@ For \code{scaleControlFilter}, a named list is returned containing:
 }
 
 \details{
-Proportion-based filtering supposes that a certain percentage of the genome is genuinely bound.
-If \code{type="proportion"}, the filter statistic is defined as the ratio of the rank to the total number of windows.
+The aim of these functions is to compute a filter statistic for each window,
+according to various abundance-based definitions that are discussed below.
+Windows can then be filtered to retain those with large filter statistics.
+This selects for high-abundance windows that are more likely to contain genuine binding sites
+and thus are more interesting for downstream (differential binding) analyses.
+}
+
+\section{Proportion-based filtering}{
+\code{filterWindowsProportion} supposes that a certain percentage of the genome (by length) is genuinely bound.
+The filter statistic is defined as the ratio of the rank in abundance to the total number of windows.
 Rank is in ascending order, i.e., higher abundance windows have higher ratios.
 Windows are retained that have rank ratios above a threshold, e.g., 0.99 if 1\% of the genome is assumed to be bound.
 
-All other values of \code{type} will perform background-based filtering, where abundances of the windows are compared to those of putative background regions.
-The filter statistic are generally defined as the difference between window and background abundances, i.e., the log-fold increase in the counts.
-Windows can be filtered to retain those with large filter statistics, to select those that are more likely to contain genuine binding sites.
-The differences between the methods center around how the background abundances are obtained for each window.
-
-If \code{type="global"}, the median average abundance across the genome is used as a global estimate of the background abundance.
-This should be used when \code{background} contains unfiltered counts for large (2 - 10 kbp) genomic bins, from which the background abundance can be computed.
-The filter statistic for each window is defined as the difference between the window abundance and the global background.
-If \code{background} is not supplied, the background abundance is directly computed from entries in \code{data}.
-
-% Note that empty windows are automatically removed by windowCounts.
-% However, if you're using large bins, these regions are likely to be systematically empty, e.g. large repeats like telomeres, centromeres.
-% I'm happy to consider them as being irrelevant parts of the genome that we can ignore, as they don't help in estimating the background (as they're empty).
-
-If \code{type="local"}, the counts of each row in \code{data} are subtracted from those of the corresponding row in \code{background}.
-The average abundance of the remaining counts is computed and used as the background abundance.
-The filter statistic is defined by subtracting the background abundance from the corresponding window abundance for each row.
-This is designed to be used when \code{background} contains counts for expanded windows, to determine the local background estimate.
-
-If \code{type="control"}, the background abundance is defined as the average abundance of each row in \code{background}.
-The filter statistic is defined as the difference between the average abundance of each row in \code{data} and that of the corresponding row in \code{background}.
-This is designed to be used when \code{background} contains read counts for each window in the control sample(s).
-Unlike \code{type="local"}, there is no subtraction of the counts in \code{background} prior to computing the average abundance.
+The definition of the rank is dependent on the total number of windows in the genome.
+However, empty windows or bins are automatically discarded in \code{\link{windowCounts}} 
+(exacerbated if \code{filter} is set above unity).
+This will result in underestimation of the rank or overestimation of the global background.
+To avoid this, the total number of windows is inferred from the spacing.
 }
 
-\section{Additional details}{
-Proportion and global background filtering are dependent on the total number of windows/bins in the genome.
-However, empty windows or bins are automatically discarded in \code{\link{windowCounts}} (exacerbated if \code{filter} is set above unity).
-This will result in underestimation of the rank or overestimation of the global background.
-To avoid this, the total number of windows or bins is inferred from the spacing.
+\section{Global background filtering}{
+\code{filterWindowsGlobal} uses the median average abundance across the genome as a global estimate of the background abundance.
+This assumes that \code{background} contains unfiltered counts for large (2 - 10 kbp) genomic bins, 
+from which the background abundance can be stably computed.
+The filter statistic for each window is defined as the difference between the window abundance and the global background,
+after adjusting for the differences in widths between windows and bins.
 
-For background-based methods, the abundances of large bins or regions in \code{background} must be rescaled for comparison to those of smaller windows 
+Similarly to \code{filterWindowsProportion}, the total number of bins is inferred from their width in \code{background}.
+This avoids overestimating the global background if some filtering has already been applied to the bins.
+% For example, windowCounts will automatically remove bins with no counts (e.g., telomeres, centromeres).
+
+If \code{background} is not supplied, the background abundance is directly computed from entries in \code{data}.
+This assumes that \code{data} contains windows for most of the regions in the genome,
+and that the coverage is sufficiently high across most windows to obtain a stable background estimate.
+}
+
+\section{Local background filtering}{
+\code{filterWindowsLocal} compares the abundance of each window to the flanking regions.
+This considers each window to contain the entirety of a binding event, 
+where any coverage of the surrounding regions is treated as background enrichment.
+It is analogous to the behaviour of peak-calling methods and accounts for local fluctuations in background,
+e.g., due to differences in mappability, sequenceability or accessibility.
+
+We assume that each region in \code{data} is nested within each corresponding region of \code{background}.
+The counts of each row in \code{data} are then subtracted from those of the corresponding row in \code{background}.
+The average abundance of the remaining counts is computed and used as the background abundance.
+The filter statistic is defined by subtracting the background abundance from the corresponding window abundance for each row.
+
+To generate \code{background}, we suggest using \code{\link{regionCounts}} on a \code{\link{resize}}d \code{rowRanges(data)} -
+see Examples.
+}
+
+\section{Control-based filtering}{ 
+In \code{filterWindowsControl}, we assume that \code{data} contains window-level counts for ChIP samples,
+while \code{background} contains counts for the same windows in the control samples.
+(However, it is also possible to supply nested regions as described in \code{filterWindowsLocal},
+where each interval in \code{background} includes the flanking regions around the corresponding entry in \code{data}.)
+For each window in \code{data}, 
+the background abundance is defined as the average abundance of the corresponding row in \code{background}.
+The filter statistic is defined as the difference between the window's average abundance and its background abundance.
+
+Composition biases are likely to be present between ChIP and control samples, 
+where increased binding at some loci reduces coverage of other loci in the ChIP samples.
+This incorrectly results in smaller filter statistics for the latter loci, as the fold-change over the input is reduced.
+To correct for this, a normalization factor between ChIP and control samples can be computed with \code{scaleControlFilter}
+and passed to \code{filterWindowsControl} using the \code{scale.info} argument.
+A warning is raised if \code{scale.info=NULL}. 
+
+To use \code{scaleControlFilter}, users should supply two \linkS4class{RangedSummarizedExperiment} objects, 
+each containing the counts for large (~10 kbp) bins in the ChIP and control samples.
+The difference in the average abundance between the two objects is computed for each bin.
+The median of the differences across all bins is used as a normalization factor to correct the filter statistics for each window.
+The assumption is that most bins represent background regions, 
+such that a systematic difference in abundance between ChIP and control should represent the composition bias.
+
+\code{scaleControlFilter} will also store the library sizes for each object in its output.
+This is used to check that \code{data} and \code{background} have the same library sizes.
+Otherwise, the normalization factor computed with bin-level counts cannot be correctly applied to the window-level counts.
+}
+
+\section{Details on filter statistic calculations}{
+When computing the filter statistic in background-based methods
+the abundances of bins/regions in \code{background} must be rescaled for comparison to those of smaller windows 
 - see \code{\link{getWidths}} and \code{\link{scaledAverage}} for more details.
-In particular, the effective width of the window is often larger than \code{width}, due to the counting of fragments rather than reads.
-The fragment length is extracted from \code{data$ext} and \code{background$ext}, though users will need to set \code{data$rlen} or \code{background$rlen} for unextended reads (i.e., \code{ext=NA}).
+In particular, the effective width of the window is often larger than the \code{width} used in \code{\link{windowCounts}}
+due to the counting of fragments rather than reads.
+The fragment length is extracted from \code{data$ext} and \code{background$ext}, 
+though users will need to set \code{data$rlen} or \code{background$rlen} for unextended reads (i.e., \code{ext=NA}).
 
 The \code{prior.count} protects against inflated log-fold increases when the background counts are near zero.
 A low prior is sufficient if \code{background} has large counts, which is usually the case for wide regions.
-Otherwise, \code{prior.count} should be increased to a larger value like 5.
-This may be necessary in \code{type="control"}, where \code{background} contains counts for small windows in the control sample.
-}
-
-\section{Normalization for composition bias}{
-When \code{type=="control"}, ChIP samples will be compared to control samples to compute the filter statistic.
-Composition biases are likely to be present, where increased binding at some loci reduces coverage of other loci in the ChIP samples.
-This incorrectly results in smaller filter statistics for the latter loci, as the fold-change over the input is reduced.
-To correct for this, a normalization factor between ChIP and control samples can be computed with \code{scaleControlFilter}.
-
-Users should supply two \code{RangedSummarizedExperiment} objects, each containing the counts for large (~10 kbp) bins in the ChIP and control samples.
-The difference in the average abundance between the two objects is computed for each bin.
-The median of the differences across all bins is used as a normalization factor to correct the filter statistics for each window.
-The idea is that most bins represent background regions, such that a systematic difference in abundance between ChIP and control should represent the composition bias.
-
-\code{scaleControlFilter} will also store the library sizes for each object in its output.
-This is used to check that the \code{data} and \code{background} supplied to \code{filterWindows} have the same library sizes.
-Otherwise, the normalization factor computed with bin-level counts cannot be correctly applied to the window-level counts.
+Otherwise, if the set of windows with large filter statistics are dominated by low counts,
+\code{prior.count} should be increased to a larger value like 5.
 }
 
 \seealso{
@@ -118,20 +177,20 @@ bamFiles <- system.file("exdata", c("rep1.bam", "rep2.bam"), package="csaw")
 data <- windowCounts(bamFiles, filter=1)
 
 # Proportion-based (keeping top 1%)
-stats <- filterWindows(data, type="proportion")
+stats <- filterWindowsProportion(data)
 head(stats$filter)
 keep <- stats$filter > 0.99 
 new.data <- data[keep,]
 
 # Global background-based (keeping fold-change above 3).
 background <- windowCounts(bamFiles, bin=TRUE, width=300)
-stats <- filterWindows(data, background, type="global")
+stats <- filterWindowsGlobal(data, background)
 head(stats$filter)
 keep <- stats$filter > log2(3)
 
 # Local background-based.
 locality <- regionCounts(bamFiles, resize(rowRanges(data), fix="center", 300))
-stats <- filterWindows(data, locality, type="local")
+stats <- filterWindowsLocal(data, locality)
 head(stats$filter)
 keep <- stats$filter > log2(3)
 
@@ -143,12 +202,11 @@ scinfo <- scaleControlFilter(chip.bin, con.bin)
 
 chip.data <- data[,1]
 con.data <- data[,2]
-stats <- filterWindows(chip.data, con.data, type="control", 
+stats <- filterWindowsControl(chip.data, con.data,
     prior.count=5, scale.info=scinfo)
 
 head(stats$filter)
 keep <- stats$filter > log2(3)
-
 }
 
 \keyword{filtering}
