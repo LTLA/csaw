@@ -16,6 +16,11 @@ Deprecated consolidateTests(), consolidateOverlaps().
 \item Renamed regions= to ranges= in mergeWindows() for consistency. 
 
 \item Added clusterWindowsList() to replace consolidateClusters().
+
+\item Added filterWindowsGlobal(), filterWindowsLocal(), filterWindowsProportion() and filterWindowsControl().
+Deprecated filterWindows().
+
+\item Minor renaming of scaleControlInfo() arguments, added assay.data= and assay.back= arguments.
 }}
 
 \section{Version 1.18.0}{\itemize{
