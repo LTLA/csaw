@@ -14,7 +14,7 @@ test_that("global filtering works correctly", {
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 1000)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
-    out <- filterWindows(windowed, binned, type="global")
+    out <- filterWindowsGlobal(windowed, binned)
     expect_equivalent(out$filter, 0) 
     expect_identical(names(out$filter), "50%")
     
@@ -22,13 +22,13 @@ test_that("global filtering works correctly", {
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*1000+1, 1:10*1000), seqinfo=Seqinfo("chrA", 10000)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=1000))
-    out <- filterWindows(windowed, binned, type="global") 
+    out <- filterWindowsGlobal(windowed, binned) 
     expect_equivalent(out$filter, 0)
 
     # Testing out different prior counts.
-    out <- filterWindows(windowed, binned, type="global", prior.count=3.5) 
+    out <- filterWindowsGlobal(windowed, binned, prior.count=3.5) 
     expect_equivalent(out$filter, 0)
-    out <- filterWindows(windowed, binned, type="global", prior.count=0.5) 
+    out <- filterWindowsGlobal(windowed, binned, prior.count=0.5) 
     expect_equivalent(out$filter, 0)
     
     # Testing what happens when the median is below the number of recorded bins.
@@ -37,41 +37,41 @@ test_that("global filtering works correctly", {
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 10000)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
-    out <- filterWindows(zeroed, binned, type="global")
+    out <- filterWindows(zeroed, binned)
     expect_equivalent(out$filter, 0) # Background estimate is also computed from all-zeroes.
     
     # Testing what happens when the median is within the recorded bins, but not quite the median of them.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 1100)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
-    out <- filterWindows(windowed, binned, type="global")
+    out <- filterWindows(windowed, binned)
     expect_equivalent(out$filter, 0)
     expect_identical(names(out$filter), "45%")
     
-    # Testing what happens when you don't specify the bin.
+    # Testing what happens when you don't specify the background.
     seqinfo(rowRanges(zeroed)) <- Seqinfo("chrA", 100)
     metadata(zeroed)$spacing <- 10
-    out <- filterWindows(zeroed, type="global") 
+    out <- filterWindowsGlobal(zeroed) 
     expect_equivalent(out$filter, 0) # Should be zero, as both median and count are based on zero's.
     
     win2 <- windowed
     seqinfo(rowRanges(win2)) <- Seqinfo("chrA", 100)
     metadata(win2)$spacing <- 10
-    out <- filterWindows(win2, type="global")
+    out <- filterWindowsGlobal(win2)
     expect_equal(out$abundances, aveLogCPM(asDGEList(win2)))
     expect_equal(out$filter, out$abundances - aveLogCPM(DGEList(matrix(0, 1, ncol(win2)), lib.size=win2$totals)))
     
     metadata(win2)$spacing <- 100
-    out2 <- filterWindows(win2, type="global")
+    out2 <- filterWindowsGlobal(win2)
     expect_equivalent(out2$filter, 0)
     expect_equivalent(out2$abundances, out$abundances)
 
     # Works correctly on empty inputs.
-    emp <- filterWindows(zeroed[0,], type="global")
+    emp <- filterWindowsGlobal(zeroed[0,])
     expect_equal(emp$filter, numeric(0))
-    emp <- filterWindows(zeroed[0,], binned, type="global")
+    emp <- filterWindowsGlobal(zeroed[0,], binned)
     expect_equal(emp$filter, numeric(0))
-    emp <- filterWindows(zeroed, binned[0,], type="global")
+    emp <- filterWindowsGlobal(zeroed, binned[0,])
     expect_equal(emp$filter, 0)
 })
 
@@ -84,40 +84,40 @@ test_that("local filtering works correctly", {
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(20, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 200)), colData=DataFrame(totals=1e6, ext=1),
     	metadata=list(final.ext=NA))
-    out <- filterWindows(windowed, binned, type="local")
+    out <- filterWindowsLocal(windowed, binned)
     expect_equivalent(out$filter, 0)
 
     # After subtraction, the background is still 10-times wider, but again this should be zero.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(110, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 1100)), colData=DataFrame(totals=1e6, ext=1),
     	metadata=list(final.ext=NA))
-    out <- filterWindows(windowed, binned, type="local")
+    out <- filterWindowsLocal(windowed, binned)
     expect_equivalent(out$filter, 0)
   
     # Testing out different prior counts.
-    out <- filterWindows(windowed, binned, type="local", prior.count=3.5) 
+    out <- filterWindowsLocal(windowed, binned, prior.count=3.5) 
     expect_equivalent(out$filter, 0)
-    out <- filterWindows(windowed, binned, type="local", prior.count=0.5) 
+    out <- filterWindowsLocal(windowed, binned, prior.count=0.5) 
     expect_equivalent(out$filter, 0)
  
     # Another case of subtraction, this time with a different extension for the background.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(110, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 1001)), colData=DataFrame(totals=1e6, ext=100),
     	metadata=list(final.ext=NA))
-    out <- filterWindows(windowed, binned, type="local")
+    out <- filterWindowsLocal(windowed, binned)
     expect_equivalent(out$filter, 0)
     
     # More subtraction.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 1000)), colData=DataFrame(totals=1e6, ext=1),
     	metadata=list(final.ext=1))
-    out <- filterWindows(windowed, binned, type="local")
+    out <- filterWindowsLocal(windowed, binned)
     expect_equivalent(out$filter, 0)
 
     # Works correctly on empty inputs.
-    emp <- filterWindows(windowed[0,], binned[0,], type="local")
+    emp <- filterWindowsLocal(windowed[0,], binned[0,])
     expect_equal(emp$filter, numeric(0))
-    expect_error(filterWindows(windowed, binned[0,], type="local"), "same length")
+    expect_error(filterWindowsLocal(windowed, binned[0,]), "same length")
 })
 
 test_that("control-based filtering works correctly", {
@@ -126,16 +126,16 @@ test_that("control-based filtering works correctly", {
     	metadata=list(final.ext=NA))
 
     countered <- windowed
-    expect_warning(out <- filterWindows(windowed, countered, type="control"), "not specified")
+    expect_warning(out <- filterWindowsControl(windowed, countered), "not specified")
     expect_equivalent(out$filter, 0)
-    expect_warning(out <- filterWindows(windowed, countered, type="control", prior.count=5), "not specified")
+    expect_warning(out <- filterWindowsControl(windowed, countered, prior.count=5), "not specified")
     expect_equivalent(out$filter, 0)
 
     # Also seeing what happens when the library size of the control changes.
     countered2 <- countered
     assay(countered2)[1] <- 20
     countered2$totals <- 2e6
-    expect_warning(out <- filterWindows(windowed, countered2, type="control"))
+    expect_warning(out <- filterWindowsControl(windowed, countered2))
 
     # With normalization; in this case, a trivial scaling.
     binned.chip <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, 1, 1)),
@@ -150,7 +150,7 @@ test_that("control-based filtering works correctly", {
     expect_identical(sc.info$data.totals, windowed$totals)
     expect_identical(sc.info$back.totals, countered$totals)
     
-    out <- filterWindows(windowed, countered, type="control", scale.info=sc.info)
+    out <- filterWindowsControl(windowed, countered, scale.info=sc.info)
     expect_equivalent(out$filter, 0)
 
     # More effortful normalization, assuming undersampling in control.
@@ -164,22 +164,22 @@ test_that("control-based filtering works correctly", {
     expect_identical(sc.info$data.totals, windowed$totals)
     expect_identical(sc.info$back.totals, countered2$totals)
 
-    out <- filterWindows(windowed, countered2, type="control", scale.info=sc.info)
+    out <- filterWindowsControl(windowed, countered2, scale.info=sc.info)
     expect_equivalent(out$filter, 0)
-    out <- filterWindows(windowed, countered2, type="control", scale.info=sc.info, prior.count=5)
+    out <- filterWindowsControl(windowed, countered2, scale.info=sc.info, prior.count=5)
     expect_equivalent(out$filter, 0)
 
     # Checking that it is unhappy when the regions are of different size.
     countered2 <- SummarizedExperiment(assays=SimpleList(counts=matrix(20, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 200)), colData=DataFrame(totals=1e6, ext=1),
     	metadata=list(final.ext=NA))
-    expect_warning(out <- filterWindows(windowed, countered2, type="control"))
+    expect_warning(out <- filterWindowsControl(windowed, countered2))
     expect_equal(out$filter, 0)
 
     # Works correctly on empty inputs.
-    expect_warning(emp <- filterWindows(windowed[0,], countered[0,], type="control"))
+    expect_warning(emp <- filterWindowsControl(windowed[0,], countered[0,]))
     expect_equal(emp$filter, numeric(0))
-    expect_error(filterWindows(windowed, countered[0,], type="control"), "same length")
+    expect_error(filterWindowsControl(windowed, countered[0,]), "same length")
 })
 
 test_that("proportional filtering works as expected", {
@@ -188,18 +188,18 @@ test_that("proportional filtering works as expected", {
     	colData=DataFrame(totals=1e6, ext=100), metadata=list(final.ext=NA, spacing=1))
 
     # works if not all windows are available, assuming the lost windows are lower abundance.
-    out <- filterWindows(multi.win, type="proportion")$filter
+    out <- filterWindowsProportion(multi.win)$filter
     expect_equal(tail(out,1), 1)
     expect_true(all(diff(out) > 0))
     expect_true(all(out > 0.99))
 
     # Still works upon changes to the chromosome size.
     seqinfo(rowRanges(multi.win)) <- Seqinfo("chrA", 10)
-    out <- filterWindows(multi.win, type="proportion")$filter
+    out <- filterWindowsProportion(multi.win)$filter
     expect_equal(out, 1:10/10)
     expect_true(all(diff(out) > 0))
 
     # Works correctly on empty inputs.
-    emp <- filterWindows(multi.win[0,], type="global")
+    emp <- filterWindowsProportion(multi.win[0,])
     expect_equal(emp$filter, numeric(0))
 })
