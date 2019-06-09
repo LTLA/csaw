@@ -11,91 +11,153 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 # created 18 February 2015	
 {
 	type <- match.arg(type, c("global", "local", "control", "proportion"))
-	abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
 
 	if (type=="proportion") {
-		genome.windows <- .getWindowNum(data)
-		ranked.win <- rank(abundances)
-		nwin <- nrow(data)
-
-		if (genome.windows <= nwin) {
-			relative.rank <- ranked.win/nwin
-		} else {
-			relative.rank <- 1 + (ranked.win - nwin)/genome.windows
-		}
-		return(list(abundances=abundances, filter=relative.rank))
-
-	} else {
-		if (missing(background) && type=="global") {
-			filter.stat <- abundances  - .getGlobalBg(data, abundances, prior.count)
-			return(list(abundances=abundances, filter=filter.stat))
-		} 
-
-        # We don't adjust each abundance for the size of the individual regions, 
-        # as that would be a bit too much like FPKM. We only use the widths to
-        # adjust the background abundances for comparison.
-		bwidth <- getWidths(background)
-		dwidth <- getWidths(data)
-
-		if (type=="global") { 
-			.checkLibSizes(data, background)
-			relative.width <- median(bwidth)/median(dwidth)
-			if (is.na(relative.width)) { relative.width <- 1 }
-			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
-			filter.stat <- abundances - .getGlobalBg(background, bg.ab, prior.count)
-			
-		} else if (type=="local") {
- 		    if (!identical(nrow(data), nrow(background))) { 
-                stop("data and background should be of the same length") 
-            }
-			.checkLibSizes(data, background)
-
-			relative.width <- (bwidth  - dwidth)/dwidth
-            assay(background, i=assay.back) <- assay(background, i=assay.back, withDimnames=FALSE) - assay(data, assay=assay.data, withDimnames=FALSE)
-
-			# Some protection for negative widths (counts should be zero, so only the prior gets involved in bg.ab).
-			subzero <- relative.width <= 0
-			if (any(subzero)) { 
-				relative.width[subzero] <- 1
-				bg.y$counts[subzero,] <- 0L
-			}	
-
-			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
-			filter.stat <- abundances - bg.ab
-
-		} else {
-			# Need to account for composition bias between ChIP and control libraries.
-			if (!is.null(scale.info)) {
-                if (!identical(scale.info$data.totals, data$totals)) {
-                    stop("'data$totals' are not the same as those used for scaling")
-                } 
-                if (!identical(scale.info$back.totals, background$totals)) { 
-                    stop("'back$totals' are not the same as those used for scaling")
-                }
-   				background$totals <- background$totals * scale.info$scale 
-			} else {
-				warning("normalization factor not specified for composition bias")
-			}
-
- 		    if (!identical(nrow(data), nrow(background))) { 
-                stop("data and background should be of the same length") 
-            }	
-			relative.width <- bwidth/dwidth
-			lib.adjust <- prior.count * mean(background$totals)/mean(data$totals) # Account for library size differences.
-
-			bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=lib.adjust)
-			filter.stat <- abundances - bg.ab 
-		}
-
-		return(list(abundances=abundances, back.abundances=bg.ab, filter=filter.stat))
+        .Deprecated("filterWindowsProportion")
+        filterWindowsProportion(data, assay.data=assay.data, prior.count=prior.count)
+	} else if (type=="global") {
+        .Deprecated("filterWindowsGlobal")
+        filterWindowsGlobal(data, background, assay.data=assay.data, assay.back=assay.back, prior.count=prior.count)
+    } else if (type=="local") {
+        .Deprecated("filterWindowsLocal")
+        filterWindowsLocal(data, background, assay.data=assay.data, assay.back=assay.back, prior.count=prior.count)
+    } else {
+        .Deprecated("filterWindowsControl")
+        filterWindowsControl(data, background, assay.data=assay.data, assay.back=assay.back, 
+            prior.count=prior.count, scale.info=scale.info)
 	}
 }
 
+#' @export
+filterWindowsProportion <- function(data, assay.data="counts", prior.count=2) 
+# Defines the filter statistic for each window as the relative rank.
+{
+    abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
+    genome.windows <- .getWindowNum(data)
+    ranked.win <- rank(abundances)
+    nwin <- nrow(data)
+
+    if (genome.windows <= nwin) {
+        relative.rank <- ranked.win/nwin
+    } else {
+        relative.rank <- 1 + (ranked.win - nwin)/genome.windows
+    }
+    list(abundances=abundances, filter=relative.rank)
+}
+
+#' @export
+filterWindowsGlobal <- function(data, background, assay.data="counts", assay.back="counts", prior.count=2) 
+# Defines the filter statistic for each window as the log-fold change
+# above a global estimate for the background enrichment.
+{
+    abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
+
+    if (missing(background)) {
+        filter.stat <- abundances  - .getGlobalBg(data, abundances, prior.count)
+        return(list(abundances=abundances, filter=filter.stat))
+    } 
+
+    # We don't adjust each abundance for the size of the individual regions, 
+    # as that would be a bit too much like FPKM and make strong assumptions 
+    # about the uniformity of coverage with respect to region width. We only 
+    # use the widths to adjust the background abundances for comparison.
+    bwidth <- getWidths(background)
+    dwidth <- getWidths(data)
+
+    .checkLibSizes(data, background)
+    relative.width <- median(bwidth)/median(dwidth)
+    if (is.na(relative.width)) { 
+        relative.width <- 1 
+    }
+
+    bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
+    filter.stat <- abundances - .getGlobalBg(background, bg.ab, prior.count)
+
+    list(abundances=abundances, back.abundances=bg.ab, filter=filter.stat)
+}
+
+#' @export
+filterWindowsLocal <- function(data, background, assay.data="counts", assay.back="counts", prior.count=2)
+# Defines the filter statistic for each window as the log-fold change
+# above a local estimate for the background enrichment, based on 
+# flanking regions.
+{
+    .checkNestedRanges(data, background)
+    .checkLibSizes(data, background)
+
+    bwidth <- getWidths(background)
+    dwidth <- getWidths(data)
+    relative.width <- (bwidth  - dwidth)/dwidth
+    assay(background, i=assay.back) <- (assay(background, i=assay.back, withDimnames=FALSE) 
+        - assay(data, assay=assay.data, withDimnames=FALSE))
+
+    # Some protection for negative widths (counts should be zero, so only the prior gets involved in bg.ab).
+    subzero <- relative.width <= 0
+    if (any(subzero)) { 
+        relative.width[subzero] <- 1
+        bg.y$counts[subzero,] <- 0L
+    }	
+
+    abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
+    bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
+    filter.stat <- abundances - bg.ab
+    list(abundances=abundances, back.abundances=bg.ab, filter=filter.stat)
+}
+
+#' @export
+filterWindowsControl <- function(data, background, assay.data="counts", assay.back="counts",
+    prior.count=2, scale.info=NULL)
+# Defines the filter statistic for each window as the log-fold change
+# above a local estimate for the background enrichment, based on 
+# control libraries at the same position.
+{
+    if (!is.null(scale.info)) {
+        if (!identical(scale.info$data.totals, data$totals)) {
+            stop("'data$totals' are not the same as those used for scaling")
+        } 
+        if (!identical(scale.info$back.totals, background$totals)) { 
+            stop("'back$totals' are not the same as those used for scaling")
+        }
+        background$totals <- background$totals * scale.info$scale 
+    } else {
+        warning("normalization factor not specified for composition bias")
+    }
+    .checkNestedRanges(data, background)
+
+    bwidth <- getWidths(background)
+    dwidth <- getWidths(data)
+    relative.width <- bwidth/dwidth
+    lib.adjust <- prior.count * mean(background$totals)/mean(data$totals) # Account for library size differences.
+
+    abundances <- scaledAverage(data, assay.id=assay.data, scale=1, prior.count=prior.count)
+    bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=lib.adjust)
+    filter.stat <- abundances - bg.ab 
+
+    list(abundances=abundances, back.abundances=bg.ab, filter=filter.stat)
+}
+
+##########################
+### Internal functions ###
+##########################
+
 .checkLibSizes <- function(data, background) {
 	if (!identical(data$totals, background$totals)) { 
-		stop("data and background totals should be identical")
+		stop("'data$totals' and 'background$totals' should be identical")
 	}
 	return(NULL)
+}
+
+#' @importFrom SummarizedExperiment assay assay<- rowRanges
+#' @importFrom BiocGenerics width
+#' @importFrom IRanges pintersect
+.checkNestedRanges <- function(data, background) {
+    if (!identical(nrow(data), nrow(background))) { 
+        stop("'data' and 'background' should be of the same length") 
+    }	
+    if (!identical(width(pintersect(rowRanges(data), rowRanges(background))), width(rowRanges(data)))) {
+        stop("'rowRanges(data)' are not nested within 'rowRanges(background)'")
+    }
+    NULL
 }
 
 #' @importFrom GenomeInfoDb seqlengths
@@ -124,14 +186,19 @@ filterWindows <- function(data, background, type="global", assay.data="counts", 
 	quantile(ab, probs=1 - 0.5/prop.seen) 
 }
 
+###############################
+### Miscellaneous functions ###
+###############################
+
 #' @export
 #' @importFrom stats median
-scaleControlFilter <- function(data, background) 
+scaleControlFilter <- function(data.bin, back.bin, assay.data="counts", assay.back="counts")
 # Computes the normalization factor due to composition bias
 # between the ChIP and background samples.
 {
-	adjusted <- filterWindows(data, background, type="control", prior.count=0, 
-        scale.info=list(scale=1, data.totals=data$totals, back.totals=background$totals))
-	nf <- 2^-median(adjusted$filter, na.rm=TRUE) # protect against NA's from all-zero . 
-    return(list(scale=nf, data.totals=data$totals, back.totals=background$totals))
+    adjusted <- filterWindowsControl(data.bin, back.bin, prior.count=0, 
+        assay.data=assay.data, assay.back=assay.back,
+        scale.info=list(scale=1, data.totals=data.bin$totals, back.totals=back.bin$totals))
+    nf <- 2^-median(adjusted$filter, na.rm=TRUE) # protect against NA's from all-zero. 
+    list(scale=nf, data.totals=data.bin$totals, back.totals=back.bin$totals)
 }
