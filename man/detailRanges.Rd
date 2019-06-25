@@ -10,22 +10,22 @@ detailRanges(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000),
 }
 
 \arguments{
-\item{incoming}{A GRanges object containing the ranges to be annotated.}
-\item{txdb}{A TxDb object for the genome of interest.}
-\item{orgdb}{An OrgDb object for the genome of interest.}
+\item{incoming}{A \linkS4class{GRanges} object containing the ranges to be annotated.}
+\item{txdb}{A \linkS4class{TxDb} object for the genome of interest.}
+\item{orgdb}{An \linkS4class{OrgDb} object for the genome of interest.}
 \item{dist}{An integer scalar specifying the flanking distance to annotate.}
 \item{promoter}{An integer vector of length 2, where first and second values define the promoter as some distance upstream and downstream from the TSS, respectively.}
-\item{key.field}{A character scalar specifying the keytype for name extraction.}
-\item{name.field}{A character scalar specifying the column to use as the gene name.}
+\item{key.field}{A character scalar specifying the key type in \code{orgdb} corresponding to the gene IDs in \code{txdb}.}
+\item{name.field}{A character scalar specifying the column from \code{orgdb} to use as the gene name.}
 \item{ignore.strand}{A logical scalar indicating whether strandedness in \code{incoming} should be ignored.}
 }
 
 \value{
-If \code{incoming} is not provided, a \code{GRanges} object will be returned containing ranges for the exons, promoters and gene bodies. 
+If \code{incoming} is not provided, a \linkS4class{GRanges} object will be returned containing ranges for the exons, promoters and gene bodies. 
 Gene keys (e.g., Entrez IDs) are povided as row names.
 Gene symbols and feature types are stored as metadata.
 
-If \code{incoming} is a \code{GRanges} object, a list will be returned with \code{overlap}, \code{left} and \code{right} elements. 
+If \code{incoming} is a \linkS4class{GRanges} object, a list will be returned with \code{overlap}, \code{left} and \code{right} elements. 
 Each element is a character vector of length equal to the number of ranges in \code{incoming}.
 Each non-empty string records the gene symbol, the overlapped exons and the strand. 
 For \code{left} and \code{right}, the gap between the range and the annotated feature is also included.
@@ -37,14 +37,15 @@ The aim is to determine the genic context of empirically identified regions, for
 All neighboring genes within a specified range are reported, rather than just the closest gene to the region.
 If a region in \code{incoming} is stranded and \code{ignore.strand=FALSE}, annotated features will only be reported if they lie on the same strand as that region.
 
-If \code{incoming} is missing, then the annotation will be provided directly to the user in the form of a \code{GRanges} object. 
+If \code{incoming} is missing, then the annotation will be provided directly to the user in the form of a \linkS4class{GRanges} object. 
 This may be more useful when further work on the annotation is required.
 Features are labelled as exons (\code{"E"}), promoters (\code{"P"}) or gene bodies (\code{"G"}).
 Overlaps to introns can be identified by finding those regions that overlap with gene bodies but not with any of the corresponding exons.
 
 The default settings for \code{key.field} and \code{name.field} will work for human and mouse genomes, but may not work for other organisms.
-The \code{key.field} should refer to the key type in the \code{OrgDb} object, and also correspond to the \code{GENEID} of the \code{TxDb} object.
-For example, in S. cerevisiae, \code{key.field} is set to \code{"ORF"} while \code{name.field} is set to \code{"GENENAME"}.
+The \code{key.field} should specify the key type in the \code{orgdb} object that corresponds to the gene IDs of the \code{txdb} object.
+For example, in S. cerevisiae, \code{key.field} is set to \code{"ORF"} to match the gene IDs in the corresponding TxDb object,
+while \code{name.field} is set to \code{"GENENAME"} to obtain the gene symbols.
 }
 
 \section{Explanation of fields}{
