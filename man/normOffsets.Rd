@@ -17,7 +17,7 @@ normFactors(object, method="TMM", weighted=FALSE, ...,
   \item{object}{A SummarizedExperiment object containing a count matrix.}
   \item{method}{String specifying the type of scaling normalization method to use.}
   \item{weighted}{A logical scalar indicating whether precision weights should be used for TMM normalization.}
-  \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{type="scaling"}, or \code{\link{loessFit}} for \code{type="loess"}.}
+  \item{...}{Other arguments to be passed to \code{\link{calcNormFactors}} for \code{normFactors}, or \code{\link{loessFit}} for \code{normOffsets}.}
   \item{assay.id}{An integer scalar or string specifying the assay values to use for normalization.}
   \item{se.out}{A logical scalar indicating whether or not a SummarizedExperiment object should be returned.
 Alternatively, a SummarizedExperiment object in which normalization factors are to be stored.}
