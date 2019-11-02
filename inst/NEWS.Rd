@@ -2,6 +2,10 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.22.0}{\itemize{
+\item Removed deprecated functionality in consolidateTests() and related functions.    
+}}
+
 \section{Version 1.20.0}{\itemize{
 \item Removed deprecated functionality in normOffsets(), readParam(), scaledAverage().
 

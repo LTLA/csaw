@@ -4,7 +4,7 @@
 #' @importFrom GenomeInfoDb seqnames Seqinfo seqlevels seqlengths
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-mergeWindows <- function(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE, regions)
+mergeWindows <- function(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE)
 # This function merges the adjacent windows if they lie within 'tol' of each other,
 # Any abundance filtering should be done beforehand. Negative values of tol refer
 # to a minimum overlap. A value of zero means that the windows must be adjacent
@@ -13,11 +13,6 @@ mergeWindows <- function(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=
 # written by Aaron Lun
 # created 30 July 2013
 {
-    if (!missing(regions)) {
-        .Deprecated(msg="'regions=' is deprecated.\nUse 'ranges=' instead.")
-        ranges <- regions
-    }
-
     ranges <- .toGRanges(ranges)
     strs <- strand(ranges)
     if (!ignore.strand && length(runValue(strs))!=1) {

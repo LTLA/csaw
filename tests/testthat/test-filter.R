@@ -1,4 +1,4 @@
-# This tests the sensibility of the filterWindows() function. In particular,
+# This tests the sensibility of the filterWindows*() functions. In particular,
 # we want to make sure that the filter is calculated properly, despite the 
 # manipulations of width and prior count.
 # library(csaw); library(testthat); source("test-filter.R")
@@ -37,14 +37,14 @@ test_that("global filtering works correctly", {
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 10000)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
-    out <- filterWindows(zeroed, binned)
+    out <- filterWindowsGlobal(zeroed, binned)
     expect_equivalent(out$filter, 0) # Background estimate is also computed from all-zeroes.
     
     # Testing what happens when the median is within the recorded bins, but not quite the median of them.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, nrow=10, 1)),
     	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 1100)), 
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
-    out <- filterWindows(windowed, binned)
+    out <- filterWindowsGlobal(windowed, binned)
     expect_equivalent(out$filter, 0)
     expect_identical(names(out$filter), "45%")
     

@@ -1,34 +1,4 @@
 #' @export
-filterWindows <- function(data, background, type="global", assay.data="counts", assay.back="counts",
-                          prior.count=2, scale.info=NULL)
-# This is a function for proportion- or background-based filtering of a
-# RangedSummarizedExperiment object. For the former, it computes the relative
-# ranks that can be used to determine the proportion of highest-abundance
-# windows to keep. For the latter, it returns the enrichment term between data
-# and background.
-#
-# written by Aaron Lun
-# created 18 February 2015	
-{
-	type <- match.arg(type, c("global", "local", "control", "proportion"))
-
-	if (type=="proportion") {
-        .Deprecated("filterWindowsProportion")
-        filterWindowsProportion(data, assay.data=assay.data, prior.count=prior.count)
-	} else if (type=="global") {
-        .Deprecated("filterWindowsGlobal")
-        filterWindowsGlobal(data, background, assay.data=assay.data, assay.back=assay.back, prior.count=prior.count)
-    } else if (type=="local") {
-        .Deprecated("filterWindowsLocal")
-        filterWindowsLocal(data, background, assay.data=assay.data, assay.back=assay.back, prior.count=prior.count)
-    } else {
-        .Deprecated("filterWindowsControl")
-        filterWindowsControl(data, background, assay.data=assay.data, assay.back=assay.back, 
-            prior.count=prior.count, scale.info=scale.info)
-	}
-}
-
-#' @export
 filterWindowsProportion <- function(data, assay.data="counts", prior.count=2) 
 # Defines the filter statistic for each window as the relative rank.
 {

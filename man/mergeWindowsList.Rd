@@ -1,5 +1,4 @@
-\name{consolidateWindows}
-\alias{consolidateWindows}
+\name{mergeWindowsList}
 \alias{mergeWindowsList}
 \alias{findOverlapsList}
 
@@ -10,25 +9,15 @@
 mergeWindowsList(ranges.list, tol, ...)
 
 findOverlapsList(ranges.list, regions, ...)
-
-# Deprecated.
-consolidateWindows(data.list, equiweight=TRUE, merge.args=list(),
-    regions=NULL, overlap.args=list(), sign.list=NULL) 
 }
 
 \arguments{
-\item{ranges.list, data.list}{A list of \linkS4class{RangedSummarizedExperiment} and/or \linkS4class{GRanges} objects.}
+\item{ranges.list}{A list of \linkS4class{RangedSummarizedExperiment} and/or \linkS4class{GRanges} objects.}
 \item{tol}{An integer scalar specifying the tolerance to use in \code{\link{mergeWindows}}.}
 \item{...}{For \code{mergeWindowsList}, further arguments to pass to \code{\link{mergeWindows}}.
 
 For \code{findOverlapsList}, further arguments to pass to \code{\link{findOverlaps}}.}
 \item{regions}{A \linkS4class{GRanges} object specifying reference regions of interest for overlapping with windows.}
-\item{equiweight}{A logical scalar indicating whether contributions from each set of windows should be weighted equally.}
-\item{merge.args}{A named list of parameters to pass to \code{\link{mergeWindows}}.}
-\item{overlap.args}{A named list of parameters to pass to \code{\link{findOverlaps}}.}
-\item{sign.list}{A list of logical vectors, where each vector corresponds to and is of the same length as an object in \code{x}.
-Each value of the vector should indicate whether the log-fold change is positive for the corresponding window.
-Use of this argument is not recommended, see \code{?\link{mergeWindows}} for details.}
 }
 
 \value{

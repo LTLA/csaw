@@ -26,14 +26,3 @@ clusterWindowsList <- function(ranges.list, tab.list, equiweight=TRUE, ...)
     out <- clusterWindows(all.data, all.result, weights=weights, ...)
     c(list(ranges=all.data), out)
 }
-
-#' @export
-consolidateClusters <- function(data.list, result.list, equiweight=TRUE, ...) {
-    .Deprecated("clusterWindowsList")
-    out <- clusterWindowsList(ranges.list=data.list, tab.list=result.list, equiweight=equiweight, ...)
-    groupings <- rep(seq_along(data.list), lengths(data.list)) 
-    out$ids <- split(out$ids, groupings)
-    names(out$ids) <- names(data.list)
-    out
-}
-

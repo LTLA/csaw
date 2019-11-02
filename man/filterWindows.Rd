@@ -24,10 +24,6 @@ filterWindowsProportion(data, assay.data="counts", prior.count=2)
 
 scaleControlFilter(data.bin, back.bin, assay.data="counts", 
     assay.back="counts")
-
-# Deprecated.
-filterWindows(data, background, type="global", assay.data="counts",
-    assay.back="counts", prior.count=2, scale.info=NULL) 
 }
 
 \arguments{
@@ -48,7 +44,6 @@ filterWindows(data, background, type="global", assay.data="counts",
 i.e., a normalization factor and library sizes for ChIP and control samples.}
 \item{data.bin}{A RangedSummarizedExperiment containing bin-level counts for ChIP libraries.}
 \item{back.bin}{A RangedSummarizedExperiment containing bin-level counts for control libraries.}
-\item{type}{String specifying the type of filtering method to use.}
 }
 
 \value{

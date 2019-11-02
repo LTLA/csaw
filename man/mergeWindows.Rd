@@ -6,8 +6,7 @@
 \description{Uses a simple single-linkage approach to merge adjacent or overlapping windows into clusters.}
 
 \usage{
-mergeWindows(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE,
-    regions) 
+mergeWindows(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE)
 }
 
 \arguments{
@@ -16,7 +15,6 @@ mergeWindows(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE,
 	\item{signs}{A logical vector specifying whether each window has a positive log-FC.}
 	\item{max.width}{A numeric scalar specifying the maximum size of merged intervals.}
 	\item{ignore.strand}{A logical scalar indicating whether to consider the strandedness of \code{ranges}.}
-    \item{regions}{Same as \code{ranges}, deprecated for consistency.}
 }
 
 \value{

@@ -1,21 +1,17 @@
 \name{clusterWindowsList}
 \alias{clusterWindowsList}
-\alias{consolidateClusters}
 
 \title{Consolidate DB clusters}
 \description{Consolidate DB results from multiple analyses with cluster-level FDR control.}
 
 \usage{
 clusterWindowsList(ranges.list, tab.list, equiweight=TRUE, ...)
-
-# Deprecated equivalent.
-consolidateClusters(data.list, result.list, equiweight=TRUE, ...)
 }
 
 \arguments{
-\item{ranges.list, data.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} objects,
+\item{ranges.list}{A list of \linkS4class{GRanges} or \linkS4class{RangedSummarizedExperiment} objects,
 usually containing windows of varying sizes from separate calls to \code{\link{windowCounts}}.}
-\item{tab.list, result.list}{A list of data.frames of differential binding results, 
+\item{tab.list}{A list of data.frames of differential binding results, 
 usually from separate analyses at differing window sizes.
 Each should contain one row per interval for the corresponding entry of \code{ranges.list}.}
 \item{equiweight}{a logical scalar indicating whether equal weighting from each analysis should be enforced}
