@@ -22,14 +22,16 @@ test_that("combineTests works as expected on vanilla inputs", {
         expect_identical(as.integer(by.id), tabcom$nWindows)
         expect_identical(names(by.id), rownames(tabcom))
 
-        test.up <- table(ids[tab$logFC > 0.5])
-        reference <- as.integer(test.up)[match(rownames(tabcom), names(test.up))]
-        reference <- ifelse(is.na(reference), 0L, reference) 
+        p.by.id <- split(tab$PValue, ids)
+        p.by.id <- lapply(p.by.id, p.adjust, method="BH")
+        ncounter <- function(p, dir) { sum(p[dir] <= 0.05) }
+
+        up.by.id <- split(tab$logFC > 0, ids)
+        reference <- mapply(p=p.by.id, dir=up.by.id, FUN=ncounter, USE.NAMES=FALSE)
         expect_identical(reference, tabcom$logFC.up)
 
-        test.down <- table(ids[tab$logFC < -0.5])
-        reference <- as.integer(test.down)[match(rownames(tabcom), names(test.down))]
-        reference <- ifelse(is.na(reference), 0L, reference) 
+        down.by.id <- split(tab$logFC < 0, ids)
+        reference <- mapply(p=p.by.id, dir=down.by.id, FUN=ncounter, USE.NAMES=FALSE)
         expect_identical(reference, tabcom$logFC.down)
 
         # Checking Simes.
@@ -61,8 +63,7 @@ test_that("combineTests works with alternative options", {
         w <- runif(length(ids), 1, 5)
         tabcom <- combineTests(ids, tab, weight=w)
         uweight <- combineTests(ids, tab)
-        expect_identical(tabcom[,c("nWindows", "logFC.up", "logFC.down")],
-            uweight[,c("nWindows", "logFC.up", "logFC.down")])
+        expect_identical(tabcom$nWindows, uweight$nWindows)
 
         # Checking weighted Simes.
         checker <- split(data.frame(PValue=tab$PValue, weight=w), ids)
