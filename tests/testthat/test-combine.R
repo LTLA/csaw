@@ -19,7 +19,7 @@ test_that("combineTests works as expected on vanilla inputs", {
 
         # Checking numbers
         by.id <- table(ids)
-        expect_identical(as.integer(by.id), tabcom$nWindows)
+        expect_identical(as.integer(by.id), tabcom$NumTests)
         expect_identical(names(by.id), rownames(tabcom))
 
         p.by.id <- split(tab$PValue, ids)
@@ -28,11 +28,11 @@ test_that("combineTests works as expected on vanilla inputs", {
 
         up.by.id <- split(tab$logFC > 0, ids)
         reference <- mapply(p=p.by.id, dir=up.by.id, FUN=ncounter, USE.NAMES=FALSE)
-        expect_identical(reference, tabcom$logFC.up)
+        expect_identical(reference, tabcom$NumUp.logFC)
 
         down.by.id <- split(tab$logFC < 0, ids)
         reference <- mapply(p=p.by.id, dir=down.by.id, FUN=ncounter, USE.NAMES=FALSE)
-        expect_identical(reference, tabcom$logFC.down)
+        expect_identical(reference, tabcom$NumDown.logFC)
 
         # Checking Simes.
         checker <- split(data.frame(PValue=tab$PValue), ids)
@@ -63,7 +63,7 @@ test_that("combineTests works with alternative options", {
         w <- runif(length(ids), 1, 5)
         tabcom <- combineTests(ids, tab, weight=w)
         uweight <- combineTests(ids, tab)
-        expect_identical(tabcom$nWindows, uweight$nWindows)
+        expect_identical(tabcom$NumTests, uweight$NumTests)
 
         # Checking weighted Simes.
         checker <- split(data.frame(PValue=tab$PValue, weight=w), ids)
@@ -88,17 +88,17 @@ test_that("combineTests works with alternative options", {
 
         ref <- combineTests(ids, tab)
         out <- combineTests(ids, retab)
-        expect_identical(ref$logFC.up, out$logFC.1.up)
-        expect_identical(ref$logFC.down, out$logFC.1.down)
-        expect_identical(ref$logFC.up, out$logFC.2.down)
-        expect_identical(ref$logFC.down, out$logFC.2.up)
+        expect_identical(ref$NumUp.logFC, out$NumUp.logFC.1)
+        expect_identical(ref$NumDown.logFC, out$NumDown.logFC.1)
+        expect_identical(ref$NumUp.logFC, out$NumDown.logFC.2)
+        expect_identical(ref$NumDown.logFC, out$NumUp.logFC.2)
         expect_identical(ref$PValue, out$PValue)
 
         retab <- tab
         colnames(retab) <- c("whee", "blah", "yay")
         out4 <- combineTests(ids, retab, pval.col="yay", fc.col="whee")
-        expect_equal(ref$logFC.up, out4$whee.up)
-        expect_equal(ref$logFC.down, out4$whee.down)
+        expect_equal(ref$NumUp.logFC, out4$NumUp.whee)
+        expect_equal(ref$NumDown.logFC, out4$NumDown.whee)
         expect_equal(ref$PValue, out4$yay)
     }
 })
@@ -180,7 +180,7 @@ test_that("combineTests handles edge cases correctly", {
     # Checking for sane behaviour when no log-fold changes are supplied.
     out3 <- combineTests(ids, tab, fc.col=integer(0))
     ref <- combineTests(ids, tab)
-    ref$logFC.up <- ref$logFC.down <- ref$direction <- NULL
+    ref$NumUp.logFC <- ref$NumDown.logFC <- ref$direction <- NULL
     expect_identical(ref, out3)
 
     # Checking for sane behaviour when no IDs are supplied.

@@ -12,8 +12,8 @@
 #' @return
 #' A \linkS4class{DataFrame} with one row per cluster and various fields:
 #' \itemize{
-#' \item An integer field \code{nWindows}, specifying the total number of tests in each cluster.
-#' \item Two integer fields \code{*.up} and \code{*.down} for each log-FC column in \code{tab}, containing the number of tests with log-FCs above 0.5 or below -0.5, respectively.
+#' \item An integer field \code{NumTests}, specifying the total number of tests in each cluster.
+#' \item Two integer fields \code{NumUp.*} and \code{NumDown.*} for each log-FC column in \code{tab}, containing the number of tests with log-FCs significantly greater or less than 0, respectively.
 #' \item A numeric field containing the combined p-value. 
 #' If \code{pval.col=NULL}, this column is named \code{PValue}, otherwise its name is set to \code{colnames(tab[,pval.col])}.
 #' \item A numeric field \code{FDR}, containing the q-value corresponding to the combined p-value.
@@ -49,7 +49,7 @@
 #' Similarly, complex differences may be present if the total number of tests is larger than the number of tests in either category (i.e., change is not consistent across the cluster).
 #'
 #' To count up/down tests, \code{combineTests} applies a Benjamini-Hochberg correction to the p-values \emph{within} each cluster.
-#' Only the tests with adjusted p-values no greater than \code{fc.threshold} are counted as being up or down (though all tests in \code{tab} are still counted for the reported \code{"nWindows"} value).
+#' Only the tests with adjusted p-values no greater than \code{fc.threshold} are counted as being up or down (though all tests in \code{tab} are still counted for the reported \code{"NumTests"} value).
 #' We can interpret this as a test of conditional significance; assuming that the cluster is interesting (i.e., contains at least one true positive), what is the distribution of the signs of the changes within that cluster?
 #' Note that this procedure has no bearing on the Simes p-value reported for the cluster itself.
 #' 
@@ -123,13 +123,13 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
     groups <- input$groups
     weights <- input$weight
  
-	# Running the clustering procedure.
     fc.col <- .parseFCcol(fc.col, tab) 
     is.pval <- .getPValCol(pval.col, tab)
 	out <- .Call(cxx_get_cluster_stats, as.list(tab[fc.col]), tab[[is.pval]], ids, weights, fc.threshold)
 
 	combined <- DataFrame(out[[1]], out[[2]], out[[3]], p.adjust(out[[3]], method="BH"), row.names=groups)
-	colnames(combined) <- c("nWindows", sprintf("%s.%s", rep(colnames(tab)[fc.col], each=2), c("up", "down")), 
+	colnames(combined) <- c("NumTests", 
+        sprintf("Num%s.%s", c("Up", "Down"), rep(colnames(tab)[fc.col], each=2)),
         colnames(tab)[is.pval], "FDR")
 
     # Adding direction.
