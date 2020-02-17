@@ -3,44 +3,97 @@
 
 /* INTERNAL UTILITIES */
 
-typedef std::deque<std::pair<double, int> > PINDICES;
+typedef std::deque<std::pair<double, int> > IndexedPValues;
 
-template<class V>
-std::pair<double, size_t> compute_simes_p(PINDICES& psorter, const V& winweight) {
-    /* Computing the (weighted) FDR and thus the (weighted) Simes value.
-     * The weights are implemented as frequency weights, e.g., if you had 2
-     * tests with a weight of 10 to 1, you'd consider the one with the
-     * higher weight 10 more times to try to reject the global null (i.e.,
-     * expanding it in-place in the sorted vector of p-values).
-     */
-    std::sort(psorter.begin(), psorter.end());
+class SimesPreparer {
+public:
+    template<class V>
+    std::pair<double, size_t> operator()(IndexedPValues& psorter, const V& winweight) {
+        /* Computing the (weighted) FDR and thus the (weighted) Simes value.
+         * The weights are implemented as frequency weights, e.g., if you had 2
+         * tests with a weight of 10 to 1, you'd consider the one with the
+         * higher weight 10 more times to try to reject the global null (i.e.,
+         * expanding it in-place in the sorted vector of p-values).
+         */
+        std::sort(psorter.begin(), psorter.end());
 
-    double curweight=0;
-    for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
-        curweight += winweight[pIt->second];
-        (pIt->first)/=curweight;
-    }
-    const double& total_weight=curweight;
-
-    // Backtracking to create adjusted p-values with a cumulative minimum.
-    double curmin=1;
-    size_t counter=psorter.size()-1, minindex=counter;
-    for (auto prIt=psorter.rbegin(); prIt!=psorter.rend(); ++prIt, --counter) {
-        double& current=(prIt->first);
-        current*=total_weight;
-        if (current < curmin) {
-            curmin=current;
-            minindex=counter;
-        } else {
-            current=curmin;
+        double cumweight=0;
+        for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+            cumweight += winweight[pIt->second];
+            (pIt->first)/=cumweight;
         }
-    }
+        const double& total_weight=cumweight;
 
-    return std::make_pair(curmin, minindex);
-}
+        // Backtracking to create adjusted p-values with a cumulative minimum.
+        double curmin=1;
+        size_t counter=psorter.size()-1, minindex=counter;
+        for (auto prIt=psorter.rbegin(); prIt!=psorter.rend(); ++prIt, --counter) {
+            double& current=(prIt->first);
+            current*=total_weight;
+            if (current < curmin) {
+                curmin=current;
+                minindex=counter;
+            } else {
+                current=curmin;
+            }
+        }
+
+        return std::make_pair(curmin, minindex);
+    }
+};
+
+class HolmPreparer {
+public:    
+    HolmPreparer(size_t mn, double mp) : min_num(std::max(size_t(1), mn)), min_prop(mp) {}
+
+    template<class V>
+    std::pair<double, size_t> operator()(IndexedPValues& psorter, const V& winweight) {
+        /* Computing the (weighted) Holm correction. Weights are implemented
+         * as scaling factors on the nominal type I error threshold, as described
+         * by BH in the weighting paper form the Scandanavian Journal of Stats.
+         */
+        double total_weight=0;
+        for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+            total_weight += winweight[pIt->second];
+        }
+
+        std::sort(psorter.begin(), psorter.end());
+
+        double remaining=total_weight;
+        double cummax=0;
+        for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+            const double curweight = winweight[pIt->second];
+
+            double& current=(pIt->first);
+            current *= remaining/curweight;
+            if (current > 1) {
+                current=1;
+            }
+            if (current > cummax) {
+                cummax=current;
+            } else {
+                current=cummax;
+            }
+
+            remaining -= curweight;
+        }
+
+
+        size_t index=std::max(
+            min_num, 
+            static_cast<size_t>(std::ceil(min_prop * static_cast<double>(psorter.size())))
+        );
+        index=std::min(index, psorter.size());
+        return std::make_pair(psorter[index].first, index-1);
+    }
+private:
+    const size_t min_num;
+    const double min_prop;
+};
+
 
 template<class V>
-int guess_direction(const PINDICES& psorter, size_t minit, const V& lfc) {
+int guess_direction(const IndexedPValues& psorter, size_t minit, const V& lfc) {
     /* If there's only one log-FC, we also determine which directions
      * contribute to the combined p-value.  This is done by looking at the
      * direction of the tests with p-values below that used as the combined
@@ -73,11 +126,10 @@ int guess_direction(const PINDICES& psorter, size_t minit, const V& lfc) {
 
 /* MAIN FUNCTION */
 
-SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold) {
-    BEGIN_RCPP
-
+template<class PREP>
+SEXP get_cluster_stats_internal (SEXP fcs0, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold, PREP& preparer) {
 	// Checking indices.
-    const Rcpp::List fclist(fcs);
+    const Rcpp::List fclist(fcs0);
 	const size_t fcn=fclist.size();
     const Rcpp::NumericVector pval(pvals);
 	const size_t nwin=pval.size();
@@ -115,6 +167,7 @@ SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthres
     
     Rcpp::NumericVector out_p(nclust);
     Rcpp::IntegerVector out_dir(fcn==1 ? nclust : 0);
+    Rcpp::IntegerVector out_rep(nclust);
 
     // Various temporary values.
     size_t curclust=0;
@@ -129,9 +182,10 @@ SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthres
 			++run_end; 
 		}
 
-        auto output=compute_simes_p(psorter, winweight);
+        auto output=preparer(psorter, winweight);
         out_p[curclust] = output.first;
-        out_nwin[curclust]=run_end - run_start;
+        out_nwin[curclust] = run_end - run_start;
+        out_rep[curclust] = psorter[output.second].second;
 
 		// Computing the nclust number of windows, and that up/down for each fold change.
 		for (size_t fc=0; fc<fcn; ++fc) { 
@@ -172,6 +226,22 @@ SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthres
         out_dir_value=Rcpp::IntegerMatrix(nclust, 0);
     }
 
-    return Rcpp::List::create(out_nwin, out_nfc_value, out_p, out_dir_value);
+    return Rcpp::List::create(out_nwin, out_nfc_value, out_p, out_dir_value, out_rep);
+}
+
+SEXP compute_cluster_simes(SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold) {
+    BEGIN_RCPP
+    SimesPreparer prep;
+    return get_cluster_stats_internal(fcs, pvals, by, weight, fcthreshold, prep);
+    END_RCPP
+}
+
+SEXP compute_cluster_holm(SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold, SEXP min_n, SEXP min_p) {
+    BEGIN_RCPP
+    HolmPreparer prep(
+        check_integer_scalar(min_n, "minimum number of tests"),
+        check_numeric_scalar(min_n, "minimum proportion of tests")
+    );
+    return get_cluster_stats_internal(fcs, pvals, by, weight, fcthreshold, prep);
     END_RCPP
 }
