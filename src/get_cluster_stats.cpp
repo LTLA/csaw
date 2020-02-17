@@ -1,6 +1,78 @@
 #include "csaw.h"
 #include "utils.h"
 
+/* INTERNAL UTILITIES */
+
+typedef std::deque<std::pair<double, int> > PINDICES;
+
+template<class V>
+std::pair<double, size_t> compute_simes_p(PINDICES& psorter, const V& winweight) {
+    /* Computing the (weighted) FDR and thus the (weighted) Simes value.
+     * The weights are implemented as frequency weights, e.g., if you had 2
+     * tests with a weight of 10 to 1, you'd consider the one with the
+     * higher weight 10 more times to try to reject the global null (i.e.,
+     * expanding it in-place in the sorted vector of p-values).
+     */
+    std::sort(psorter.begin(), psorter.end());
+
+    double curweight=0;
+    for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+        curweight += winweight[pIt->second];
+        (pIt->first)/=curweight;
+    }
+    const double& total_weight=curweight;
+
+    // Backtracking to create adjusted p-values with a cumulative minimum.
+    double curmin=1;
+    size_t counter=psorter.size()-1, minindex=counter;
+    for (auto prIt=psorter.rbegin(); prIt!=psorter.rend(); ++prIt, --counter) {
+        double& current=(prIt->first);
+        current*=total_weight;
+        if (current < curmin) {
+            curmin=current;
+            minindex=counter;
+        } else {
+            current=curmin;
+        }
+    }
+
+    return std::make_pair(curmin, minindex);
+}
+
+template<class V>
+int guess_direction(const PINDICES& psorter, size_t minit, const V& lfc) {
+    /* If there's only one log-FC, we also determine which directions
+     * contribute to the combined p-value.  This is done by looking at the
+     * direction of the tests with p-values below that used as the combined
+     * p-value.  These tests must contribute because if any of them were
+     * non-significant, the combined p-value would increase.  Output codes
+     * are only up (1), only down (2) or mixed, i.e., both up and down (0).
+     */
+    bool has_up=false, has_down=false;
+
+    for (size_t i=0; i<=minit; ++i) {
+        const double& curfc=lfc[psorter[i].second];
+        if (curfc > 0) { 
+            has_up=true; 
+        } else if (curfc < 0) {
+            has_down=true;
+        }
+        if (has_up && has_down) { 
+            break; 
+        }
+    }
+
+    if (has_up && !has_down) { 
+        return 1; 
+    } else if (has_down && !has_up) { 
+        return 2; 
+    } else {
+        return 0;
+    }
+}
+
+/* MAIN FUNCTION */
+
 SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold) {
     BEGIN_RCPP
 
@@ -52,78 +124,35 @@ SEXP get_cluster_stats (SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthres
     while (run_start < nwin) {
         psorter.push_back(std::make_pair(pval[run_start], run_start));
         size_t run_end=run_start + 1;
-        double subweight=winweight[run_start];
 		while (run_end < nwin && clustid[run_start]==clustid[run_end]) { 
-			subweight+=winweight[run_end];
             psorter.push_back(std::make_pair(pval[run_end], run_end));
 			++run_end; 
 		}
 
-		// Computing the nclust number of windows, and that up/down for each fold change.
+        auto output=compute_simes_p(psorter, winweight);
+        out_p[curclust] = output.first;
         out_nwin[curclust]=run_end - run_start;
+
+		// Computing the nclust number of windows, and that up/down for each fold change.
 		for (size_t fc=0; fc<fcn; ++fc) { 
 			int& allup=out_nfc[fc*2][curclust];
 			int& alldown=out_nfc[fc*2+1][curclust];
+            const auto& curfcs=fcs[fc];
 
-			for (size_t curwin=run_start; curwin<run_end; ++curwin) {  
-                const double& curfc=fcs[fc][curwin];
-				if (curfc > fcthresh) { 
-                    ++allup; 
-                } else if (curfc < -fcthresh) { 
-                    ++alldown; 
+            for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+                if (pIt->first <= fcthresh) {
+                    const double& curfc=curfcs[pIt->second];
+                    if (curfc > 0) { 
+                        ++allup; 
+                    } else if (curfc < 0) { 
+                        ++alldown; 
+                    }
                 }
 			}
 		}
 
-		/* Computing the weighted Simes value. The weights are implemented as frequency 
-		 * weights, e.g., if you had 2 tests with a weight of 10 to 1, you'd consider the
-		 * one with the higher weight 10 more times to try to reject the global null (i.e.,
-		 * expanding it in-place in the sorted vector of p-values).
-		 */
-		std::sort(psorter.begin(), psorter.end());
-        double remaining=winweight[psorter.front().second];
-		double& outp=(out_p[curclust]=psorter.front().first/remaining); 
-        auto itps=psorter.begin()+1;
-        auto minit=psorter.begin();
-
-        while (itps!=psorter.end()) {
-	    	const int& curwin=itps->second;
-			remaining+=winweight[curwin];
-			const double more_temp=(itps->first)/remaining;
-			if (more_temp < outp) { 
-                outp=more_temp; 
-                minit=itps;
-            }
-            ++itps;
-		}
-		outp*=subweight;
-
-        /* If there's only one log-FC, we also determine which directions contribute to the combined p-value.
-         * This is done by looking at the direction of the tests with p-values below that used as the combined p-value.
-         * These tests must contribute because if any of them were non-significant, the combined p-value would increase.
-         * Output codes are only up (1), only down (2) or mixed, i.e., both up and down (0).
-         */
         if (fcn==1) {
-            bool has_up=false, has_down=false;
-            ++minit;
-
-            for (auto itps=psorter.begin(); itps!=minit; ++itps) {
-                const double& curfc=fcs[0][itps->second];
-                if (curfc > 0) { 
-                    has_up=true; 
-                } else if (curfc < 0) {
-                    has_down=true;
-                }
-                if (has_up && has_down) { 
-                    break; 
-                }
-            }
-
-            if (has_up && !has_down) { 
-                out_dir[curclust]=1; 
-            } else if (has_down && !has_up) { 
-                out_dir[curclust]=2; 
-            }
+            out_dir[curclust]=guess_direction(psorter, output.second, fcs[0]);
         }
 
 		// Setting it up for the next round.
