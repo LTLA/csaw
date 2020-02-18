@@ -23,7 +23,12 @@
 #' \itemize{
 #' \item For \code{\link{combineTests}}, the Benjamini-Hochberg correction is used.
 #' \item For \code{\link{minimalTests}}, the Holm correction is used. 
-#' \item For \code{\link{getBestTest}}, the Bonferroni correction is used.
+#' \item For \code{\link{getBestTest}} with \code{by.pval=TRUE}, the Holm correction is used.
+#' We could also use the Bonferroni correction here but Holm is universally more powerful so we use that instead.
+#' \item For \code{\link{getBestTest}} with \code{by.pval=FALSE}, 
+#' all tests bar the one with the highest abundance are simply removed.
+#' This mimics the application of an independent filter.
+#' No correction is applied as only one test remains.
 #' }
 #' 
 #' @section Determining the cluster-level direction:
@@ -43,7 +48,8 @@
 #' \itemize{
 #' \item For \code{\link{combineTests}}, the test with the lowest BH-adjusted p-value before enforcing monotonicity is used.
 #' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used (see the documentation for details).
-#' \item For \code{\link{getBestTest}}, the test with the lowest p-value is used.
+#' \item For \code{\link{getBestTest}}, the test with the lowest p-value is used if \code{by.pval=TRUE}.
+#' Otherwise, the test with the highest abundance is used.
 #' }
 #' Note that the chosen test is only representative in the sense that its p-value is especially important for computing the cluster-level p-value.
 #' This is usually sufficient to provide proxy log-fold changes for clusters with simple differences,
