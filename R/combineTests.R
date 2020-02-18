@@ -102,7 +102,7 @@
 combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     .general_test_combiner(ids=ids, tab=tab, weights=weights, 
         pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-        FUN=function(...) {
+        FUN=function(..., tab) {
             .Call(cxx_compute_cluster_simes, ...)
         }
     )
@@ -120,10 +120,10 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
  
     fc.col <- .parseFCcol(fc.col, tab) 
     is.pval <- .getPValCol(pval.col, tab)
-	out <- FUN(as.list(tab[fc.col]), tab[[is.pval]], ids, weights, fc.threshold)
+    out <- FUN(as.list(tab[fc.col]), tab[[is.pval]], ids, weights, fc.threshold, tab=tab)
 
     names(out[[2]]) <- sprintf("num.%s.%s", c("up", "down"), rep(colnames(tab)[fc.col], each=2))
-	combined <- DataFrame(num.tests=out[[1]], out[[2]], row.names=groups)
+    combined <- DataFrame(num.tests=out[[1]], out[[2]], row.names=groups)
     combined[[colnames(tab)[is.pval]]] <- out[[3]]
     combined$FDR <- p.adjust(out[[3]], method="BH")
 

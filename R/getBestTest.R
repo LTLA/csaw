@@ -22,12 +22,11 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, fc.
         if (length(cpm.col)!=1L) {
             stop("absent or multiple logCPM columns are not supported")
         }
-        abs<- tab[,cpm.col]
 
         .general_test_combiner(ids=ids, tab=tab, weights=weights, 
             pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-            FUN=function(...) {
-                .Call(cxx_compute_cluster_maxed, ..., abs)
+            FUN=function(..., tab) {
+                .Call(cxx_compute_cluster_maxed, ..., tab[,cpm.col])
             }
         )
     }
