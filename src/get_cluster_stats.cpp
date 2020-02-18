@@ -48,13 +48,15 @@ public:
 
     template<class V>
     std::pair<double, size_t> operator()(IndexedPValues& psorter, const V& winweight) {
-        /* Computing the (weighted) Holm correction. Weights are implemented
-         * as scaling factors on the nominal type I error threshold, as described
-         * by BH in the weighting paper form the Scandanavian Journal of Stats.
+        /* Computing the (weighted) Holm correction. Weights are implemented as
+         * scaling factors on the nominal type I error threshold, as described
+         * in Holm's original paper.
          */
         double total_weight=0;
         for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
-            total_weight += winweight[pIt->second];
+            const double curweight=winweight[pIt->second];
+            total_weight+=curweight;
+            (pIt->first)/=curweight;
         }
 
         std::sort(psorter.begin(), psorter.end());
@@ -63,28 +65,27 @@ public:
         double cummax=0;
         for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
             const double curweight = winweight[pIt->second];
-
-            double& current=(pIt->first);
-            current *= remaining/curweight;
-            if (current > 1) {
-                current=1;
-            }
-            if (current > cummax) {
-                cummax=current;
-            } else {
-                current=cummax;
-            }
-
+            double& curp=(pIt->first);
+            curp*=remaining;
             remaining -= curweight;
-        }
 
+            if (curp > 1) {
+                curp=1;
+            }
+            if (curp > cummax) {
+                cummax=curp;
+            } else {
+                curp=cummax;
+            }
+        }
 
         size_t index=std::max(
             min_num, 
             static_cast<size_t>(std::ceil(min_prop * static_cast<double>(psorter.size())))
         );
         index=std::min(index, psorter.size());
-        return std::make_pair(psorter[index].first, index-1);
+        --index;
+        return std::make_pair(psorter[index].first, index);
     }
 private:
     const size_t min_num;
