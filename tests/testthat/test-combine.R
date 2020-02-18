@@ -17,9 +17,9 @@ test_that("combineTests works as expected on vanilla inputs", {
         tab <- test$table
         tabcom <- combineTests(ids, tab)
 
-        # Checking numbers
+        # Checking numbers.
         by.id <- table(ids)
-        expect_identical(as.integer(by.id), tabcom$NumTests)
+        expect_identical(as.integer(by.id), tabcom$num.tests)
         expect_identical(names(by.id), rownames(tabcom))
 
         p.by.id <- split(tab$PValue, ids)
@@ -28,11 +28,17 @@ test_that("combineTests works as expected on vanilla inputs", {
 
         up.by.id <- split(tab$logFC > 0, ids)
         reference <- mapply(p=p.by.id, dir=up.by.id, FUN=ncounter, USE.NAMES=FALSE)
-        expect_identical(reference, tabcom$NumUp.logFC)
+        expect_identical(reference, tabcom$num.up.logFC)
 
         down.by.id <- split(tab$logFC < 0, ids)
         reference <- mapply(p=p.by.id, dir=down.by.id, FUN=ncounter, USE.NAMES=FALSE)
-        expect_identical(reference, tabcom$NumDown.logFC)
+        expect_identical(reference, tabcom$num.down.logFC)
+
+        # Checking the representative.
+        p2 <- NumericList(p.by.id)
+        chosen <- IntegerList(split(seq_along(ids), ids))==tabcom$rep.test
+        expect_identical(unlist(p2[chosen]), min(p2))
+        expect_identical(tab$logFC[tabcom$rep.test], tabcom$rep.logFC)
 
         # Checking Simes.
         checker <- split(data.frame(PValue=tab$PValue), ids)
@@ -44,6 +50,7 @@ test_that("combineTests works as expected on vanilla inputs", {
         # Checking if we get the same results after reversing the ids (ensures internal re-ordering is active).
         re.o <- rev(seq_along(ids))
         out2 <- combineTests(ids[re.o], tab[re.o,])
+        out2$rep.test <- re.o[out2$rep.test]
         expect_equal(tabcom, out2)
 
         # Checking we get the same results with a character vector (though ordering might be different).
@@ -63,7 +70,7 @@ test_that("combineTests works with alternative options", {
         w <- runif(length(ids), 1, 5)
         tabcom <- combineTests(ids, tab, weight=w)
         uweight <- combineTests(ids, tab)
-        expect_identical(tabcom$NumTests, uweight$NumTests)
+        expect_identical(tabcom$num.tests, uweight$num.tests)
 
         # Checking weighted Simes.
         checker <- split(data.frame(PValue=tab$PValue, weight=w), ids)
@@ -78,6 +85,7 @@ test_that("combineTests works with alternative options", {
         # Weights respond correctly to re-ordering.
         re.o <- rev(seq_along(ids))
         out2 <- combineTests(ids[re.o], tab[re.o,], weight=w[re.o])
+        out2$rep.test <- re.o[out2$rep.test]
         expect_equal(tabcom, out2)
 
         # Adding some tests if there's multiple log-FC's in 'tab'.
@@ -88,17 +96,17 @@ test_that("combineTests works with alternative options", {
 
         ref <- combineTests(ids, tab)
         out <- combineTests(ids, retab)
-        expect_identical(ref$NumUp.logFC, out$NumUp.logFC.1)
-        expect_identical(ref$NumDown.logFC, out$NumDown.logFC.1)
-        expect_identical(ref$NumUp.logFC, out$NumDown.logFC.2)
-        expect_identical(ref$NumDown.logFC, out$NumUp.logFC.2)
+        expect_identical(ref$num.up.logFC, out$num.up.logFC.1)
+        expect_identical(ref$num.down.logFC, out$num.down.logFC.1)
+        expect_identical(ref$num.up.logFC, out$num.down.logFC.2)
+        expect_identical(ref$num.down.logFC, out$num.up.logFC.2)
         expect_identical(ref$PValue, out$PValue)
 
         retab <- tab
         colnames(retab) <- c("whee", "blah", "yay")
         out4 <- combineTests(ids, retab, pval.col="yay", fc.col="whee")
-        expect_equal(ref$NumUp.logFC, out4$NumUp.whee)
-        expect_equal(ref$NumDown.logFC, out4$NumDown.whee)
+        expect_equal(ref$num.up.logFC, out4$num.up.whee)
+        expect_equal(ref$num.down.logFC, out4$num.down.whee)
         expect_equal(ref$PValue, out4$yay)
     }
 })
@@ -180,7 +188,7 @@ test_that("combineTests handles edge cases correctly", {
     # Checking for sane behaviour when no log-fold changes are supplied.
     out3 <- combineTests(ids, tab, fc.col=integer(0))
     ref <- combineTests(ids, tab)
-    ref$NumUp.logFC <- ref$NumDown.logFC <- ref$direction <- NULL
+    ref$num.up.logFC <- ref$num.down.logFC <- ref$direction <- NULL
     expect_identical(ref, out3)
 
     # Checking for sane behaviour when no IDs are supplied.

@@ -130,11 +130,11 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
     # Adding direction.
     if (length(fc.col)==1L) {
         labels <- c("mixed", "up", "down")
-        combined$Direction <- labels[out[[4]] + 1L]
+        combined$direction <- labels[out[[4]] + 1L]
     }
 
     # Adding representative log-fold changes.
-    combined$rep.test <- out[[5]]
+    combined$rep.test <- input$original[out[[5]]+1L]
     if (length(fc.col)!=0L) {
         combined <- cbind(combined, rep=tab[out[[5]] + 1L,fc.col,drop=FALSE])
     }
