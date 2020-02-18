@@ -124,7 +124,7 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
 
     names(out[[2]]) <- sprintf("num.%s.%s", c("up", "down"), rep(colnames(tab)[fc.col], each=2))
 	combined <- DataFrame(num.tests=out[[1]], out[[2]], row.names=groups)
-    combined[[is.pval]] <- out[[3]]
+    combined[[colnames(tab)[is.pval]]] <- out[[3]]
     combined$FDR <- p.adjust(out[[3]], method="BH")
 
     # Adding direction.
@@ -134,7 +134,7 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
     }
 
     # Adding representative log-fold changes.
-    combined$rep.test <- 
+    combined$rep.test <- out[[5]]
     if (length(fc.col)!=0L) {
         combined <- cbind(combined, rep=tab[out[[5]] + 1L,fc.col,drop=FALSE])
     }
