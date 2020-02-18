@@ -21,7 +21,7 @@ test_that("getBestTest works as expected on vanilla input", {
         	ref <- aggregate(tab$PValue ~ ids, FUN=function(x) { min(1, x*length(x)) }, data=NULL)	
         	xref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.min(tab$PValue[x])] }, data=NULL)	
             expect_equal(best$PValue, ref[,2])
-            expect_equal(best$best, xref[,2])
+            expect_equal(best$rep.test, xref[,2])
             expect_identical(rownames(best), as.character(sort(unique(ids))))
         
             # Testing what happens with a character vector as input.
@@ -48,12 +48,12 @@ test_that("getBestTest works with alternative options", {
             ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { min(1, tab$PValue[x]/w[x]*sum(w[x])) }, data=NULL)	
             xref <- aggregate(seq_along(ids)~ ids, FUN=function(x) { x[which.min(tab$PValue[x]/w[x])] }, data=NULL)	
             expect_equal(best$PValue, ref[,2])
-            expect_equal(best$best, xref[,2])
+            expect_equal(best$rep.test, xref[,2])
 
             # Now, searching for the max log-CPM.
             mostab <- getBestTest(ids, tab, by.pval=FALSE)
             ref <- aggregate(seq_along(ids) ~ ids, FUN=function(x) { x[which.max(tab$logCPM[x])] }, data=NULL)
-            expect_identical(ref[,2], mostab$best)
+            expect_identical(ref[,2], mostab$rep.test)
 
             # Changing the column headings.
             ref <- getBestTest(ids, tab)
@@ -63,7 +63,7 @@ test_that("getBestTest works with alternative options", {
 
             out <- getBestTest(ids, retab, pval.col="yay")
             expect_equal(out$yay, ref$PValue)
-            expect_identical(out$best, ref$best)
+            expect_identical(out$rep.test, ref$rep.test)
 
             out2 <- getBestTest(ids, retab, pval.col=3)
             expect_equal(out2, out)
@@ -102,7 +102,7 @@ test_that("getBestTest handles edge cases correctly", {
     
         expect_equal(out.na$PValue, out.ref$PValue)
         expect_identical(rownames(out.na), rownames(out.ref))
-        expect_identical(out.na$best, setdiff(seq_len(nrow(tab)), invalid)[out.ref$best]) 
+        expect_identical(out.na$rep.test, setdiff(seq_len(nrow(tab)), invalid)[out.ref$rep.test]) 
     }
 
     # Checking for sane behaviour when no IDs are supplied.
