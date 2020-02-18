@@ -9,9 +9,10 @@ minimalTests(
   tab,
   min.sig.n = 3,
   min.sig.prop = 0.4,
-  weight = NULL,
+  weights = NULL,
   pval.col = NULL,
-  fc.col = NULL
+  fc.col = NULL,
+  fc.threshold = 0.05
 )
 }
 \arguments{
@@ -23,19 +24,31 @@ minimalTests(
 
 \item{min.sig.prop}{Numeric scalar containing the minimum proportion of significant barcodes when \code{method="holm-min"}.}
 
+\item{weights}{A numeric vector of weights for each test, defaults to 1 for each test.}
+
 \item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.}
 
 \item{fc.col}{An integer or character vector specifying the columns of \code{tab} containing the log-fold changes.}
+
+\item{fc.threshold}{A numeric scalar specifying the FDR threshold to use \emph{within} each cluster for counting tests changing in each direction.}
 }
 \value{
-A \linkS4class{DataFrame} containing:
+A \linkS4class{DataFrame} with one row per cluster and various fields:
 \itemize{
-\item An integer field \code{NumTests}, specifying the total number of tests in each cluster.
-\item One or more numeric fields containing the log-fold changes of the test with the \eqn{x}th-smallest p-value in each cluster.
-\item A numeric field containing the combined p-value. 
+\item An integer field \code{num.tests}, specifying the total number of tests in each cluster.
+\item Two integer fields \code{num.up.*} and \code{num.down.*} for each log-FC column in \code{tab}, containing the number of tests with log-FCs significantly greater or less than 0, respectively.
+See \code{?"\link{cluster-direction}"} for more details.
+\item A numeric field containing the cluster-level p-value. 
 If \code{pval.col=NULL}, this column is named \code{PValue}, otherwise its name is set to \code{colnames(tab[,pval.col])}.
-\item A numeric field \code{FDR}, containing the q-value corresponding to the combined p-value.
+\item A numeric field \code{FDR}, containing the BH-adjusted cluster-level p-value.
+\item A character field \code{direction} (if \code{fc.col} is of length 1), specifying the dominant direction of change for tests in each cluster.
+See \code{?"\link{cluster-direction}"} for more details.
+\item One integer field \code{rep.test} containing the row index (for \code{tab}) of a representative test for each cluster.
+See \code{?"\link{cluster-direction}"} for more details.
+\item One numeric field \code{rep.*} for each log-FC column in \code{tab}, containing a representative log-fold change for the differential tests in the cluster.
+See \code{?"\link{cluster-direction}"} for more details.
 }
+Each row is named according to the ID of the corresponding cluster.
 }
 \description{
 Compute a p-value for each cluster based around the rejection of a minimal number or proportion of tests from that cluster.
@@ -45,12 +58,20 @@ For each cluster, this function applies the Holm-Bonferroni correction to all of
 It then chooses the \eqn{x}th-smallest adjusted p-value as the cluster-level p-value,
 where \eqn{x} is defined from the larger of \code{min.sig.n} and the product of \code{min.sig.prop} and the number of tests.
 (If \eqn{x} is larger than the total number of tests, the largest per-test p-value is used instead.)
-This means that a cluster can only achieve a low p-value if at least \eqn{x} tests also have low p-values.
 
 More formally, the cluster-level null hypothesis is that the per-test null hypothesis is false for fewer than \eqn{x} tests.
 We reject the cluster-level null at a nominal threshold \eqn{T} if we can reject \eqn{x} or more tests while controlling the FWER at \eqn{T}.
 This is done using the Holm-Bonferroni method to obtain strong FWER control over the rejected tests in the cluster.
 It is then straightforward to invert this logic to obtain a cluster-level p-value from the Holm-adjusted per-test p-values.
+
+The idea is that a cluster can only achieve a low p-value if at least \eqn{x} tests also have low p-values.
+This favors clusters that exhibit consistent changes across all tests,
+which is useful for detecting, e.g., systematic increases in binding across a broad genomic region spanning many windows.
+
+The importance of each test within a cluster can be adjusted by supplying different relative \code{weights} values. 
+This may be useful for downweighting low-confidence tests, e.g., those in repeat regions. 
+In Holm's procedure, weights are interpreted as scaling factors on the nominal threshold for each test to adjust the distribution of errors.
+Note that these weights have no effect between clusters and will not be used to adjust the computed FDR.
 }
 \examples{
 ids <- round(runif(100, 1, 10))
@@ -58,6 +79,11 @@ tab <- data.frame(logFC=rnorm(100), logCPM=rnorm(100), PValue=rbeta(100, 1, 2))
 minimal <- minimalTests(ids, tab)
 head(minimal)
 
+}
+\references{
+Benjamini Y and Hochberg Y (1997). 
+Multiple hypotheses testing with weights. 
+\emph{Scand. J. Stat.} 24, 407-418.
 }
 \author{
 Aaron Lun
