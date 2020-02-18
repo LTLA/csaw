@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom S4Vectors DataFrame
 #' @importFrom stats p.adjust
-getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, cpm.col=NULL)
+getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, cpm.col=NULL)
 # This uses Holms' method to provide strong control of the FWER within each
 # cluster. The idea is that it returns the test with the lowest p-value in the
 # cluster. You can then use one test as the representative of the entire cluster,
@@ -12,35 +12,25 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, cpm
 # created 17 April 2014
 # last modified 8 January 2017
 {
-    input <- .check_test_inputs(ids, tab, weights)
-    ids <- input$ids
-    tab <- input$tab
-    groups <- input$groups
-    weights <- input$weight
+    if (by.pval) {
+        minimalTests(ids, tab, weights=weights, pval.col=pval.col, fc.col=fc.col, 
+            fc.threshold=fc.threshold, min.sig.n=0, min.sig.prop=0)
+    } else {
+        if (is.null(cpm.col)) { 
+            cpm.col <- "logCPM" 
+        }
+        if (length(cpm.col)!=1L) {
+            stop("absent or multiple logCPM columns are not supported")
+        }
+        abs<- tab[,cpm.col]
 
-    pval.col <- .getPValCol(pval.col, tab)
-	if (by.pval) { 
-		# Identifying the minimum P-value, and Bonferroni-correcting it.
-		out <- .Call(cxx_best_in_cluster, tab[,pval.col], ids, weights)
-		pval <- out[[1]]
-		best <- out[[2]]
-
-	} else {
-		if (is.null(cpm.col)) { cpm.col <- "logCPM" }
-		if (length(cpm.col)!=1L) { 
-			stop("absent or multiple logCPM columns are not supported")
-		} 
-
-		# Identifying the window with the maximum logCPM.
-		out <- .Call(cxx_best_in_cluster, -tab[,cpm.col], ids, weights)
-		best <- out[[2]]
-		pval <- tab[best, pval.col]
-	}
-	
-	subtab <- tab[best,]
-	subtab[,pval.col] <- pval
-	result <- DataFrame(best=input$original[best], subtab, FDR=p.adjust(pval, method="BH"), row.names=groups)
-	return(result)
+        .general_test_combiner(ids=ids, tab=tab, weights=weights, 
+            pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
+            FUN=function(...) {
+                .Call(cxx_compute_cluster_maxed, ..., abs)
+            }
+        )
+    }
 }
 
 # You can reduce the conservativeness of the Bonferroni method by using windows that 

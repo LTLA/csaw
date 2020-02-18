@@ -34,6 +34,8 @@ SEXP compute_cluster_simes(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 SEXP compute_cluster_holm(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
+SEXP compute_cluster_maxed(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+
 /* merge_windows.cpp */
 
 SEXP merge_windows(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);

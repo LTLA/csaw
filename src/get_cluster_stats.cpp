@@ -91,6 +91,34 @@ private:
     const double min_prop;
 };
 
+class MaxedPreparer {
+public:    
+    MaxedPreparer(const Rcpp::NumericVector& m) : metric(m) {}
+
+    template<class V>
+    std::pair<double, size_t> operator()(IndexedPValues& psorter, const V& winweight) {
+        double maxed=R_NegInf;
+        auto chosen=psorter.begin();
+
+        for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+            const auto& current=metric[pIt->second];
+            if (current > maxed) {
+                maxed=current;
+                chosen=pIt;
+            }
+        }
+
+        // Wiping out everything that is NOT the top test with respect to some
+        // independent filter statistic.
+        for (auto pIt=psorter.begin(); pIt!=psorter.end(); ++pIt) {
+            if (pIt!=chosen) { pIt->first=1; }
+        }
+
+        return std::make_pair(chosen->first, (chosen - psorter.begin()));
+    }
+private:
+    const Rcpp::NumericVector& metric;
+};
 
 template<class V>
 int guess_direction(const IndexedPValues& psorter, size_t minit, const V& lfc) {
@@ -242,6 +270,13 @@ SEXP compute_cluster_holm(SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthr
         check_integer_scalar(min_n, "minimum number of tests"),
         check_numeric_scalar(min_n, "minimum proportion of tests")
     );
+    return get_cluster_stats_internal(fcs, pvals, by, weight, fcthreshold, prep);
+    END_RCPP
+}
+
+SEXP compute_cluster_maxed(SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthreshold, SEXP metric) {
+    BEGIN_RCPP
+    MaxedPreparer prep(metric);
     return get_cluster_stats_internal(fcs, pvals, by, weight, fcthreshold, prep);
     END_RCPP
 }
