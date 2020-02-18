@@ -6,14 +6,7 @@
 #' @param min.sig.n Integer scalar containing the minimum number of significant barcodes when \code{method="holm-min"}.
 #' @param min.sig.prop Numeric scalar containing the minimum proportion of significant barcodes when \code{method="holm-min"}.
 #'
-#' @return A \linkS4class{DataFrame} containing:
-#' \itemize{
-#' \item An integer field \code{NumTests}, specifying the total number of tests in each cluster.
-#' \item One or more numeric fields containing the log-fold changes of the test with the \eqn{x}th-smallest p-value in each cluster.
-#' \item A numeric field containing the combined p-value. 
-#' If \code{pval.col=NULL}, this column is named \code{PValue}, otherwise its name is set to \code{colnames(tab[,pval.col])}.
-#' \item A numeric field \code{FDR}, containing the q-value corresponding to the combined p-value.
-#' }
+#' @inherit combineTests return
 #'
 #' @details
 #' For each cluster, this function applies the Holm-Bonferroni correction to all of its tests.
@@ -29,6 +22,11 @@
 #' The idea is that a cluster can only achieve a low p-value if at least \eqn{x} tests also have low p-values.
 #' This favors clusters that exhibit consistent changes across all tests,
 #' which is useful for detecting, e.g., systematic increases in binding across a broad genomic region spanning many windows.
+#'
+#' The importance of each test within a cluster can be adjusted by supplying different relative \code{weights} values. 
+#' This may be useful for downweighting low-confidence tests, e.g., those in repeat regions. 
+#' In Holm's procedure, weights are interpreted as scaling factors on the nominal threshold for each test to adjust the distribution of errors.
+#' Note that these weights have no effect between clusters and will not be used to adjust the computed FDR.
 #' 
 #' @author Aaron Lun
 #'
@@ -38,39 +36,19 @@
 #' minimal <- minimalTests(ids, tab)
 #' head(minimal)
 #'
+#' @references
+#' Benjamini Y and Hochberg Y (1997). 
+#' Multiple hypotheses testing with weights. 
+#' \emph{Scand. J. Stat.} 24, 407-418.
+#' 
 #' @export
 #' @importFrom stats p.adjust
 #' @importFrom S4Vectors DataFrame
-minimalTests <- function(ids, tab, min.sig.n=3, min.sig.prop=0.4, weight=NULL, pval.col=NULL, fc.col=NULL) {
-    is.pval <- .getPValCol(pval.col, tab)
-    fc.col <- .parseFCcol(fc.col, tab) 
-
-    # Counting the number of tests.
-    by.id <- split(seq_along(ids), ids)
-    output <- DataFrame(NumTests=lengths(by.id), row.names=names(by.id))
-
-    # Computing the Holm minimal p-value.
-    barcode.p <- numeric(nrow(output))
-    chosen <- integer(nrow(output))
-    all.p <- tab[,is.pval]
-
-    for (i in seq_along(by.id)) {
-        current <- by.id[[i]]
-        p <- p.adjust(all.p[current], method="holm")
-
-        n <- min(max(min.sig.n, ceiling(min.sig.prop * length(p))), length(p))
-        o <- order(p)
-        idx <- o[n]
-
-        barcode.p[i] <- p[idx]
-        chosen[i] <- current[idx]
-    }
-
-    # Throwing in statistics for the representative window.
-    output <- cbind(output, tab[chosen,fc.col])
-
-    output[,is.pval] <- barcode.p
-    output$FDR <- p.adjust(output[[is.pval]], method="BH")
-    output
+minimalTests <- function(ids, tab, min.sig.n=3, min.sig.prop=0.4, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
+    .general_test_combiner(ids=ids, tab=tab, weights=weights, 
+        pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
+        FUN=function(...) {
+            .Call(cxx_compute_cluster_holm, ..., min.sig.n, min.sig.prop)
+        }
+    )
 }
-
