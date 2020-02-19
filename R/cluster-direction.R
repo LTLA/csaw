@@ -29,6 +29,10 @@
 #' all tests bar the one with the highest abundance are simply removed.
 #' This mimics the application of an independent filter.
 #' No correction is applied as only one test remains.
+#' \item For \code{\link{mixedTests}}, the Benjamini-Hochberg correction is used, 
+#' given that this function just calls \code{\link{combineTests}} on the one-sided p-values in each direction.
+#' Here, though, the number of up tests is obtained using the one-sided p-values for a positive change;
+#' similarly, the number of down tests is obtained using the one-sided p-values for a negative change.
 #' }
 #' 
 #' @section Determining the cluster-level direction:
@@ -40,7 +44,11 @@
 #' The label for each cluster is stored as the \code{"direction"} field in the returned data frame.
 #' However, keep in mind that the label only describes the direction of change among the most significant tests in the cluster.
 #' Clusters with complex differences may still be labelled as changing in only one direction, if the tests changing in one direction have much lower p-values than the tests changing in the other direction (even if both sets of p-values are significant).
-#' More rigorous checks for mixed changes should be performed with \code{\link{mixedClusters}}.
+#' More rigorous checks for mixed changes should be performed with \code{\link{mixedTests}}.
+#'
+#' Speaking of which, the \code{"direction"} field for \code{\link{mixedTests}} is simply set to \code{"mixed"} for all clusters.
+#' This reflects the fact that the reported p-value represents the evidence for mixed directionality in this function;
+#' indeed, the field itself is simply reported for consistency, given that we already know we are looking for mixed clusters! 
 #'
 #' @section Representative log-fold changes:
 #' For each combining procedure, it is usually possible to identify a representative test for the entire cluster.
@@ -50,6 +58,8 @@
 #' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used (see the documentation for details).
 #' \item For \code{\link{getBestTest}}, the test with the lowest p-value is used if \code{by.pval=TRUE}.
 #' Otherwise, the test with the highest abundance is used.
+#' \item For \code{\link{mixedTests}}, two representative tests are reported in each direction.
+#' The representative test in each direction is defined using \code{\link{combineTests}} as described above.
 #' }
 #' Note that the chosen test is only representative in the sense that its p-value is especially important for computing the cluster-level p-value.
 #' This is usually sufficient to provide proxy log-fold changes for clusters with simple differences,
