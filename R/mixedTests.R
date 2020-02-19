@@ -4,6 +4,7 @@
 #' 
 #' @inheritParams combineTests
 #' @param fc.col An integer or string specifying the single column of \code{tab} containing the log-fold change.
+#' @param ... Further arguments to pass to \code{\link{mixedTests}}.
 #' 
 #' @return
 #' A \linkS4class{DataFrame} with one row per cluster and various fields:
@@ -62,17 +63,19 @@ mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.th
     # Combining the one-sided p-values.
     up.tab <- tab
     up.tab[,pval.col] <- all.p$up
-    up.com <- combineTests(ids, up.tab, weights=weights, pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold)
+    up.com <- combineTests(ids, up.tab, weights=weights, pval.col=pval.col, 
+        fc.col=fc.col, fc.threshold=fc.threshold)
 
     # Repeating in the other direction.
     down.tab <- tab
     down.tab[,pval.col] <- all.p$down
-    down.com <- combineTests(ids, down.tab, weights=weights, pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold)
+    down.com <- combineTests(ids, down.tab, weights=weights, pval.col=pval.col,
+        fc.col=fc.col, fc.threshold=fc.threshold)
 
     # Taking the IUT p-value.
     up.com[,pval.colname] <- pmax(up.com[,pval.colname], down.com[,pval.colname])
     up.com$FDR <- p.adjust(up.com[,pval.colname], method="BH")
-    up.com$direction <- "mixed"
+    up.com$direction <- rep("mixed", nrow(up.com))
 
     # Replacing the down counts.
     all.down <- sprintf("num.down.%s", colnames(tab)[fc.col])
@@ -90,4 +93,7 @@ mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.th
 
 #' @export
 #' @rdname mixedTests
-mixedClusters <- mixedTests
+mixedClusters <- function(...) {
+    .Deprecated(new="mixedTests")
+    mixedTests(...)
+}
