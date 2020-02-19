@@ -1,4 +1,4 @@
-# Tests the mixedClusters function.
+# Tests the mixedTests function.
 # library(csaw); library(testthat); source("test-mixed.R")
 
 autogen <- function(n.clusters, total.n) {
@@ -8,12 +8,12 @@ autogen <- function(n.clusters, total.n) {
 }
 
 set.seed(60000)
-test_that("mixedClusters works as expected on vanilla inputs", {
+test_that("mixedTests works as expected on vanilla inputs", {
     for (ntests in c(10, 50, 100)) {
         test <- autogen(20, ntests)
         ids <- test$id
         tab <- test$table
-        tabmix <- mixedClusters(ids, tab)
+        tabmix <- mixedTests(ids, tab)
 
         uptab <- tab
         uptab$PValue <- ifelse(tab$logFC > 0, tab$PValue/2, 1-tab$PValue/2)
@@ -23,20 +23,27 @@ test_that("mixedClusters works as expected on vanilla inputs", {
         downtab$PValue <- ifelse(tab$logFC < 0, tab$PValue/2, 1-tab$PValue/2)
         tabdown <- combineTests(ids, downtab)
 
-        expect_identical(tabmix[,1:3], tabup[,1:3])
+        expect_identical(tabmix[,1:2], tabup[,1:2])
+        expect_identical(tabmix[,3], tabdown[,3])
+
+        expect_identical(tabmix$rep.up.test, tabup$rep.test)
+        expect_identical(tabmix$rep.down.test, tabdown$rep.test)
+        expect_identical(tabmix$rep.up.logFC, tabup$rep.logFC)
+        expect_identical(tabmix$rep.down.logFC, tabdown$rep.logFC)
+
         expect_identical(tabmix$PValue, pmax(tabup$PValue, tabdown$PValue))
         expect_identical(tabmix$FDR, p.adjust(tabmix$PValue, method="BH"))
     }
 })
 
 set.seed(60001)
-test_that("mixedClusters works as expected with weights", {
+test_that("mixedTests works as expected with weights", {
     for (ntests in c(10, 50, 100)) {
         test <- autogen(20, ntests)
         ids <- test$id
         tab <- test$table
         w <- runif(ntests)
-        tabmix <- mixedClusters(ids, tab, weight=w)
+        tabmix <- mixedTests(ids, tab, weight=w)
 
         uptab <- tab
         uptab$PValue <- ifelse(tab$logFC > 0, tab$PValue/2, 1-tab$PValue/2)
@@ -46,39 +53,40 @@ test_that("mixedClusters works as expected with weights", {
         downtab$PValue <- ifelse(tab$logFC < 0, tab$PValue/2, 1-tab$PValue/2)
         tabdown <- combineTests(ids, downtab, weight=w)
 
-        expect_identical(tabmix[,1:3], tabup[,1:3])
+        expect_identical(tabmix[,1:2], tabup[,1:2])
+        expect_identical(tabmix[,3], tabdown[,3])
         expect_identical(tabmix$PValue, pmax(tabup$PValue, tabdown$PValue))
         expect_identical(tabmix$FDR, p.adjust(tabmix$PValue, method="BH"))
     }
 })
 
 set.seed(60002)
-test_that("mixedClusters works as expected with alternative options", {
+test_that("mixedTests works as expected with alternative options", {
     test <- autogen(20, 100)
     ids <- test$id
     tab <- test$table
-    ref <- mixedClusters(ids, tab)
+    ref <- mixedTests(ids, tab)
 
     retab <- tab
     retab$whee <- tab$logFC
     retab$yay <- tab$PValue
     retab$logFC <- NULL
     retab$PValue <- NULL
-    out <- mixedClusters(ids, retab, fc.col="whee", pval.col="yay")
+    out <- mixedTests(ids, retab, fc.col="whee", pval.col="yay")
  
-    expect_identical(out$whee.up, ref$logFC.up)
-    expect_identical(out$whee.down, ref$logFC.down)
+    expect_identical(out$num.up.whee, ref$num.up.logFC)
+    expect_identical(out$num.down.whee, ref$num.down.logFC)
     expect_identical(out$yay, ref$PValue)
 })
 
 set.seed(60003) 
-test_that("mixedClusters behaves correctly with silly inputs", {
+test_that("mixedTests behaves correctly with silly inputs", {
     test <- autogen(20, 100)
     ids <- test$id
     tab <- test$table
-    ref <- mixedClusters(ids[0], tab[0,])
-    expect_identical(dim(ref), c(0L, 5L))
+    ref <- mixedTests(ids[0], tab[0,])
+    expect_identical(dim(ref), c(0L, 10L))
 
-    expect_error(mixedClusters(ids, tab[0,]), "not TRUE")
-    expect_error(mixedClusters(ids, tab, weight=0), "not TRUE")
+    expect_error(mixedTests(ids, tab[0,]), "not TRUE")
+    expect_error(mixedTests(ids, tab, weight=0), "not TRUE")
 })
