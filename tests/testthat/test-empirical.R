@@ -29,22 +29,29 @@ test_that("empiricalFDR works correctly with vanilla input", {
             new.p[tab$logFC < 0] <- 1 - new.p[tab$logFC < 0]
             tab2 <- tab
             tab2$PValue <- new.p
-            ref <- combineTests(merged.ids, tab2)
-            expect_equal(out$PValue, ref$PValue)
+            tabup <- combineTests(merged.ids, tab2)
+            expect_equal(out$PValue, tabup$PValue)
         
             alt <- empiricalFDR(merged.ids, tab, neg.down=FALSE)
             tab2 <- tab
             tab2$PValue <- 1-new.p
-            ref <- combineTests(merged.ids, tab2)
-            expect_equal(alt$PValue, ref$PValue)
-            expect_equal(out$PValue.neg, ref$PValue)
-        
+            tabdown <- combineTests(merged.ids, tab2)
+            expect_equal(alt$PValue, tabdown$PValue)
+
             # Checking calculations for the FDR.
             emp.fdr <- findInterval(out$PValue, sort(alt$PValue))/rank(out$PValue, ties.method="max")
             emp.fdr <- pmin(emp.fdr, 1)
             o <- order(out$PValue, decreasing=TRUE)
             emp.fdr[o] <- cummin(emp.fdr[o])
             expect_equal(emp.fdr, out$FDR)
+
+            # Checking directionality.
+            expect_identical(out[,1:2], tabup[,1:2])
+            expect_identical(out[,3], tabdown[,3])
+            expect_identical(out$rep.test, tabup$rep.test)
+            expect_identical(out$rep.logFC, tabup$rep.logFC)
+            expect_identical(alt$rep.test, tabdown$rep.test)
+            expect_identical(alt$rep.logFC, tabdown$rep.logFC)
         }
     }
 })

@@ -59,7 +59,7 @@ mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.th
     fc.col <- .parseFCcol(fc.col, tab, multiple=FALSE)
     pval.col <- .getPValCol(pval.col, tab)
 
-    com.out <- .get_two_one_sided_results(tab, pval.col=pval.col, fc.col=fc.col,
+    com.out <- .get_two_one_sided_results(ids, tab, pval.col=pval.col, fc.col=fc.col,
         weights=weights, fc.threshold=fc.threshold)
     up.com <- com.out$up
     down.com <- com.out$down
@@ -83,7 +83,7 @@ mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.th
     cbind(up.com, down.com[,rep.down])
 }
 
-.get_two_one_sided_results <- function(tab, pval.col, fc.col, ...) {
+.get_two_one_sided_results <- function(ids, tab, pval.col, fc.col, ...) {
     all.p <- .make_one_sided(tab, pval.col=pval.col, fc.col=fc.col)
 
     # Combining the one-sided p-values.

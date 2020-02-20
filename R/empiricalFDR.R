@@ -80,7 +80,7 @@
 empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, neg.down=TRUE) {
     fc.col <- .parseFCcol(fc.col, tab, multiple=FALSE)
     pval.col <- .getPValCol(pval.col, tab)
-    com.out <- .get_two_one_sided_results(tab, pval.col=pval.col, fc.col=fc.col,
+    com.out <- .get_two_one_sided_results(ids, tab, pval.col=pval.col, fc.col=fc.col,
         weights=weights, fc.threshold=fc.threshold)
 
     if (neg.down) { 
@@ -109,7 +109,7 @@ empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
     right.com$FDR <- empirical
 
     # Mopping up.
-    right.com$direction <- right
+    right.com$direction <- rep(right, nrow(right.com))
     right.com
 }
 
