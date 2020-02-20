@@ -57,22 +57,14 @@
 mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     fc.col <- .parseFCcol(fc.col, tab, multiple=FALSE)
     pval.col <- .getPValCol(pval.col, tab)
-    pval.colname <- colnames(tab)[pval.col]
-    all.p <- .make_one_sided(tab, pval.col=pval.col, fc.col=fc.col)
 
-    # Combining the one-sided p-values.
-    up.tab <- tab
-    up.tab[,pval.col] <- all.p$up
-    up.com <- combineTests(ids, up.tab, weights=weights, pval.col=pval.col, 
-        fc.col=fc.col, fc.threshold=fc.threshold)
-
-    # Repeating in the other direction.
-    down.tab <- tab
-    down.tab[,pval.col] <- all.p$down
-    down.com <- combineTests(ids, down.tab, weights=weights, pval.col=pval.col,
-        fc.col=fc.col, fc.threshold=fc.threshold)
+    com.out <- .get_two_one_sided_results(tab, pval.col=pval.col, fc.col=fc.col,
+        weights=weights, fc.threshold=fc.threshold)
+    up.com <- com.out$up
+    down.com <- com.out$down
 
     # Taking the IUT p-value.
+    pval.colname <- colnames(tab)[pval.col]
     up.com[,pval.colname] <- pmax(up.com[,pval.colname], down.com[,pval.colname])
     up.com$FDR <- p.adjust(up.com[,pval.colname], method="BH")
     up.com$direction <- rep("mixed", nrow(up.com))
@@ -84,11 +76,26 @@ mixedTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.th
     # Adding representative up/down statistics.
     rep.up <- grep("^rep\\.", colnames(up.com))
     colnames(up.com)[rep.up] <- sub("^rep\\.", "rep.up.", colnames(up.com)[rep.up])
-
     rep.down <- grep("^rep\\.", colnames(down.com))
     colnames(down.com)[rep.down] <- sub("^rep\\.", "rep.down.", colnames(down.com)[rep.down])
 
     cbind(up.com, down.com[,rep.down])
+}
+
+.get_two_one_sided_results <- function(tab, pval.col, fc.col, ...) {
+    all.p <- .make_one_sided(tab, pval.col=pval.col, fc.col=fc.col)
+
+    # Combining the one-sided p-values.
+    up.tab <- tab
+    up.tab[,pval.col] <- all.p$up
+    up.com <- combineTests(ids, up.tab, pval.col=pval.col, fc.col=fc.col, ...)
+
+    # Repeating in the other direction.
+    down.tab <- tab
+    down.tab[,pval.col] <- all.p$down
+    down.com <- combineTests(ids, down.tab, pval.col=pval.col, fc.col=fc.col, ...)
+
+    list(up=up.com, down=down.com)
 }
 
 #' @export

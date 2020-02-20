@@ -1,49 +1,38 @@
 #' @export
-empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, neg.down=TRUE) 
-# Converts two-tailed p-values to one-tailed p-values, combines them 
-# and takes the number of rejections in the "wrong" direction as an 
-# estimate of the number of false positives.
-#
-# written by Aaron Lun
-# created 7 January 2017
-# last modified 9 January 2017
-{
+empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, neg.down=TRUE) {
     fc.col <- .parseFCcol(fc.col, tab, multiple=FALSE)
     pval.col <- .getPValCol(pval.col, tab)
-    pval.colname <- colnames(tab)[pval.col]
-    
-    all.p <- .make_one_sided(tab, pval.col=pval.col, fc.col=fc.col)
+    com.out <- .get_two_one_sided_results(tab, pval.col=pval.col, fc.col=fc.col,
+        weights=weights, fc.threshold=fc.threshold)
+
     if (neg.down) { 
-        all.p <- list(right=all.p$up, wrong=all.p$down)
+        right <- "up"
+        wrong <- "down"
     } else {
-        all.p <- list(right=all.p$down, wrong=all.p$up)
+        right <- "down"
+        wrong <- "up"
     }
 
-    # Combining one-sided p-values.
-    right.tab <- tab
-    right.tab[,pval.col] <- all.p$right
-    right.com <- combineTests(ids, right.tab, weights=weights, pval.col=pval.col, fc.col=fc.col)
-    right.com$direction <- NULL
-    right.com$FDR <- NULL
-    
-    # Repeating in the other direction.
-    wrong.tab <- tab
-    wrong.tab[,pval.col] <- all.p$wrong
-    wrong.com <- combineTests(ids, wrong.tab, weights=weights, pval.col=pval.col, fc.col=integer(0))
-    right.com[,paste0(pval.colname, ".neg")] <- wrong.com[,pval.colname]
+    right.com <- com.out[[right]]
+    wrong.com <- com.out[[wrong]]
+    all.down <- sprintf("num.%s.%s", wrong, colnames(tab)[fc.col])
+    right.com[,all.down] <- wrong.com[,all.down]
 
     # Computing the empirical FDR.
+    pval.colname <- colnames(tab)[pval.col]
     right.comp <- right.com[,pval.colname]
     o <- order(right.comp)
     right.comp <- right.comp[o]
     empirical <- findInterval(right.comp, sort(wrong.com[,pval.colname]))/seq_along(right.comp)
     
-    # Enforcing monotonicity and other characteristics.
     empirical <- pmin(1, empirical)
     empirical <- rev(cummin(rev(empirical)))
     empirical[o] <- empirical
     right.com$FDR <- empirical
-    return(right.com)
+
+    # Mopping up.
+    right.com$direction <- right
+    right.com
 }
 
 .make_one_sided <- function(tab, pval.col, fc.col) {
@@ -51,13 +40,12 @@ empiricalFDR <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, neg
     going.up <- cur.fc > 0
     pval <- tab[,pval.col]
     
-    # Calculating each set fresh, to avoid numeric imprcesion from repeated "1-" operations
+    # Calculating each set fresh, to avoid numeric 
+    # imprecision from repeated "1-" operations
     up.p <- pval/2
     up.p[!going.up] <- 1 - up.p[!going.up]
     down.p <- pval/2
     down.p[going.up] <- 1 - down.p[going.up]
-    return(list(up=up.p, down=down.p))
+
+    list(up=up.p, down=down.p)
 }
-
-
-
