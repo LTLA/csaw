@@ -32,6 +32,7 @@
 #' The IUT p-value provides evidence against the null hypothesis that either direction is not significant.
 #' In short, a low p-value is only possible if there are significant changes in both directions.
 #' This formally identifies genomic regions containing complex DB events, i.e., where depletion in one subinterval of the bound/enriched region is accompanied by increasing binding in another subinterval. 
+#' Examples include swaps in adjacent TF binding locations between conditions or shifts in histone mark patterns in bidirectional promoters.
 #' 
 #' We expect that the p-values in \code{pval.col} are two-sided and independent of the sign of the log-fold change under the null hypothesis.
 #' This is true for likelihood ratio tests but may not be true for others (e.g., from \code{\link{glmTreat}}), so caution is required when supplying values in \code{tab}.
