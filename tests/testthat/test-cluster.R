@@ -113,9 +113,10 @@ test_that("clusterWindows works as expected", {
     windows <- GRanges("chrA", IRanges(1:1000, 1:1000))
     test.p <- runif(1000)
     test.p[rep(1:2, 100) + rep(0:99, each=2) * 10] <- 0 # every 10 bases contains 2 true positives.
-   
+    tab <- data.frame(PValue=test.p, logFC=rnorm(length(test.p)))
+
     target <- 0.05
-    out.0 <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0)
+    out.0 <- clusterWindows(windows, tab, target=target, tol=0)
     expect_true(out.0$FDR <= target)
 
     adjp <- p.adjust(test.p, method="BH")
@@ -127,13 +128,13 @@ test_that("clusterWindows works as expected", {
     expect_identical(merged$region, out.0$region)
     expect_identical(merged$id, out.0$id[keep])
 
-    # Upper threshold should have p-values above the specified FDR.
-    upper.threshold <- min(adjp[!keep])
-    upper.FDR <- clusterFDR(out.0$id[keep], upper.threshold) 
-    expect_true(upper.FDR > target)
+    # Statistics are correctly transformed.
+    expect_null(out.0$statistics$FDR)
+    expect_identical(out.0$stats$rep.logFC, tab$logFC[out.0$stats$rep.test])
+    expect_identical(out.0$stats$num.tests, out.0$stats$num.up.logFC + out.0$stats$num.down.logFC)
 
     # Trying with a higher tolerance - this should merge everything.
-    out.10 <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=10)
+    out.10 <- clusterWindows(windows, tab, target=target, tol=10)
     expect_identical(start(out.10$region), 1L)
     expect_identical(end(out.10$region), max(which(test.p==0)))
     expect_identical(out.10$FDR, 0)
@@ -142,31 +143,28 @@ test_that("clusterWindows works as expected", {
     # Checking that the frequency weights work.
     weight <- sample(3, length(windows), replace=TRUE)
     expand <- rep(seq_along(weight), weight)
-    out <- clusterWindows(windows, data.frame(PValue=test.p), target=target, tol=0, weights=weight)
-    ref <- clusterWindows(windows[expand], data.frame(PValue=test.p[expand]), target=target, tol=0)
+    out <- clusterWindows(windows, tab, target=target, tol=0, weights=weight)
+    ref <- clusterWindows(windows[expand], tab[expand,], target=target, tol=0)
 
     expect_identical(out$FDR, ref$FDR)
     expect_identical(out$region, ref$region)
     expect_identical(out$id, ref$id[!duplicated(expand)])
 
     # Responsive to the sign.
-    out <- clusterWindows(windows, data.frame(PValue=test.p, logFC=1), target=target, tol=0, fc.col="logFC")
-    expect_identical(out, out.0)
-
     lfc <- rnorm(length(windows))
-    out <- clusterWindows(windows, data.frame(PValue=test.p, logFC=lfc), target=target, tol=0, fc.col="logFC")
+    out <- clusterWindows(windows, data.frame(PValue=test.p, logFC=lfc), target=target, tol=0, signs=TRUE)
     expect_true(out$FDR <= target)
     expect_true(all(lengths(lapply(split(lfc > 0, out$id), unique))==1L))
 
     # Trying with empty and other silly inputs.
-    out <- clusterWindows(windows[0], data.frame(PValue=test.p[0]), target=target, tol=0)
+    out <- clusterWindows(windows[0], tab[0,], target=target, tol=0)
     expect_identical(out$id, integer(0))
     expect_identical(out$region, windows[0])
     expect_identical(out$FDR, 0)
 
-    expect_error(clusterWindows(windows[0], data.frame(PValue=test.p), target=target, tol=0), "number of ranges")
-    expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), target=target), "'tol'")
-    expect_warning(clusterWindows(windows[1], data.frame(PValue=test.p[1]), tol=100), "set to 0.05")
+    expect_error(clusterWindows(windows[0], tab, target=target, tol=0), "number of ranges")
+    expect_warning(clusterWindows(windows[1], tab[1,], target=target), "'tol'")
+    expect_warning(clusterWindows(windows[1], tab[1,], tol=100), "set to 0.05")
 })
 
 ##################################################
