@@ -59,11 +59,11 @@
     if (!all(okay.ids)) { 
         ids <- ids[okay.ids]
         weight <- weight[okay.ids]
-        tab <- tab[okay.ids,]
+        tab <- tab[okay.ids,,drop=FALSE]
     }
 	id.order <- order(ids)
 	ids <- ids[id.order]
-	tab <- tab[id.order,]
+	tab <- tab[id.order,,drop=FALSE]
 	weight <- weight[id.order]
 
     if (!all(okay.ids)) { 
@@ -71,7 +71,8 @@
     } else {
         originals <- id.order
     }
-    return(list(ids=ids, groups=all.names, tab=tab, weight=weight, original=originals))
+
+    list(ids=ids, groups=all.names, tab=tab, weight=weight, original=originals)
 }
 
 .parseFCcol <- function(fc.col, tab, multiple=TRUE) 
