@@ -83,7 +83,7 @@ public:
             min_num, 
             static_cast<size_t>(std::ceil(min_prop * static_cast<double>(psorter.size())))
         );
-        index=std::min(index, psorter.size());
+        index=std::min(index, static_cast<size_t>(1));
         --index;
         return std::make_pair(psorter[index].first, index);
     }
