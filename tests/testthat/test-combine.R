@@ -182,13 +182,14 @@ test_that("combineTests handles edge cases correctly", {
         na.ids[invalid] <- NA_integer_
         out.na <- combineTests(na.ids, tab)
         out.ref <- combineTests(na.ids[-invalid], tab[-invalid,])
+        out.ref$rep.test <- which(!is.na(na.ids))[out.ref$rep.test]
         expect_equal(out.na, out.ref) 
     }
 
     # Checking for sane behaviour when no log-fold changes are supplied.
     out3 <- combineTests(ids, tab, fc.col=integer(0))
     ref <- combineTests(ids, tab)
-    ref$num.up.logFC <- ref$num.down.logFC <- ref$direction <- NULL
+    ref$num.up.logFC <- ref$num.down.logFC <- ref$direction <- ref$rep.logFC <- NULL
     expect_identical(ref, out3)
 
     # Checking for sane behaviour when no IDs are supplied.
