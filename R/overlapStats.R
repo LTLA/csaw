@@ -1,5 +1,5 @@
 #' @importFrom S4Vectors queryLength queryHits subjectHits
-.overlapStats <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, FUN, ...) { 
+.overlapStats <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, FUN, ..., rep.fields="rep.test") {
 	region.dex <- queryHits(overlaps)
 	win.dex <- subjectHits(overlaps)
 
@@ -22,6 +22,11 @@
     expand.vec[row.dex] <- seq_along(row.dex)
     output <- output[expand.vec,,drop=FALSE]
     rownames(output) <- as.character(seq_len(N))
+
+    for (rep in rep.fields) {
+        output[[rep]] <- subjectHits(overlaps)[output[[rep]]]
+    }
+
     output
 }
 
@@ -47,9 +52,7 @@ getBestOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...)
 # created 25 March 2015
 # last modified 26 March 2015
 {
-	output <- .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=getBestTest, ...)
-    output$best <- subjectHits(overlaps)[output$best]
-    output
+	.overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=getBestTest, ...)
 }
 
 #' @export
@@ -71,7 +74,8 @@ mixedOverlaps <- function(overlaps, tab, o.weights=NULL, i.weights=NULL, ...)
 # written by Aaron Lun
 # created 7 January 2017
 {
-    .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=mixedClusters, ...)
+    .overlapStats(overlaps, tab, o.weights=o.weights, i.weights=i.weights, FUN=mixedClusters, 
+        ..., rep.fields=c("rep.up.test", "rep.down.test"))
 }
 
 #' @export

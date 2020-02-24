@@ -17,12 +17,14 @@ test_that("combineOverlaps works correctly", {
             # Straight-up comparison to combineTests, after discarding all NA's.
             output <- combineOverlaps(olap, tab)
             refstats <- combineTests(queryHits(olap), tab[subjectHits(olap),])
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
             expect_identical(output[!is.na(output$PValue),], refstats)
 
         	# Testing with weights.
             test.weight <- runif(ns)
             output <- combineOverlaps(olap, tab, i.weight=test.weight)
             refstats <- combineTests(queryHits(olap), tab[subjectHits(olap),], weight=test.weight[subjectHits(olap)])
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
             expect_identical(output[!is.na(output$PValue),], refstats)
 
         	# More weight testing, where o.weight is constructed from the weight for each i.weight.
@@ -50,14 +52,14 @@ test_that("getBestOverlaps works correctly", {
         
         	output <- getBestOverlaps(olap, tab)
         	refstats <- getBestTest(queryHits(olap), tab[subjectHits(olap),])
-        	refstats$best <- subjectHits(olap)[refstats$best]
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
         	expect_identical(output[!is.na(output$PValue),], refstats)
         
         	# Testing with weights.
         	test.weight <- runif(ns)
         	output <- getBestOverlaps(olap, tab, i.weight=test.weight)
         	refstats <- getBestTest(queryHits(olap), tab[subjectHits(olap),], weight=test.weight[subjectHits(olap)])
-        	refstats$best <- subjectHits(olap)[refstats$best]
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
         	expect_identical(output[!is.na(output$PValue),], refstats)
         
         	# More weight testing.
@@ -86,12 +88,14 @@ test_that("empiricalOverlaps works correctly", {
         	# Straight-up comparison to empiricalFDR, after discarding all NA's.
         	output <- empiricalOverlaps(olap, tab)
         	refstats <- empiricalFDR(queryHits(olap), tab[subjectHits(olap),])
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
         	expect_identical(output[!is.na(output$PValue),], refstats)
         
         	# Testing with weights.
         	test.weight <- runif(ns)
         	output <- empiricalOverlaps(olap, tab, i.weight=test.weight)
         	refstats <- empiricalFDR(queryHits(olap), tab[subjectHits(olap),], weight=test.weight[subjectHits(olap)])
+        	refstats$rep.test <- subjectHits(olap)[refstats$rep.test]
         	expect_identical(output[!is.na(output$PValue),], refstats)
         
         	# More weight testing, where o.weight is constructed from the weight for each i.weight.
@@ -120,12 +124,16 @@ test_that("mixedOverlaps works correctly", {
             # Straight-up comparison to combineTests, after discarding all NA's.
             output <- mixedOverlaps(olap, tab)
             refstats <- mixedClusters(queryHits(olap), tab[subjectHits(olap),])
+        	refstats$rep.up.test <- subjectHits(olap)[refstats$rep.up.test]
+        	refstats$rep.down.test <- subjectHits(olap)[refstats$rep.down.test]
             expect_identical(output[!is.na(output$PValue),], refstats)
 
         	# Testing with weights.
             test.weight <- runif(ns)
             output <- mixedOverlaps(olap, tab, i.weight=test.weight)
             refstats <- mixedClusters(queryHits(olap), tab[subjectHits(olap),], weight=test.weight[subjectHits(olap)])
+        	refstats$rep.up.test <- subjectHits(olap)[refstats$rep.up.test]
+        	refstats$rep.down.test <- subjectHits(olap)[refstats$rep.down.test]
             expect_identical(output[!is.na(output$PValue),], refstats)
 
         	# More weight testing, where o.weight is constructed from the weight for each i.weight.
@@ -153,8 +161,8 @@ test_that("summitOverlaps works correctly", {
         	output <- getBestOverlaps(olap, tab)
         
         	# Checking summit calls.
-        	re.weight <- summitOverlaps(olap, output$best)
-        	best.win <- output$best[queryHits(olap)]
+        	re.weight <- summitOverlaps(olap, output$rep.test)
+        	best.win <- output$rep.test[queryHits(olap)]
         	is.summit <- !is.na(best.win) & best.win==subjectHits(olap)
         	re.weight2a <- summitOverlaps(olap, o.summit=is.summit)
         	re.weight2b <- summitOverlaps(olap, o.summit=which(is.summit))
