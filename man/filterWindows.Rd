@@ -1,5 +1,4 @@
 \name{filterWindows}
-\alias{filterWindows}
 \alias{filterWindowsProportion}
 \alias{filterWindowsGlobal}
 \alias{filterWindowsLocal}

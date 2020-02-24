@@ -18,13 +18,16 @@ combineTests(
 
 \item{tab}{A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.}
 
-\item{weights}{A numeric vector of weights for each test, defaults to 1 for each test.}
+\item{weights}{A numeric vector of weights for each test. 
+Defaults to 1 for all tests.}
 
-\item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.}
+\item{pval.col}{An integer scalar or string specifying the column of \code{tab} containing the p-values.
+Defaults to \code{"PValue"}.}
 
-\item{fc.col}{An integer or character vector specifying the columns of \code{tab} containing the log-fold changes.}
+\item{fc.col}{An integer or character vector specifying the columns of \code{tab} containing the log-fold changes.
+Defaults to all columns in \code{tab} starting with \code{"logFC"}.}
 
-\item{fc.threshold}{A numeric scalar specifying the FDR threshold to use \emph{within} each cluster for counting tests changing in each direction.}
+\item{fc.threshold}{A numeric scalar specifying the FDR threshold to use \emph{within} each cluster for counting tests changing in each direction, see \code{?"\link{cluster-direction}"} for more details.}
 }
 \value{
 A \linkS4class{DataFrame} with one row per cluster and various fields:
@@ -48,24 +51,24 @@ Each row is named according to the ID of the corresponding cluster.
 Combines p-values across clustered tests using Simes' method to control the cluster-level FDR.
 }
 \details{
-This function uses Simes' procedure to compute the combined p-value for each cluster of tests with the same value of \code{ids}.
-Each combined p-value represents evidence against the global null hypothesis, i.e., all individual nulls are true in each cluster. 
-This may be more relevant than examining each test individually when multiple tests in a cluster represent parts of the same underlying event, e.g., genomic regions consisting of clusters of windows.
-The BH method is also applied to control the FDR across all clusters.
+All tests with the same value of \code{ids} are used to define a single cluster.
+This function applies Simes' procedure to the per-test p-values to compute the combined p-value for each cluster,
+which represents evidence against the global null hypothesis, i.e., all individual nulls are true in each cluster. 
+The BH method is then applied to control the FDR across all clusters.
+
+Rejection of the global null is more relevant than the significance of each individual test when multiple tests in a cluster represent parts of the same underlying event, e.g., differentially bound genomic regions consisting of clusters of windows.
+Control of the FDR across tests may not equate to control of the FDR across clusters;
+we ensure the latter by explicitly computing cluster-level p-values for use in the BH method.
+
+We use Simes' method as it is relatively relaxed and rejects the global null upon observing any change in the cluster.
+More stringent methods are available in functions like \code{\link{minimalTests}} and \code{\link{getBestTest}}.
 
 The importance of each test within a cluster can be adjusted by supplying different relative \code{weights} values. 
 This may be useful for downweighting low-confidence tests, e.g., those in repeat regions. 
 In Simes' procedure, weights are interpreted as relative frequencies of the tests in each cluster. 
-Note that these weights have no effect between clusters and will not be used to adjust the computed FDR.
+Note that these weights have no effect between clusters.
 
-By default, the relevant fields in \code{tab} are identified by matching the column names to their expected values.
-Multiple fields in \code{tab} containing the \code{logFC} substring are allowed, e.g., to accommodate ANOVA-like contrasts. 
-The p-value column is expected to be named as \code{PValue}.
-If the column names are different from what is expected, specification of the correct columns can be performed using \code{pval.col} and \code{fc.col}.
-This will overwrite any internal selection of the appropriate fields.
-
-
-A simple clustering approach for windows is provided in \code{\link{mergeWindows}}. 
+To obtain \code{ids}, a simple clustering approach for genomic windows is implemented in \code{\link{mergeWindows}}.
 However, anything can be used so long as it is independent of the p-values and does not compromise type I error control, e.g., promoters, gene bodies, independently called peaks. 
 Any tests with \code{NA} values for \code{ids} will be ignored.
 }

@@ -29,9 +29,9 @@ Their successors are also listed.
 \details{
 \code{filterWindows} is succeeded by \code{\link{filterWindowsGlobal}} and related functions, which provide a more focused programmatic interface.
 
-\code{consolidateWindows} is succeeded by \code{\link{mergeWindowsList}} and \code{\link{overlapWindowsList}}.
+\code{consolidateWindows} is succeeded by \code{\link{mergeWindowsList}} and \code{\link{findOverlapsList}}.
 
-\code{consolidateTests} and \code{consolidateOverlaps} are succeeded by \code{\link{mergeResultsList}} and \code{\link{mergeOverlapsList}}, respectively.
+\code{consolidateTests} and \code{consolidateOverlaps} are succeeded by \code{\link{mergeResultsList}} and \code{\link{overlapResultsList}}, respectively.
 }
 \examples{
 try(filterWindows())

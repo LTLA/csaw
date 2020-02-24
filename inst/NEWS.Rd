@@ -3,7 +3,13 @@
 \encoding{UTF-8}
 
 \section{Version 1.22.0}{\itemize{
-\item Removed deprecated functionality in consolidateTests() and related functions.    
+\item Removed deprecated functionality in consolidateTests() and related functions.
+\item Modified the method used to count the number of up/down windows in combineTests().
+Reported a representative test in the output along with its log-fold changes.
+\item Renamed mixedClusters() to mixedTests() with deprecation of the former.
+\item Added minimalTests() for cluster-level summarization with a minimum proportion of significant tests.
+\item Standardized the output of getBestTest(), empiricalFDR(), mixedTests() and minimalTests() to that of combineTests().
+In particular, getBestTest() now returns the index of its best window in the rep.test field.
 }}
 
 \section{Version 1.20.0}{\itemize{
