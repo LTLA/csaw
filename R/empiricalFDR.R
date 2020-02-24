@@ -3,11 +3,7 @@
 #' Control the empirical FDR across clusters for comparisons to negative controls, 
 #' based on tests that are significant in the \dQuote{wrong} direction.
 #' 
-#' @param ids Integer vector containing the cluster ID for each test.
-#' @param tab A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.
-#' @param weights A numeric vector of weights for each window, defaults to 1 for each test.
-#' @param pval.col An integer scalar or string specifying the column of \code{tab} containing the p-values.
-#' @param fc.col An integer scalar or string specifying the column of \code{tab} containing the log-fold changes.
+#' @inheritParams mixedTests
 #' @param neg.down A logical scalar indicating if negative log-fold changes correspond to the \dQuote{wrong} direction.
 #' 
 #' @details

@@ -88,7 +88,7 @@
 #' 
 #' # Weighting example, with relation-specific weights.
 #' best.by.ave <- getBestOverlaps(olap, mock, by.pval=FALSE)
-#' w <- summitOverlaps(olap, region.best=best.by.ave$best)
+#' w <- summitOverlaps(olap, region.best=best.by.ave$rep.test)
 #' head(w)
 #' stopifnot(length(w)==length(olap))
 #' combineOverlaps(olap, mock, o.weight=w)

@@ -3,6 +3,8 @@
 #' Find the test with the greatest significance or the highest abundance in each cluster.
 #' 
 #' @inheritParams combineTests
+#' @param by.pval Logical scalar indicating whether the best test should be selected on the basis of the smallest p-value.
+#' If \code{FALSE}, the best test is defined as that with the highest abundance.
 #' @param cpm.col An integer scalar or string specifying the column of \code{tab} containing the log-CPM values.
 #' Defaults to \code{"logCPM"}.
 #' 
@@ -85,8 +87,8 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, fc.
 
         .general_test_combiner(ids=ids, tab=tab, weights=weights, 
             pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-            FUN=function(..., tab) {
-                .Call(cxx_compute_cluster_maxed, ..., tab[,cpm.col])
+            FUN=function(fcs, p, ids, weights, threshold, tab) {
+                .Call(cxx_compute_cluster_maxed, fcs, p, ids, weights, threshold, tab[,cpm.col])
             }
         )
     }

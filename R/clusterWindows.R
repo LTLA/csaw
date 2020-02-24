@@ -11,7 +11,7 @@
 #' Defaults to \code{"logFC"}.
 #' @param signs A logical scalar indicating whether the sign of the log-fold change (specified by \code{fc.col}) should be used in \code{\link{mergeWindows}}.
 #' @param tol,... Arguments to be passed to \code{\link{mergeWindows}}.
-#' @param weights, grid.length, iterations Arguments to be passed to \code{\link{controlClusterFDR}}.
+#' @param weights,grid.length,iterations Arguments to be passed to \code{\link{controlClusterFDR}}.
 #' 
 #' @return
 #' A named list containing:

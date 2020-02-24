@@ -4,7 +4,8 @@
 #' 
 #' @param ids An integer vector or factor containing the cluster ID for each test.
 #' @param tab A data.frame of results with \code{PValue} and at least one \code{logFC} field for each test.
-#' @param weights A numeric vector of weights for each test, defaults to 1 for each test.
+#' @param weights A numeric vector of weights for each test. 
+#' Defaults to 1 for all tests.
 #' @param pval.col An integer scalar or string specifying the column of \code{tab} containing the p-values.
 #' Defaults to \code{"PValue"}.
 #' @param fc.col An integer or character vector specifying the columns of \code{tab} containing the log-fold changes.
@@ -104,8 +105,8 @@
 combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     .general_test_combiner(ids=ids, tab=tab, weights=weights, 
         pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-        FUN=function(..., tab) {
-            .Call(cxx_compute_cluster_simes, ...)
+        FUN=function(fcs, p, ids, weights, threshold, tab) {
+            .Call(cxx_compute_cluster_simes, fcs, p, ids, weights, threshold)
         }
     )
 }
@@ -122,7 +123,7 @@ combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.
  
     fc.col <- .parseFCcol(fc.col, tab) 
     is.pval <- .getPValCol(pval.col, tab)
-    out <- FUN(as.list(tab[fc.col]), tab[[is.pval]], ids, weights, fc.threshold, tab=tab)
+    out <- FUN(fcs=as.list(tab[fc.col]), p=tab[[is.pval]], ids=ids, weights=weights, threshold=fc.threshold, tab=tab)
 
     names(out[[2]]) <- sprintf("num.%s.%s", c("up", "down"), rep(colnames(tab)[fc.col], each=2))
     combined <- DataFrame(num.tests=out[[1]], out[[2]], row.names=groups)

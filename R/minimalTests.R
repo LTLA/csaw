@@ -55,8 +55,8 @@
 minimalTests <- function(ids, tab, min.sig.n=3, min.sig.prop=0.4, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     .general_test_combiner(ids=ids, tab=tab, weights=weights, 
         pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-        FUN=function(..., tab) {
-            .Call(cxx_compute_cluster_holm, ..., min.sig.n, min.sig.prop)
+        FUN=function(fcs, p, ids, weights, threshold, tab) {
+            .Call(cxx_compute_cluster_holm, fcs, p, ids, weights, threshold, min.sig.n, min.sig.prop)
         }
     )
 }
