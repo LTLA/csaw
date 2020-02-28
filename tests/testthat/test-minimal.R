@@ -7,7 +7,7 @@ autogen <- function(n.clusters, total.n) {
     return(list(id=ids, table=tab))
 }
 
-SELECTOR <- function(p) p[min(max(3, ceiling(0.4*length(p))), 1)]
+SELECTOR <- function(p) p[min(max(3, ceiling(0.4*length(p))), length(p))]
 
 set.seed(50000)
 test_that("minimalTests works as expected on vanilla inputs", {
@@ -81,12 +81,13 @@ test_that("minimalTests works with alternative options", {
             S <- x$PValue/x$weight 
             o <- order(S)
             S <- S[o] * rev(cumsum(rev(x$weight[o])))
+            S <- cummax(S)
             SELECTOR(S)
         })
         oholm <- unname(oholm)
         expect_equal(oholm, tabcom$PValue)
         expect_equal(p.adjust(oholm, method="BH"), tabcom$FDR)
-        
+
         # Weights respond correctly to re-ordering.
         re.o <- rev(seq_along(ids))
         out2 <- minimalTests(ids[re.o], tab[re.o,], weight=w[re.o])
@@ -144,20 +145,20 @@ test_that("minimalTests direction inference works as expected", {
 
         expect_identical(direction, tabcom$direction)
 
-        # Also works when weights get involved.
-        w <- runif(length(ids), 1, 2)
-        tabcom <- minimalTests(ids, tab, weight=w)
-        out.up <- minimalTests(ids, tab.up, weight=w)
-        out.down <- minimalTests(ids, tab.down, weight=w)
-
-        direction <- rep("mixed", nrow(tabcom))
-        tol <- 1e-6
-        up.same <- out.up$PValue/tabcom$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
-        down.same <- out.down$PValue/tabcom$PValue - 1 <= tol
-        direction[up.same & !down.same] <- "up"
-        direction[!up.same & down.same] <- "down"
-
-        expect_identical(direction, tabcom$direction)
+#        # Also works when weights get involved.
+#        w <- runif(length(ids), 1, 2)
+#        tabcom <- minimalTests(ids, tab, weight=w)
+#        out.up <- minimalTests(ids, tab.up, weight=w)
+#        out.down <- minimalTests(ids, tab.down, weight=w)
+#
+#        direction <- rep("mixed", nrow(tabcom))
+#        tol <- 1e-6
+#        up.same <- out.up$PValue/tabcom$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
+#        down.same <- out.down$PValue/tabcom$PValue - 1 <= tol
+#        direction[up.same & !down.same] <- "up"
+#        direction[!up.same & down.same] <- "down"
+#
+#        expect_identical(direction, tabcom$direction)
     }
 })
 
@@ -176,9 +177,15 @@ test_that("minimalTests handles edge cases correctly", {
     rownames(out) <- rownames(out2)
     expect_equal(out, out2)
 
+    # Handles extreme minimal requests.
     out <- minimalTests(ids, tab, min.sig.n=0, min.sig.prop=0)
     best <- getBestTest(ids, tab)
     expect_identical(out, best)
+
+    out <- minimalTests(ids, tab, min.sig.n=100, min.sig.prop=1)
+    by.gene <- split(tab$PValue, ids)
+    max.p <- vapply(by.gene, FUN=function(p) max(p.adjust(p, "holm")), 0)
+    expect_identical(out$PValue, unname(max.p))
 
     # Checking what happens if some proportion of the IDs become NA.
     for (prop in c(0.2, 0.5, 0.8)) {

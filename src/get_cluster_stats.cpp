@@ -83,8 +83,10 @@ public:
             min_num, 
             static_cast<size_t>(std::ceil(min_prop * static_cast<double>(psorter.size())))
         );
-        index=std::min(index, static_cast<size_t>(1));
-        --index;
+        index=std::min(index, psorter.size());
+        if (index!=0) {
+            --index;
+        }
         return std::make_pair(psorter[index].first, index);
     }
 private:
@@ -269,7 +271,7 @@ SEXP compute_cluster_holm(SEXP fcs, SEXP pvals, SEXP by, SEXP weight, SEXP fcthr
     BEGIN_RCPP
     HolmPreparer prep(
         check_integer_scalar(min_n, "minimum number of tests"),
-        check_numeric_scalar(min_n, "minimum proportion of tests")
+        check_numeric_scalar(min_p, "minimum proportion of tests")
     );
     return get_cluster_stats_internal(fcs, pvals, by, weight, fcthreshold, prep);
     END_RCPP
