@@ -34,14 +34,38 @@
 #' similarly, the number of down tests is obtained using the one-sided p-values for a negative change.
 #' }
 #' 
+#' @section Representative tests and their log-fold changes:
+#' For each combining procedure, we identify a representative test for the entire cluster.
+#' This is usually based on the fact that one p-value is especially important for computing the cluster-level p-value.
+#' The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
+#' \itemize{
+#' \item For \code{\link{combineTests}}, the test is chosen with the lowest BH-adjusted p-value before enforcing monotonicity.
+#' This is because the p-value for this test is directly used as the combined p-value in Simes' method.
+#' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used
+#' (see the documentation for the definition of \eqn{x}).
+#' \item For \code{\link{getBestTest}} with \code{by.pval=TRUE}, the test with the lowest p-value is used.
+#' \item For \code{\link{getBestTest}} with \code{by.pval=FALSE}, the test with the highest abundance is used.
+#' \item For \code{\link{mixedTests}}, two representative tests are reported in each direction.
+#' The representative test in each direction is defined using \code{\link{combineTests}} as described above.
+#' \item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}},
+#' but from a BH adjustment using only one-sided p-values in the \dQuote{desirable} direction,
+#' i.e., up tests when \code{neg.down=TRUE} and down tests otherwise.
+#' }
+#' This representative is usually sufficient for providing proxy log-fold changes for clusters with simple differences,
+#' but is obviously inadequate for representing more complex changes.
+#'
 #' @section Determining the cluster-level direction:
 #' When only one log-fold change column is specified, we will try to determine which direction contributes to the combined p-value.
-#' This is done by considering whether the cluster-level p-value would increase if all tests in one direction were assigned p-values of unity.
-#' If there is an increase, then tests changing in that direction must contribute to the combined p-value calculations. 
-#' In this manner, clusters are labelled based on whether their combined p-values are driven by tests with only positive (\code{"up"}) or negative log-fold changes (\code{"down"}) or both (\code{"mixed"}).
+#' This is done by tallying the directions of all tests with (weighted) p-values below that of the representative test.
+#' If all tests in a cluster have positive or negative log-fold changes, that cluster's direction is reported as \code{"up"} or \code{"down"} respectively; otherwise it is reported as \code{"mixed"}.
+#' This is stored as the \code{"direction"} field in the returned data frame.
 #' 
-#' The label for each cluster is stored as the \code{"direction"} field in the returned data frame.
-#' However, keep in mind that the label only describes the direction of change among the most significant tests in the cluster.
+#' Assessing the contribution of per-test p-values to the cluster-level p-value is roughly equivalent to asking whether the latter would increase if all tests in one direction were assigned p-values of unity.
+#' If there is an increase, then tests changing in that direction must contribute to the combined p-value calculations. 
+#' In this manner, clusters are labelled based on whether their combined p-values are driven by tests with only positive, negative or mixed log-fold changes.
+#' (Note that this interpretation is not completely correct for \code{\link{minimalTests}} due to equality effects from enforcing monotonicity in the Holm procedure, but this is of little practical consequence.)
+#' 
+#' Users should keep in mind that the label only describes the direction of change among the most significant tests in the cluster.
 #' Clusters with complex differences may still be labelled as changing in only one direction, if the tests changing in one direction have much lower p-values than the tests changing in the other direction (even if both sets of p-values are significant).
 #' More rigorous checks for mixed changes should be performed with \code{\link{mixedTests}}.
 #'
@@ -53,29 +77,12 @@
 #' \item For \code{\link{empiricalFDR}}, it is set to \code{"up"} when \code{neg.down=FALSE} and \code{"down"} otherwise.
 #' This reflects the fact that the empirical FDR reflects the significance of changes in the desired direction.
 #' }
-#'
-#' @section Representative log-fold changes:
-#' For each combining procedure, we identify a representative test for the entire cluster.
-#' This is usually based on the fact that one p-value is especially important for computing the cluster-level p-value.
-#' The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
-#' \itemize{
-#' \item For \code{\link{combineTests}}, the test is chosen with the lowest BH-adjusted p-value before enforcing monotonicity.
-#' This is because the p-value for this test is directly used as the combined p-value in Simes' method.
-#' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used
-#  (see the documentation for the definition of \eqn{x}).
-#' \item For \code{\link{getBestTest}} with \code{by.pval=TRUE}, the test with the lowest p-value is used.
-#' \item For \code{\link{getBestTest}} with \code{by.pval=FALSE}, the test with the highest abundance is used.
-#' \item For \code{\link{mixedTests}}, two representative tests are reported in each direction.
-#' The representative test in each direction is defined using \code{\link{combineTests}} as described above.
-#' \item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}},
-#' but from a BH adjustment using only one-sided p-values in the \dQuote{desirable} direction,
-#' i.e., up tests when \code{neg.down=TRUE} and down tests otherwise.
-#' }
-#' This representative is usually sufficient for providing proxy log-fold changes for clusters with simple differences,
-#' but is obviously inadequate for representing more complex changes.
 #' 
 #' @author Aaron Lun
 #'
+#' @seealso
+#' \code{\link{combineTests}}, \code{\link{minimalTests}}, \code{\link{getBestTest}},
+#' \code{\link{empiricalFDR}} annd \code{\link{mixedTests}} for the functions that do the work.
 #' @name cluster-direction
 NULL
 

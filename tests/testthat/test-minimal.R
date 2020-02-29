@@ -135,30 +135,32 @@ test_that("minimalTests direction inference works as expected", {
         tab.down <- tab
         tab.down$PValue[going.up] <- 1
         out.down <- minimalTests(ids, tab.down)
-        
-        direction <- rep("mixed", nrow(tabcom))
+
         tol <- 1e-6
         up.same <- out.up$PValue/tabcom$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
         down.same <- out.down$PValue/tabcom$PValue - 1 <= tol
-        direction[up.same & !down.same] <- "up"
-        direction[!up.same & down.same] <- "down"
 
-        expect_identical(direction, tabcom$direction)
+        # Due to ties in Holm procedure, the 'setting p-values to unity' interpretation above is not exact;
+        # clusters reported as 'mixed' may actually not change when setting p-values to unity in one direction.
+        # But any clusters reported as 'up' MUST be 'up.same' and '!down.same'; opposite is true for reported 'down'.
+        # Similarly, if you are '!up.same' and '!down.same', you MUST be reported as 'mixed'.
+        expect_identical(up.same & !down.same & tabcom$direction=="up", tabcom$direction=="up")
+        expect_identical(!up.same & down.same & tabcom$direction=="down", tabcom$direction=="down")
+        expect_identical(!up.same & !down.same & tabcom$direction=="mixed", !up.same & !down.same)
 
-#        # Also works when weights get involved.
-#        w <- runif(length(ids), 1, 2)
-#        tabcom <- minimalTests(ids, tab, weight=w)
-#        out.up <- minimalTests(ids, tab.up, weight=w)
-#        out.down <- minimalTests(ids, tab.down, weight=w)
-#
-#        direction <- rep("mixed", nrow(tabcom))
-#        tol <- 1e-6
-#        up.same <- out.up$PValue/tabcom$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
-#        down.same <- out.down$PValue/tabcom$PValue - 1 <= tol
-#        direction[up.same & !down.same] <- "up"
-#        direction[!up.same & down.same] <- "down"
-#
-#        expect_identical(direction, tabcom$direction)
+        # Also works when weights get involved.
+        w <- runif(length(ids), 1, 2)
+        tabcom <- minimalTests(ids, tab, weight=w)
+        out.up <- minimalTests(ids, tab.up, weight=w)
+        out.down <- minimalTests(ids, tab.down, weight=w)
+
+        tol <- 1e-6
+        up.same <- out.up$PValue/tabcom$PValue - 1 <= tol  # No need to use abs(), up/down cannot be lower.
+        down.same <- out.down$PValue/tabcom$PValue - 1 <= tol
+
+        expect_identical(up.same & !down.same & tabcom$direction=="up", tabcom$direction=="up")
+        expect_identical(!up.same & down.same & tabcom$direction=="down", tabcom$direction=="down")
+        expect_identical(!up.same & !down.same & tabcom$direction=="mixed", !up.same & !down.same)
     }
 })
 
