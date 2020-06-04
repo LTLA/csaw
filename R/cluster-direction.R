@@ -36,23 +36,24 @@
 #' 
 #' @section Representative tests and their log-fold changes:
 #' For each combining procedure, we identify a representative test for the entire cluster.
-#' This is usually based on the fact that one p-value is especially important for computing the cluster-level p-value.
-#' The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
+#' This is based on the observation that, in each method, 
+#' there is often one test that is especially important for computing the cluster-level p-value.
 #' \itemize{
-#' \item For \code{\link{combineTests}}, the test is chosen with the lowest BH-adjusted p-value before enforcing monotonicity.
+#' \item For \code{\link{combineTests}}, the representative is the test with the lowest BH-adjusted p-value before enforcing monotonicity.
 #' This is because the p-value for this test is directly used as the combined p-value in Simes' method.
-#' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used
-#' (see the documentation for the definition of \eqn{x}).
+#' \item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used as the representative.
+#' See the function's documentation for the definition of \eqn{x}.
 #' \item For \code{\link{getBestTest}} with \code{by.pval=TRUE}, the test with the lowest p-value is used.
 #' \item For \code{\link{getBestTest}} with \code{by.pval=FALSE}, the test with the highest abundance is used.
 #' \item For \code{\link{mixedTests}}, two representative tests are reported in each direction.
 #' The representative test in each direction is defined using \code{\link{combineTests}} as described above.
-#' \item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}},
-#' but from a BH adjustment using only one-sided p-values in the \dQuote{desirable} direction,
+#' \item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}}
+#' after converting all p-values to their one-sided counterparts in the \dQuote{desirable} direction,
 #' i.e., up tests when \code{neg.down=TRUE} and down tests otherwise.
 #' }
-#' This representative is usually sufficient for providing proxy log-fold changes for clusters with simple differences,
-#' but is obviously inadequate for representing more complex changes.
+#'
+#' The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
+#' For clusters with simple differences, the log-fold change for the representative is a good summary of the effect size for the cluster.
 #'
 #' @section Determining the cluster-level direction:
 #' When only one log-fold change column is specified, we will try to determine which direction contributes to the combined p-value.

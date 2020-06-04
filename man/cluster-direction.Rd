@@ -43,23 +43,24 @@ similarly, the number of down tests is obtained using the one-sided p-values for
 \section{Representative tests and their log-fold changes}{
 
 For each combining procedure, we identify a representative test for the entire cluster.
-This is usually based on the fact that one p-value is especially important for computing the cluster-level p-value.
-The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
+This is based on the observation that, in each method, 
+there is often one test that is especially important for computing the cluster-level p-value.
 \itemize{
-\item For \code{\link{combineTests}}, the test is chosen with the lowest BH-adjusted p-value before enforcing monotonicity.
+\item For \code{\link{combineTests}}, the representative is the test with the lowest BH-adjusted p-value before enforcing monotonicity.
 This is because the p-value for this test is directly used as the combined p-value in Simes' method.
-\item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used
-(see the documentation for the definition of \eqn{x}).
+\item For \code{\link{minimalTests}}, the test with the \eqn{x}th-smallest p-value is used as the representative.
+See the function's documentation for the definition of \eqn{x}.
 \item For \code{\link{getBestTest}} with \code{by.pval=TRUE}, the test with the lowest p-value is used.
 \item For \code{\link{getBestTest}} with \code{by.pval=FALSE}, the test with the highest abundance is used.
 \item For \code{\link{mixedTests}}, two representative tests are reported in each direction.
 The representative test in each direction is defined using \code{\link{combineTests}} as described above.
-\item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}},
-but from a BH adjustment using only one-sided p-values in the \dQuote{desirable} direction,
+\item For \code{\link{empiricalFDR}}, the test is chosen in the same manner as described for \code{\link{combineTests}}
+after converting all p-values to their one-sided counterparts in the \dQuote{desirable} direction,
 i.e., up tests when \code{neg.down=TRUE} and down tests otherwise.
 }
-This representative is usually sufficient for providing proxy log-fold changes for clusters with simple differences,
-but is obviously inadequate for representing more complex changes.
+
+The index of the associated test is reported in the output as the \code{"rep.test"} field along with its log-fold changes.
+For clusters with simple differences, the log-fold change for the representative is a good summary of the effect size for the cluster.
 }
 
 \section{Determining the cluster-level direction}{
@@ -74,7 +75,7 @@ If there is an increase, then tests changing in that direction must contribute t
 In this manner, clusters are labelled based on whether their combined p-values are driven by tests with only positive, negative or mixed log-fold changes.
 (Note that this interpretation is not completely correct for \code{\link{minimalTests}} due to equality effects from enforcing monotonicity in the Holm procedure, but this is of little practical consequence.)
 
-However, keep in mind that the label only describes the direction of change among the most significant tests in the cluster.
+Users should keep in mind that the label only describes the direction of change among the most significant tests in the cluster.
 Clusters with complex differences may still be labelled as changing in only one direction, if the tests changing in one direction have much lower p-values than the tests changing in the other direction (even if both sets of p-values are significant).
 More rigorous checks for mixed changes should be performed with \code{\link{mixedTests}}.
 
@@ -88,6 +89,10 @@ This reflects the fact that the empirical FDR reflects the significance of chang
 }
 }
 
+\seealso{
+\code{\link{combineTests}}, \code{\link{minimalTests}}, \code{\link{getBestTest}},
+\code{\link{empiricalFDR}} annd \code{\link{mixedTests}} for the functions that do the work.
+}
 \author{
 Aaron Lun
 }
