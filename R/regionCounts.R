@@ -21,6 +21,7 @@ regionCounts <- function(bam.files, regions, ext=100, param=readParam(), BPPARAM
 		strand(regions) <- "*"
 	}
 
+    bam.files <- .make_BamFiles(bam.files)
     nbam <- length(bam.files)
 	ext.data <- .collateExt(nbam, ext) 
 

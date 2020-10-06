@@ -1,3 +1,17 @@
+#' @importFrom Rsamtools BamFile
+#' @importClassesFrom Rsamtools BamFile
+.make_BamFile <- function(bam.file) {
+    if (!is(bam.file, "BamFile")) {
+        BamFile(bam.file)
+    } else {
+        bam.file
+    }
+}
+
+.make_BamFiles <- function(bam.files) {
+    lapply(bam.files, .make_BamFile)
+}
+
 #' @importFrom Rsamtools scanBamHeader
 .activeChrs <- function(bam.files, restrict) 
 # Processes the incoming data; checks that bam headers are all correct, truncates the list according to 'restrict'.
@@ -6,8 +20,10 @@
 # created 12 December 2014
 { 
     originals <- NULL
+    bam.files <- .make_BamFiles(bam.files)
+
     for (bam in bam.files) {
-        chrs <- scanBamHeader(bam)[[1]][[1]]
+        chrs <- scanBamHeader(bam)$targets
         chrs <- chrs[order(names(chrs))]
 
         if (is.null(originals)) { 

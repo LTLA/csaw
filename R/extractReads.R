@@ -22,7 +22,8 @@ extractReads <- function(bam.file, region, ext=NA, param=readParam(), as.reads=F
     }
     ext.data <- .collateExt(1, ext)
 
-    chrs <- scanBamHeader(bam.file)[[1]][[1]]
+    bam.file <- .make_BamFile(bam.file)
+    chrs <- scanBamHeader(bam.file)$targets
     cur.chr <- as.character(seqnames(region)[1])
     if (length(param$restrict) && ! cur.chr %in% param$restrict) {
         warning("current chromosome not in restricted subset")

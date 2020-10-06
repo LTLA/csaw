@@ -11,7 +11,8 @@ profileSites(bam.files, regions, param=readParam(), range=5000, ext=100,
 }
 
 \arguments{
-\item{bam.files}{A character vector containing paths to one or more BAM files.}
+\item{bam.files}{A character vector containing paths to one or more BAM files.
+Alternatively, a list of \linkS4class{BamFile} objects.}
 \item{regions}{A \linkS4class{GenomicRanges} object over which profiles are to be aggregated.}
 \item{param}{A \linkS4class{readParam} object containing read extraction parameters.}
 \item{range}{An integer scalar specifying the range over which the profile will be collected.}

@@ -16,6 +16,7 @@
 
 #' @importFrom stats weighted.mean
 #' @importFrom S4Vectors DataFrame
+#' @importFrom BiocGenerics path
 .formatColData <- function(bam.files, totals, ext.data, all.extras, param) 
 # Formats the column data in the output SummarizedExperiment after counting.
 {
@@ -36,5 +37,8 @@
         store.rlen <- store.extras 
     }
 
+    if (!is.character(bam.files)) {
+        bam.files <- vapply(bam.files, path, "")
+    }
     DataFrame(bam.files=bam.files, totals=totals, ext=store.ext, rlen=store.rlen)
 }

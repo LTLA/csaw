@@ -12,7 +12,8 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
 {
     if (param$pe!="both") { stop("paired-end inputs required") }
 
-    extracted.chrs <- .activeChrs(bam.file, param$restrict)
+    bam.file <- .make_BamFile(bam.file)
+    extracted.chrs <- .activeChrs(list(bam.file), param$restrict)
     nchrs <- length(extracted.chrs)
     totals <- singles <- one.unmapped <- mapped <- unoriented <- 0L
     norm.list <- loose.names.1 <- loose.names.2 <- vector("list", nchrs)
@@ -41,8 +42,8 @@ getPESizes <- function(bam.file, param=readParam(pe="both"))
     inter.chr <- sum(loose.names.1 %in% loose.names.2)
     one.unmapped <- one.unmapped + length(loose.names.2) + length(loose.names.1) - inter.chr*2L
 
-    bam.file <- path.expand(bam.file)
-    bam.index <- paste0(bam.file, ".bai")
+    bam.index <- path.expand(index(bam.file))
+    bam.file <- path.expand(path(bam.file))
     out <- .Call(cxx_get_leftovers, bam.file, bam.index, names(extracted.chrs))
     totals <- totals + out
 

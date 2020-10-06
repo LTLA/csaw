@@ -1,5 +1,5 @@
 # This script tests the windowCounts function.
-# library(csaw); library(testthat); source("test-window.R")
+# library(csaw); library(testthat); source("setup.R"); source("test-window.R")
 
 expected_ranges <- function(width, shift, spacing, bam.files, param) {
     spacing <- as.integer(spacing)
@@ -181,6 +181,15 @@ test_that("windowCounts works with binning", {
                   regenPE(20000, chromos/10, file.path(tempdir, "B")))
     x <- windowCounts(bam.files, bin=TRUE, width=100, param=rparam, filter=0)
     expect_equal(colSums(assay(x)), x$totals)
+})
+
+test_that("windowCounts gives the same result for BamFiles", {
+    bam.files <-c(regenSE(1000, chromos, file.path(tempdir, "A")), 
+                  regenSE(2000, chromos, file.path(tempdir, "B")))
+
+    x1 <- windowCounts(bam.files, bin=TRUE, width=100)
+    x2 <- windowCounts(lapply(bam.files, BamFile), bin=TRUE, width=100)
+    expect_identical(x1, x2)
 })
 
 set.seed(40004)

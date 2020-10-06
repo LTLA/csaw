@@ -9,7 +9,8 @@ strandedCounts(bam.files, param=readParam(forward=NULL), regions=NULL, ...)
 }
 
 \arguments{
-\item{bam.files}{a character vector containing paths to sorted and indexed BAM files}
+\item{bam.files}{a character vector containing paths to sorted and indexed BAM files.
+Alternatively, a list of \linkS4class{BamFile} objects.}
 \item{param}{a \code{readParam} object containing read extraction parameters, where the \code{forward} slot must be set to \code{NULL}}
 \item{regions}{a \code{GRanges} object specifying the regions over which reads are to be counted}
 \item{...}{other arguments to be passed to \code{\link{windowCounts}} or \code{\link{regionCounts}}}

@@ -1,5 +1,7 @@
+#' @importFrom Rsamtools index 
+#' @importFrom BiocGenerics path
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics start end
+#' @importFrom BiocGenerics start end 
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
 # duplicate and poorly mapped/non-unique reads. We also discard reads in the
@@ -9,8 +11,10 @@
 # created 8 December 2013
 {
     cur.chr <- as.character(seqnames(where)) 
-    bam.file <- path.expand(bam.file)
-    bam.index <- paste0(bam.file, ".bai")
+
+    bam.file <- .make_BamFile(bam.file)
+    bam.index <- path.expand(index(bam.file))
+    bam.file <- path.expand(path(bam.file))
 
     if (length(param$forward)==0L) { 
         stop("read strand extraction must be specified") 
@@ -44,6 +48,8 @@
     cur.discard
 }
 
+#' @importFrom Rsamtools index 
+#' @importFrom BiocGenerics path
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics start end
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
@@ -57,8 +63,10 @@
 # created 8 December 2013
 {
     cur.chr <- as.character(seqnames(where)) 
-    bam.file <- path.expand(bam.file)
-    bam.index <- paste0(bam.file, ".bai")
+
+    bam.file <- .make_BamFile(bam.file)
+    bam.index <- path.expand(index(bam.file))
+    bam.file <- path.expand(path(bam.file))
 
     if (!identical(param$forward, NA)) { 
         stop("cannot specify read strand when 'pe=\"both\"'") 

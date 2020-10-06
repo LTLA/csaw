@@ -1,5 +1,5 @@
 # This checks the checkBimodality function.
-# library(csaw); library(testthat); source("test-bimodal.R")
+# library(csaw); library(testthat); source("setup.R"); source("test-bimodal.R")
 
 CHECKFUN <- function(bam.files, regions, width, param, prior.count) {
     width <- rep(width, length.out=length(bam.files))

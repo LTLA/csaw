@@ -29,6 +29,7 @@ windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0,
     if (shift >= spacing) { stop("shift must be less than the spacing") } # avoid redundant windows, see POINT 1 below.
     at.start <- .is_pt_at_start(shift, width) # see POINT 2
 
+    bam.files <- .make_BamFiles(bam.files)
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
 

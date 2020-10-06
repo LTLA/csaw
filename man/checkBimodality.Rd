@@ -11,7 +11,8 @@ checkBimodality(bam.files, regions, width=100, param=readParam(),
 }
 
 \arguments{
-\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.
+Alternatively, a list of \linkS4class{BamFile} objects.}
 \item{regions}{A \linkS4class{GenomicRanges} object specifying the regions over which bimodality is to be calculated.}
 \item{width}{An integer scalar or list indicating the span with which to compute bimodality.}
 \item{param}{A \linkS4class{readParam} object containing read extraction parameters.}

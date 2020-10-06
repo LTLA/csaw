@@ -2,6 +2,10 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.24.0}{\itemize{
+\item Accept a list of BamFiles in \code{bam.files=} for all functions.
+}}
+
 \section{Version 1.22.0}{\itemize{
 \item Removed deprecated functionality in consolidateTests() and related functions.
 \item Modified the method used to count the number of up/down windows in combineTests().

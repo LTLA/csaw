@@ -65,6 +65,7 @@ profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=
     norm.type <- match(normalize, norm.types)
 
     # Setting up.
+    bam.files <- .make_BamFiles(bam.files)
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, ext)
     range <- as.integer(range)

@@ -1,6 +1,6 @@
 Package: csaw
-Version: 1.23.2
-Date: 2020-06-04
+Version: 1.23.3
+Date: 2020-10-05
 Title: ChIP-Seq Analysis with Windows
 Authors@R:
     c(person("Aaron", "Lun", role=c("aut", "cre"), email = "infinite.monkeys.with.keyboards@gmail.com"),
@@ -52,4 +52,4 @@ License: GPL-3
 NeedsCompilation: yes
 SystemRequirements: C++11, GNU make
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

@@ -12,6 +12,7 @@ checkBimodality <- function(bam.files, regions, width=100, param=readParam(), pr
 # written by Aaron Lun
 # created 1 May 2015
 {
+    bam.files <- .make_BamFiles(bam.files)
     nbam <- length(bam.files)
     ext.data <- .collateExt(nbam, width) 
     invert <- as.logical(invert)

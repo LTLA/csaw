@@ -22,7 +22,9 @@ correlateReads <- function(bam.files, max.dist=1000, cross=TRUE, param=readParam
         on.exit(bpstop(BPPARAM))
     }
 
+    bam.files <- .make_BamFiles(bam.files)
     extracted.chrs <- .activeChrs(bam.files, param$restrict)
+
     for (i in seq_along(extracted.chrs)) {
         chr <- names(extracted.chrs)[i]
         where <- GRanges(chr, IRanges(1L, extracted.chrs[i]))

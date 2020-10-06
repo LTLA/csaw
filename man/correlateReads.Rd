@@ -11,7 +11,8 @@ correlateReads(bam.files, max.dist=1000, cross=TRUE, param=readParam(),
 }
 
 \arguments{
-\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.
+Alternatively, a list of \linkS4class{BamFile} objects.}
 \item{max.dist}{An integer scalar specifying the maximum delay distance over which correlation coefficients will be calculated.}
 \item{cross}{A logical scalar specifying whether cross-correlations should be computed.}
 \item{param}{A \linkS4class{readParam} object containing read extraction parameters.}

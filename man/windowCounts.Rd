@@ -11,7 +11,8 @@ windowCounts(bam.files, spacing=50, width=spacing, ext=100, shift=0,
 }
 
 \arguments{
-\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.}
+\item{bam.files}{A character vector containing paths to sorted and indexed BAM files.
+Alternatively, a list of \linkS4class{BamFile} objects.}
 \item{spacing}{An integer scalar specifying the distance between consecutive windows.}
 \item{width}{An integer scalar specifying the width of the window.}
 \item{ext}{An integer scalar or a list of two integer scalars/vectors, containing the average length(s) of the sequenced fragments in each library.}
