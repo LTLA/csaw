@@ -10,11 +10,12 @@ extractReads(bam.file, region, ext=NA, param=readParam(), as.reads=FALSE)
 }
 
 \arguments{
-	\item{bam.file}{a character string containing the path to a sorted and indexed BAM file}
-	\item{region}{a \code{GRanges} object of length 1 describing the region of interest}
-	\item{ext}{an integer scalar or list specifying the fragment length for directional read extension}
-	\item{param}{a \code{readParam} object specifying how reads should be extracted}
-	\item{as.reads}{a logical scalar indicating whether reads should be returned instead of fragments for paired-end data}
+	\item{bam.file}{A character string containing the path to a sorted and indexed BAM file.
+    Alternatively, a \linkS4class{BamFile} object describing a BAM file and its index.}
+	\item{region}{A \linkS4class{GRanges} object of length 1 describing the region of interest.}
+	\item{ext}{An integer scalar or list specifying the fragment length for directional read extension.}
+	\item{param}{A \linkS4class{readParam} object specifying how reads should be extracted.}
+	\item{as.reads}{A logical scalar indicating whether reads should be returned instead of fragments for paired-end data.}
 }	
 
 \details{
@@ -36,8 +37,9 @@ Alternatively, the returned \code{GRanges} can be filtered to retain only the de
 }
 
 \value{
-If \code{pe!="both"} or \code{as.reads=FALSE}, a GRanges object is returned containing the read (for single-end data) or fragment intervals (for paired-end data).
-If \code{pe="both"} and \code{as.reads=TRUE}, a GRangesList is returned containing the paired reads -- see Details. 
+If \code{pe!="both"} or \code{as.reads=FALSE}, a \linkS4class{GRanges} object is returned containing the read (for single-end data) or fragment intervals (for paired-end data).
+
+If \code{pe="both"} and \code{as.reads=TRUE}, a \linkS4class{GRangesList} is returned containing the paired reads -- see Details. 
 }
 
 \author{Aaron Lun}
