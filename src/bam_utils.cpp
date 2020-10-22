@@ -14,7 +14,7 @@ BamFile::BamFile(SEXP bam, SEXP idx) {
         throw std::runtime_error(err.str());
     }
     try {
-        index = bam_index_load(xpath.get_cstring()); 
+        index = hts_idx_load2(path.get_cstring(), xpath.get_cstring()); 
         if (index==NULL) { 
             std::stringstream err;
             err << "failed to open BAM index at '" << xpath.get_cstring() << "'";
