@@ -47,7 +47,7 @@ normOffsets <- function(object, ..., assay.id="counts", se.out=TRUE)
     }
     
     # Computing the offsets as log-differences from the average (implicit if the same average is used across libraries).
-    offs <- matrix(0, nwin, nlibs, byrow=TRUE)
+    offs <- matrix(0, nwin, nlibs, byrow=TRUE, dimnames=dimnames(object))
     for (x in seq_len(nlibs)) {
     	fit <- loessFit(log(mat[,x]+cont.cor.scaled[x]), ab, ...)
 
