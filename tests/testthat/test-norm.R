@@ -1,33 +1,29 @@
 # This tests the correctness of the normOffsets functions.
 # library(csaw); library(testthat); source("test-norm.R")
 
+set.seed(1000)
+data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=10), ncol=10)))
+data$totals <- rpois(10, lambda=10000)
 library(edgeR)
-test_that("testing scaling normalization", {
-    set.seed(1000)
-    data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=10), ncol=10)))
-    data$totals <- rpois(10, lambda=10000)
-    
+ref <- calcNormFactors(DGEList(assay(data), lib.size=data$totals), doWeighting=FALSE, method="TMM")$samples$norm.factors
+
+test_that("normFactors works as expected", {
     nf <- normFactors(data, se.out=FALSE)
-    ref <- calcNormFactors(DGEList(assay(data), lib.size=data$totals), doWeighting=FALSE, method="TMM")$samples$norm.factors
     expect_identical(nf, ref)
     
     data2 <- normFactors(data, se.out=TRUE)
     expect_identical(data2$norm.factors, ref)
     expect_identical(data2$totals, data$totals)
-    
-    # Checking that overwriting se.out works.
-    data3 <- data
-    assay(data3) <- assay(data3)*runif(nrow(data3))
-    data3b <- normFactors(data, se.out=data3)
-    expect_identical(assay(data3b), assay(data3))
-    expect_identical(data3b$norm.factors, ref)
 
-    # Throwing an error when the library sizes are different.
-    data3$totals <- rpois(10, lambda=10000)
-    expect_error(normFactors(data, se.out=data3), "library sizes")
+    # Works with DGEList inputs.
+    nf2 <- normFactors(asDGEList(data), se.out=FALSE)
+    expect_equivalent(nf, nf2)
 
-    # Checking other errors.
-    expect_error(normFactors(data, se.out=data[,1]), "number of libraries")
+    y <- normFactors(asDGEList(data))
+    expect_equivalent(y$samples$norm.factors, nf2)
+
+    mat <- normFactors(assay(data))
+    expect_type(attr(mat, "norm.factors"), "double")
 
     # Behaves when empty.
     # 1 is correct, as calcNormFactors() just diverts to that.
@@ -35,7 +31,27 @@ test_that("testing scaling normalization", {
     expect_identical(normFactors(data[,0], se.out=FALSE), numeric(0))
 })
 
-test_that("testing what happens with undersampling", {
+test_that("normFactors works with another se.out", {
+    data3 <- data
+
+    # Checking that overwriting se.out works.
+    assay(data3) <- assay(data3)*runif(nrow(data3))
+    data3b <- normFactors(data, se.out=data3)
+    expect_identical(assay(data3b), assay(data3))
+    expect_identical(data3b$norm.factors, ref)
+
+    # Works with an output DGEList.
+    data3c <- normFactors(data, se.out=asDGEList(data3))
+    expect_equivalent(data3b$norm.factors, data3c$samples$norm.factors)
+
+    # Throwing an error when the library sizes are different.
+    data3$totals <- rpois(10, lambda=10000)
+    expect_error(normFactors(data, se.out=data3), "library sizes")
+    expect_error(normFactors(data, se.out=data[,1]), "library sizes")
+})
+
+set.seed(1001)
+test_that("normFactors yields the correct output from undersampling", {
     n <- 1000L
     mu1 <- rep(10, n)
     mu2 <- mu1
@@ -67,23 +83,38 @@ test_that("testing what happens with undersampling", {
         abs(normFactors(data, weighted=TRUE)$norm.factors - true.value)))
 })
 
-test_that("testing what happens with loess normalization", {
-    set.seed(1000)
-    means <- 2^runif(1000)
-    data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=means), ncol=10)))
-    data$totals <- rpois(10, lambda=10000)
-    
+set.seed(1000)
+means <- 2^runif(1000)
+data <- SummarizedExperiment(list(counts=matrix(rpois(10000, lambda=means), ncol=10)))
+data$totals <- rpois(10, lambda=10000)
+
+test_that("normOffsets works correctly", {
     offs <- normOffsets(data, se.out=FALSE)
     data <- normOffsets(data, se.out=TRUE)
-    expect_equal(offs, assay(data, "offset", withDimnames=FALSE))
-   
+    expect_equal(offs, assay(data, "offset"))
+
+    # Behaves with a DGEList input.
+    offs2 <- normOffsets(asDGEList(data))
+    expect_equivalent(offs2$offset, offs)
+
+    mat <- normOffsets(assay(data))
+    expect_equal(dim(attr(mat, "offset")), dim(data))
+
+    # Behaves when empty.
+    expect_identical(dim(normOffsets(data[0,], se.out=FALSE)), c(0L, 10L))
+})
+
+test_that("normOffsets works with another se.out", {
+    data <- normOffsets(data)
+
     # Checking that overwriting se.out works.
     shuffler <- sample(nrow(data))
     data2 <- data[shuffler,]
     data2 <- normOffsets(data, se.out=data2)
     expect_equal(assay(data2, "offset"), assay(data, "offset")[shuffler,])
-    
+ 
     # Reference calculation, after subtracting the reference 'ab' from the observed values.
+    # This represents the theoretical fit to the M-values computed against the reference.
     lib.sizes <- data$totals
     mat <- assay(data)
     
@@ -91,21 +122,18 @@ test_that("testing what happens with loess normalization", {
     cont.cor.scaled <- cont.cor * lib.sizes/mean(lib.sizes)
     ab <- aveLogCPM(mat, lib.size=lib.sizes, prior.count=cont.cor)/log2(exp(1))
     
-    ref <- matrix(0, nrow(mat), ncol(mat), byrow=TRUE)
+    ref <- matrix(0, nrow(mat), ncol(mat), byrow=TRUE, dimnames=dimnames(mat))
     for (x in seq_len(ncol(mat))) {
         fit <- loessFit(log(mat[,x]+cont.cor.scaled[x]) - ab, ab) # explicit subtraction this time.
         ref[,x] <- fit$fitted 
     }
-    ref <- ref-rowMeans(ref)
-    
-    expect_equal(ref, offs)
+    ref <- scaleOffset(lib.sizes, ref)
+
+    expect_equal(ref, assay(data, "offset"))
 
     # Breaks when the library sizes are different.
     data3 <- data
     data3$totals <- rpois(10, lambda=10000)
     expect_error(normOffsets(data, se.out=data3), "library sizes")
-    expect_error(normOffsets(data, se.out=data[,1]), "number of libraries")
-
-    # Behaves when empty.
-    expect_identical(dim(normOffsets(data[0,], se.out=FALSE)), c(0L, 10L))
+    expect_error(normOffsets(data, se.out=data[,1]), "library sizes")
 })
