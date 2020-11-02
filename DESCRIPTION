@@ -10,6 +10,7 @@ Depends:
     SummarizedExperiment
 Imports:
     Rcpp,
+    Matrix,
     BiocGenerics,
     Rsamtools,
     edgeR,
