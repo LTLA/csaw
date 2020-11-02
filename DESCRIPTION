@@ -1,6 +1,6 @@
 Package: csaw
-Version: 1.25.0
-Date: 2020-10-21
+Version: 1.25.1
+Date: 2020-10-29
 Title: ChIP-Seq Analysis with Windows
 Authors@R:
     c(person("Aaron", "Lun", role=c("aut", "cre"), email = "infinite.monkeys.with.keyboards@gmail.com"),
@@ -10,6 +10,7 @@ Depends:
     SummarizedExperiment
 Imports:
     Rcpp,
+    Matrix,
     BiocGenerics,
     Rsamtools,
     edgeR,
