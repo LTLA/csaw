@@ -53,7 +53,7 @@ All filtering functions return a named list containing:
     \item \code{abundances}, a numeric vector containing the average abundance of each row in \code{data}.
     \item \code{filter}, a numeric vector containing the filter statistic for the given \code{type} for each row.
         The definition of this filter statistic will vary across the different methods.
-    \item \code{back.abundances}, a numeric vector containing the average abundance of each entry in \code{background}.
+    \item \code{back.abundances}, a numeric vector containing the background abundance for each row in \code{data}.
         Not reported for \code{filterWindowsProportion}.
 }
 
