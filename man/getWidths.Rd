@@ -25,8 +25,8 @@ Thus, a 1 bp window has an effective width that includes the average length of e
 % strand reads, respectively). This logic holds regardless of which strand the read was from, 
 % so there's no need to adjust things if data$param$forward is not NA.
 
-The fragment length is taken from \code{metadata(data)$final.ext}, if it is not \code{NA}.
-Otherwise, it is taken from \code{data$ext}.
+The fragment length is taken from \code{metadata(data)$final.ext}, if it is a valid integer.
+If \code{NULL}, it is set to 1, and if \code{NA}, it is taken from \code{data$ext}.
 If the fragment lengths are different between libraries, the average is used to compute the effective width of the window.
 For paired-end data, \code{data$ext} should be an average of the inferred fragment sizes, e.g., obtained with \code{\link{getPESizes}}.
 
