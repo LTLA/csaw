@@ -12,7 +12,9 @@ getWidths <- function(data)
 {
 	flen <- metadata(data)$final.ext
 
-	if (is.na(flen)) { 
+    if (is.null(flen)) {
+        flen <- 1L
+    } else if (is.na(flen)) { 
 		flen <- data$ext
 		is.missing <- is.na(flen)
 		if (any(is.missing)) { 
@@ -22,7 +24,7 @@ getWidths <- function(data)
 			flen[is.missing] <- data$rlen[is.missing]
 		}
 		flen <- as.integer(mean(flen))
-	}
+	} 
 
 	width(rowRanges(data)) + flen - 1L
 }
