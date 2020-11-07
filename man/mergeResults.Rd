@@ -7,11 +7,11 @@
 \description{Convenience wrappers around lower-level functions to easily obtain region-level results from window statistics.}
 
 \usage{
-mergeResults(ranges, tab, tol, get.best=TRUE, merge.args=list(), 
-    combine.args=list(), best.args=list())
+mergeResults(ranges, tab=mcols(ranges), tol, get.best=TRUE, 
+    merge.args=list(), combine.args=list(), best.args=list())
 
-overlapResults(ranges, tab, regions, get.best=TRUE, overlap.args=list(), 
-    combine.args=list(), best.args=list())
+overlapResults(ranges, tab=mcols(ranges), regions, get.best=TRUE, 
+    overlap.args=list(), combine.args=list(), best.args=list())
 }
 
 \arguments{

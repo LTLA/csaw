@@ -1,9 +1,13 @@
 #' @export
-#' @importFrom S4Vectors DataFrame metadata<-
+#' @importFrom S4Vectors DataFrame metadata<- I
 #' @importFrom IRanges findOverlaps
-overlapResultsList <- function(ranges.list, tab.list, regions, equiweight=TRUE, get.best=TRUE, 
+overlapResultsList <- function(ranges.list, tab.list=NULL, regions, equiweight=TRUE, get.best=TRUE, 
     overlap.args=list(), combine.args=list(), best.args=list()) 
 {
+    if (is.null(tab.list)) {
+        tab.list <- lapply(ranges.list, mcols)
+    }
+
     .verify_ranges_tabs(ranges.list, tab.list)
     olap.out <- do.call(findOverlapsList, c(list(ranges.list, regions), overlap.args))
     tab <- do.call(rbind, tab.list)

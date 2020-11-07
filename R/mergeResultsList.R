@@ -1,8 +1,12 @@
 #' @export
-#' @importFrom S4Vectors DataFrame metadata<-
-mergeResultsList <- function(ranges.list, tab.list, tol, equiweight=TRUE, get.best=TRUE, 
+#' @importFrom S4Vectors DataFrame metadata<- mcols I
+mergeResultsList <- function(ranges.list, tab.list=NULL, tol, equiweight=TRUE, get.best=TRUE, 
     merge.args=list(), combine.args=list(), best.args=list()) 
 {
+    if (is.null(tab.list)) {
+        tab.list <- lapply(ranges.list, mcols)
+    }
+
     .verify_ranges_tabs(ranges.list, tab.list)
     m.out <- do.call(mergeWindowsList, c(list(ranges.list, tol=tol), merge.args))
     tab <- do.call(rbind, tab.list)

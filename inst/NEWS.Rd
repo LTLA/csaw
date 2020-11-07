@@ -6,6 +6,8 @@
 \item \code{filterWindowsGlobal()} finally behaves correctly for variable-width \code{data=}.
 
 \item \code{normFactors()} and \code{normOffsets()} accept DGEList inputs in their \code{object=} and \code{se.out=} arguments.
+
+\item \code{mergeResults()} and friends now default to taking \code{tab=} from the \code{mcols()} of the inputs.
 }}
 
 \section{Version 1.24.0}{\itemize{
