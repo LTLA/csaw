@@ -16,7 +16,8 @@ filterWindowsProportion <- function(data, assay.data="counts", prior.count=2)
 }
 
 #' @export
-filterWindowsGlobal <- function(data, background, assay.data="counts", assay.back="counts", prior.count=2) 
+#' @importFrom stats spline
+filterWindowsGlobal <- function(data, background, assay.data="counts", assay.back="counts", prior.count=2, grid.pts=21) 
 # Defines the filter statistic for each window as the log-fold change
 # above a global estimate for the background enrichment.
 {
@@ -27,22 +28,35 @@ filterWindowsGlobal <- function(data, background, assay.data="counts", assay.bac
         return(list(abundances=abundances, filter=filter.stat))
     } 
 
-    # We don't adjust each abundance for the size of the individual regions, 
-    # as that would be a bit too much like FPKM and make strong assumptions 
-    # about the uniformity of coverage with respect to region width. We only 
-    # use the widths to adjust the background abundances for comparison.
-    bwidth <- getWidths(background)
-    dwidth <- getWidths(data)
-
     .checkLibSizes(data, background)
-    relative.width <- median(bwidth)/median(dwidth)
-    if (is.na(relative.width)) { 
-        relative.width <- 1 
+
+    dwidth <- getWidths(data)
+    log.dwidth <- log(pmax(1, dwidth))
+
+    pts <- unique(log.dwidth)
+    interpolate <- (length(pts) > grid.pts) 
+    if (interpolate) {
+        # Using grid interpolation to adjust for differences in the input
+        # 'data' width while respecting the specified prior.count.
+        limits <- range(pts)
+        pts <- seq(limits[1], limits[2], length.out=grid.pts)
     }
 
-    bg.ab <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
-    filter.stat <- abundances - .getGlobalBg(background, bg.ab, prior.count)
+    bwidth <- getWidths(background)
+    bg.pts <- numeric(length(pts)) 
+    for (i in seq_along(pts)) {
+        relative.width <- bwidth/exp(pts[i])
+        bg.abs <- scaledAverage(background, assay.id=assay.back, scale=relative.width, prior.count=prior.count)
+        bg.pts[i] <- .getGlobalBg(background, bg.abs, prior.count)
+    }
 
+    if (interpolate) {
+        bg.ab <- spline(x=pts, y=bg.pts, xout=log.dwidth)$y
+    } else {
+        bg.ab <- bg.pts[match(log.dwidth, pts)]
+    }
+
+    filter.stat <- abundances - bg.ab
     list(abundances=abundances, back.abundances=bg.ab, filter=filter.stat)
 }
 

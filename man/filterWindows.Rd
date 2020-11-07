@@ -11,7 +11,7 @@ based on proportions or using enrichment over background.}
 
 \usage{
 filterWindowsGlobal(data, background, assay.data="counts", 
-    assay.back="counts", prior.count=2)
+    assay.back="counts", prior.count=2, grid.pts=21)
 
 filterWindowsLocal(data, background, assay.data="counts", 
     assay.back="counts", prior.count=2)
@@ -43,6 +43,8 @@ scaleControlFilter(data.bin, back.bin, assay.data="counts",
 i.e., a normalization factor and library sizes for ChIP and control samples.}
 \item{data.bin}{A RangedSummarizedExperiment containing bin-level counts for ChIP libraries.}
 \item{back.bin}{A RangedSummarizedExperiment containing bin-level counts for control libraries.}
+\item{grid.pts}{An integer scalar specifying the number of grid points to use for interpolation when \code{data} contains variable-width intervals,
+e.g., for peaks or other regions instead of windows.}
 }
 
 \value{
@@ -94,6 +96,12 @@ after adjusting for the differences in widths between windows and bins.
 Similarly to \code{filterWindowsProportion}, the total number of bins is inferred from their width in \code{background}.
 This avoids overestimating the global background if some filtering has already been applied to the bins.
 % For example, windowCounts will automatically remove bins with no counts (e.g., telomeres, centromeres).
+
+The calculation is fairly straightforward for window-level counts where all \code{\link{rowRanges}(data)} are of the same width. 
+If the widths are variable (e.g., because \code{data} contains counts for peaks, genes or other irregular features), 
+the adjustment for differences in width needs to performed separately for each unique width.
+If there are more than \code{grid.pts} unique widths, we expedite this process by computing the adjustment for \code{grid.pts} widths
+and interpolating to obtain the adjusted background at each width.
 
 If \code{background} is not supplied, the background abundance is directly computed from entries in \code{data}.
 This assumes that \code{data} contains windows for most of the regions in the genome,

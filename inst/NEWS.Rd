@@ -2,6 +2,12 @@
 \title{csaw News}
 \encoding{UTF-8}
 
+\section{Version 1.26.0}{\itemize{
+\item \code{filterWindowsGlobal()} finally behaves correctly for variable-width \code{data=}.
+
+\item \code{normFactors()} and \code{normOffsets()} accept DGEList inputs in their \code{object=} and \code{se.out=} arguments.
+}}
+
 \section{Version 1.24.0}{\itemize{
 \item Accept a list of BamFiles in \code{bam.files=} for all functions.
 }}

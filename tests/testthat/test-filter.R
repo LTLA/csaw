@@ -5,7 +5,7 @@
 
 library(edgeR)
 
-test_that("global filtering works correctly", {
+test_that("global filtering works correctly with equal widths", {
     windowed <- SummarizedExperiment(assays=SimpleList(counts=matrix(10, 1, 1)),
     	rowRanges=GRanges("chrA", IRanges(1, 1)), colData=DataFrame(totals=1e6, ext=100),
     	metadata=list(final.ext=NA))
@@ -16,7 +16,6 @@ test_that("global filtering works correctly", {
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
     out <- filterWindowsGlobal(windowed, binned)
     expect_equivalent(out$filter, 0) 
-    expect_identical(names(out$filter), "50%")
     
     # Effective length after extension is exactly 10-fold less than the bin width.
     binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, nrow=10, 1)),
@@ -46,14 +45,13 @@ test_that("global filtering works correctly", {
     	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
     out <- filterWindowsGlobal(windowed, binned)
     expect_equivalent(out$filter, 0)
-    expect_identical(names(out$filter), "45%")
-    
+
     # Testing what happens when you don't specify the background.
     seqinfo(rowRanges(zeroed)) <- Seqinfo("chrA", 100)
     metadata(zeroed)$spacing <- 10
     out <- filterWindowsGlobal(zeroed) 
     expect_equivalent(out$filter, 0) # Should be zero, as both median and count are based on zero's.
-    
+
     win2 <- windowed
     seqinfo(rowRanges(win2)) <- Seqinfo("chrA", 100)
     metadata(win2)$spacing <- 10
@@ -73,6 +71,23 @@ test_that("global filtering works correctly", {
     expect_equal(emp$filter, numeric(0))
     emp <- filterWindowsGlobal(zeroed, binned[0,])
     expect_equal(emp$filter, 0)
+})
+
+test_that("global filtering works correctly with unequal widths", {
+    intervals <- SummarizedExperiment(assays=SimpleList(counts=matrix(1:100, 100, 1)),
+        rowRanges=GRanges("chrA", IRanges(1, width=1:100)), 
+        colData=DataFrame(totals=1e6))
+   
+    binned <- SummarizedExperiment(assays=SimpleList(counts=matrix(100, nrow=10, 1)),
+    	rowRanges=GRanges("chrA", IRanges(0:9*100+1, 1:10*100), seqinfo=Seqinfo("chrA", 1000)), 
+    	colData=DataFrame(totals=1e6, ext=1), metadata=list(final.ext=NA, spacing=100))
+
+    # All intervals have counts that scale with width, so all filter stats should be zero. 
+    out <- filterWindowsGlobal(intervals[1:10,], binned)
+    expect_true(all(abs(out$filter) < 1e-10))
+
+    out <- filterWindowsGlobal(intervals, binned)
+    expect_true(all(abs(out$filter) < 1e-5)) # a bit of give required, because the interpolation is approximate.
 })
 
 test_that("local filtering works correctly", {
