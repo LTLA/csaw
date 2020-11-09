@@ -15,8 +15,6 @@ Imports:
     Rsamtools,
     edgeR,
     limma,
-    GenomicFeatures,
-    AnnotationDbi,
     methods,
     S4Vectors,
     IRanges,
@@ -25,9 +23,11 @@ Imports:
     BiocParallel,
     utils
 Suggests:
+    AnnotationDbi,
     org.Mm.eg.db,
     TxDb.Mmusculus.UCSC.mm10.knownGene,
     testthat,
+    GenomicFeatures,
     GenomicAlignments,
     knitr,
     BiocStyle,

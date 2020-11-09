@@ -1,13 +1,10 @@
 #' @export
-#' @importFrom GenomicFeatures exonsBy genes
 #' @importFrom IRanges promoters trim IRanges flank findOverlaps
 #' @importFrom BiocGenerics strand start end
 #' @importFrom GenomeInfoDb seqnames seqinfo
-#' @importFrom AnnotationDbi mapIds 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom S4Vectors queryHits subjectHits
 #' @importFrom methods is
-#' @importClassesFrom GenomicFeatures TxDb
 detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000), key.field="ENTREZID", name.field="SYMBOL", ignore.strand=TRUE)
 # Gives three character vectors for each 'incoming'. 
 # The first specifies which features are wholly or partially overlapped by the current range.
@@ -20,7 +17,7 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 # created 23 November 2013
 {
     # Obtain exons.
-    exon.ranges <- exonsBy(txdb, by="gene")
+    exon.ranges <- GenomicFeatures::exonsBy(txdb, by="gene")
     exon.ranges <- unlist(exon.ranges)
     exon.ranges$exon_id <- NULL
     exon.ranges$exon_name <- NULL
@@ -37,16 +34,16 @@ detailRanges <- function(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000
 
     # Obtain gene bodies.
     if (is(txdb, "TxDb")) { 
-        gene.ranges <- genes(txdb, single.strand.genes.only=FALSE)
+        gene.ranges <- GenomicFeatures::genes(txdb, single.strand.genes.only=FALSE)
         gene.ranges <- unlist(gene.ranges)
     } else {
-        gene.ranges <- genes(txdb)
+        gene.ranges <- GenomicFeatures::genes(txdb)
     }
 
     # Assembling all ranges.
     all.ranges <- c(exon.ranges, prom.ranges, gene.ranges)
     range.type <- rep(c("E", "P", "G"), c(length(exon.ranges), length(prom.ranges), length(gene.ranges)))
-    gene.names <- suppressMessages(mapIds(orgdb, keys=names(all.ranges), column=name.field, keytype=key.field))  
+    gene.names <- suppressMessages(AnnotationDbi::mapIds(orgdb, keys=names(all.ranges), column=name.field, keytype=key.field))  
     gene.names <- ifelse(is.na(gene.names), names(all.ranges), gene.names)
 
     all.ranges$symbol <- gene.names
