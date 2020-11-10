@@ -144,7 +144,9 @@ filterWindowsControl <- function(data, background, assay.data="counts", assay.ba
     NULL
 }
 
-#' @importFrom GenomeInfoDb seqlengths
+#' @importFrom stats median 
+#' @importFrom BiocGenerics start
+#' @importFrom GenomeInfoDb seqlengths seqnames
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom S4Vectors metadata
 .getWindowNum <- function(data) 
@@ -152,8 +154,20 @@ filterWindowsControl <- function(data, background, assay.data="counts", assay.ba
 # reported in windowCounts (for empty windows/those lost by filter > 1).
 {
 	spacing <- metadata(data)$spacing
-	if (is.null(spacing)) { stop("failed to find spacing for windows") }
-	sum(ceiling(seqlengths(rowRanges(data))/spacing)) 
+	if (is.null(spacing)) { 
+        by.chr <- split(start(data), seqnames(data))
+        combined <- unlist(lapply(by.chr, diff))
+        spacing <- median(combined)
+    }
+
+    seq.len <- seqlengths(rowRanges(data))
+    if (!is.null(spacing) && !is.na(spacing)) {
+        sum(ceiling(seq.len/spacing)) 
+    } else {
+        # Sensible fallback when we have super-large bins 
+        # and the spacing is not specified.
+        length(seq.len)
+    }
 }
 
 #' @importFrom edgeR aveLogCPM

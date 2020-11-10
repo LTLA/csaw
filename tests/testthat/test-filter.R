@@ -24,6 +24,11 @@ test_that("global filtering works correctly with equal widths", {
     out <- filterWindowsGlobal(windowed, binned) 
     expect_equivalent(out$filter, 0)
 
+    # Continues to work when the spacing for the bins is not specified.
+    metadata(binned)$spacing <- NULL
+    out2 <- filterWindowsGlobal(windowed, binned)
+    expect_identical(out, out2)
+
     # Testing out different prior counts.
     out <- filterWindowsGlobal(windowed, binned, prior.count=3.5) 
     expect_equivalent(out$filter, 0)
