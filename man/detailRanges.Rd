@@ -11,8 +11,8 @@ detailRanges(incoming, txdb, orgdb, dist=5000, promoter=c(3000, 1000),
 
 \arguments{
 \item{incoming}{A \linkS4class{GRanges} object containing the ranges to be annotated.}
-\item{txdb}{A \linkS4class{TxDb} object for the genome of interest.}
-\item{orgdb}{An \linkS4class{OrgDb} object for the genome of interest.}
+\item{txdb}{A TxDb object for the genome of interest.}
+\item{orgdb}{An OrgDb object for the genome of interest.}
 \item{dist}{An integer scalar specifying the flanking distance to annotate.}
 \item{promoter}{An integer vector of length 2, where first and second values define the promoter as some distance upstream and downstream from the TSS, respectively.}
 \item{key.field}{A character scalar specifying the key type in \code{orgdb} corresponding to the gene IDs in \code{txdb}.}
