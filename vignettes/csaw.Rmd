@@ -33,16 +33,13 @@ While intended for ChIP-seq data, the methods in this package can also be applie
 
 # Documentation
 
-The full user's guide is available as part of the online documentation in the `r Biocpkg("csawUsersGuide")` workflow package.
+The full user's guide is available as part of the online documentation in the `r Biocbook("csawBook")` package.
 It can be obtained by typing:
 
 ```{r}
 library(csaw)
 if (interactive()) csawUsersGuide()
 ```
-
-In addition, several end-to-end usage examples are provided by the `r Biocpkg("chipseqDB")` workflow package.
-This is less comprehensive but more concise than the user's guide.
 
 Documentation for speicific functions is available through the usual R help system, e.g., `?windowCounts`.
 Further questions about the package should be directed to the [Bioconductor support site](https://support.bioconductor.org).

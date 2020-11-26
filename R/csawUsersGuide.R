@@ -5,5 +5,7 @@ csawUsersGuide <- function()
 # 
 # written by Aaron Lun.
 {
-    browseURL(sprintf("https://bioconductor.org/packages/%s/csawUsersGuide/vignettes/csaw.pdf", BiocManager::version()))
+    thing <- BiocStyle::Biocbook("csawBook")
+    target <- sub(".*\\((.*)\\).*", "\\1", thing)
+    browseURL(target)
 }
