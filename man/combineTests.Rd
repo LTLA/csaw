@@ -114,6 +114,10 @@ De novo detection of differentially bound regions for ChIP-seq data using peaks 
 \emph{Nucleic Acids Res.} 42, e95
 }
 \seealso{
+\code{\link{groupedSimes}}, which does the heavy lifting.
+
+\code{\link{minimalTests}} and \code{\link{getBestTest}}, for another method of combining p-values for each cluster.
+
 \code{\link{mergeWindows}}, for one method of generating \code{ids}.
 
 \code{\link{glmQLFTest}}, for one method of generating \code{tab}.

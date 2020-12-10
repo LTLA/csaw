@@ -96,6 +96,15 @@ Holm S (1979).
 A simple sequentially rejective multiple test procedure.
 \emph{Scand. J. Stat.} 6, 65-70.
 }
+\seealso{
+\code{\link{groupedHolmMin}}, which does the heavy lifting.
+
+\code{\link{combineTests}} and \code{\link{getBestTest}}, for another method of combining p-values for each cluster.
+
+\code{\link{mergeWindows}}, for one method of generating \code{ids}.
+
+\code{\link{glmQLFTest}}, for one method of generating \code{tab}.
+}
 \author{
 Aaron Lun
 }

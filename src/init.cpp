@@ -10,10 +10,6 @@ static const R_CallMethodDef all_call_entries[] = {
     REGISTER(annotate_overlaps, 8),
     REGISTER(best_in_cluster, 3),
 
-    REGISTER(compute_cluster_simes, 5),
-    REGISTER(compute_cluster_holm, 7),
-    REGISTER(compute_cluster_maxed, 6),
-
     REGISTER(merge_windows, 6),
     REGISTER(correlate_reads, 6),
     REGISTER(get_rle_counts, 5), 

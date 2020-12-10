@@ -73,11 +73,9 @@
 #' @keywords testing
 #'
 #' @export
+#' @importFrom S4Vectors splitAsList
 getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, cpm.col=NULL) {
-    if (by.pval) {
-        minimalTests(ids, tab, weights=weights, pval.col=pval.col, fc.col=fc.col, 
-            fc.threshold=fc.threshold, min.sig.n=0, min.sig.prop=0)
-    } else {
+    if (!by.pval) {
         if (is.null(cpm.col)) { 
             cpm.col <- "logCPM" 
         }
@@ -85,13 +83,17 @@ getBestTest <- function(ids, tab, by.pval=TRUE, weights=NULL, pval.col=NULL, fc.
             stop("absent or multiple logCPM columns are not supported")
         }
 
-        .general_test_combiner(ids=ids, tab=tab, weights=weights, 
-            pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-            FUN=function(fcs, p, ids, weights, threshold, tab) {
-                .Call(cxx_compute_cluster_maxed, fcs, p, ids, weights, threshold, tab[,cpm.col])
-            }
-        )
+        cur.col <- tab[,cpm.col]
+        by.id <- splitAsList(seq_along(ids), ids)
+        best <- unlist(lapply(by.id, function(x) x[which.max(cur.col[x])]))
+        is.best <- seq_along(ids) %in% best
+
+        is.pval <- .getPValCol(pval.col, tab)
+        tab[!is.best,is.pval] <- NA_real_
     }
+
+    minimalTests(ids, tab, weights=weights, pval.col=pval.col, fc.col=fc.col, 
+        fc.threshold=fc.threshold, min.sig.n=0, min.sig.prop=0)
 }
 
 # You can reduce the conservativeness of the Bonferroni method by using windows that 

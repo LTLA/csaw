@@ -44,19 +44,26 @@
 #' minimal <- minimalTests(ids, tab)
 #' head(minimal)
 #'
+#' @seealso
+#' \code{\link{groupedHolmMin}}, which does the heavy lifting.
+#'
+#' \code{\link{combineTests}} and \code{\link{getBestTest}}, for another method of combining p-values for each cluster.
+#'
+#' \code{\link{mergeWindows}}, for one method of generating \code{ids}.
+#' 
+#' \code{\link{glmQLFTest}}, for one method of generating \code{tab}.
+#' 
 #' @references
 #' Holm S (1979).
 #' A simple sequentially rejective multiple test procedure.
 #' \emph{Scand. J. Stat.} 6, 65-70.
 #'
 #' @export
-#' @importFrom stats p.adjust
-#' @importFrom S4Vectors DataFrame
+#' @importFrom metapod groupedHolmMin
 minimalTests <- function(ids, tab, min.sig.n=3, min.sig.prop=0.4, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     .general_test_combiner(ids=ids, tab=tab, weights=weights, 
         pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-        FUN=function(fcs, p, ids, weights, threshold, tab) {
-            .Call(cxx_compute_cluster_holm, fcs, p, ids, weights, threshold, min.sig.n, min.sig.prop)
-        }
+        FUN=function(...) groupedHolmMin(..., min.n=min.sig.n, min.prop=min.sig.prop),
+        count.correct="holm"
     )
 }

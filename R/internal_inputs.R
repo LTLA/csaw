@@ -54,43 +54,6 @@
     return(x)
 }
 
-.check_test_inputs <- function(ids, tab, weight) 
-# Checks the inputs to testing functions, namely getBestTest() and combineTests().
-# Checks for correct length, converts 'ids' to an integer, and reorders all values by 'ids'.
-# Also returns the original position of each reordered entry, in case that is necessary.
-{
-    f <- factor(ids)
-    all.names <- levels(f)
-    ids <- as.integer(f)
-    
-	if (is.null(weight)) { 
-        weight <- rep(1, length(ids)) 
-    } else if (!is.double(weight)) { 
-        weight <- as.double(weight) 
-    }
-	stopifnot(length(ids)==nrow(tab))
-	stopifnot(length(ids)==length(weight))
-
-    okay.ids <- !is.na(ids)
-    if (!all(okay.ids)) { 
-        ids <- ids[okay.ids]
-        weight <- weight[okay.ids]
-        tab <- tab[okay.ids,,drop=FALSE]
-    }
-	id.order <- order(ids)
-	ids <- ids[id.order]
-	tab <- tab[id.order,,drop=FALSE]
-	weight <- weight[id.order]
-
-    if (!all(okay.ids)) { 
-        originals <- which(okay.ids)[id.order]
-    } else {
-        originals <- id.order
-    }
-
-    list(ids=ids, groups=all.names, tab=tab, weight=weight, original=originals)
-}
-
 .parseFCcol <- function(fc.col, tab, multiple=TRUE) 
 # Checks 'tab' for a column containing log-fold changes.
 # Checks for any "logFC.*"-named column if a fc.col=NULL.

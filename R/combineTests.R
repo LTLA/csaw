@@ -76,6 +76,10 @@
 #' head(combined)
 #' 
 #' @seealso
+#' \code{\link{groupedSimes}}, which does the heavy lifting.
+#'
+#' \code{\link{minimalTests}} and \code{\link{getBestTest}}, for another method of combining p-values for each cluster.
+#'
 #' \code{\link{mergeWindows}}, for one method of generating \code{ids}.
 #' 
 #' \code{\link{glmQLFTest}}, for one method of generating \code{tab}.
@@ -102,44 +106,79 @@
 #' @keywords testing
 #'
 #' @export
+#' @importFrom metapod groupedSimes
 combineTests <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05) {
     .general_test_combiner(ids=ids, tab=tab, weights=weights, 
         pval.col=pval.col, fc.col=fc.col, fc.threshold=fc.threshold,
-        FUN=function(fcs, p, ids, weights, threshold, tab) {
-            .Call(cxx_compute_cluster_simes, fcs, p, ids, weights, threshold)
-        }
-    )
+        FUN=groupedSimes, count.correct="BH")
 }
 
 #' @importFrom S4Vectors DataFrame
 #' @importFrom BiocGenerics cbind
 #' @importFrom stats p.adjust
-.general_test_combiner <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, FUN) {
-    input <- .check_test_inputs(ids, tab, weights)
-    ids <- input$ids
-    tab <- input$tab
-    groups <- input$groups
-    weights <- input$weight
- 
-    fc.col <- .parseFCcol(fc.col, tab) 
+#' @importFrom metapod countGroupedDirection summarizeGroupedDirection
+.general_test_combiner <- function(ids, tab, weights=NULL, pval.col=NULL, fc.col=NULL, fc.threshold=0.05, FUN, count.correct) {
+	stopifnot(length(ids)==nrow(tab))
+    if (!is.null(weights)) {
+        stopifnot(length(ids)==length(weights))
+    }
+
+    if (!all(okay.ids <- !is.na(ids))) { 
+        originals <- which(okay.ids)
+        ids <- ids[okay.ids]
+        weights <- weights[okay.ids]
+        tab <- tab[okay.ids,,drop=FALSE]
+    } else {
+        originals <- seq_along(ids)
+    }
+
     is.pval <- .getPValCol(pval.col, tab)
-    out <- FUN(fcs=as.list(tab[fc.col]), p=tab[[is.pval]], ids=ids, weights=weights, threshold=fc.threshold, tab=tab)
+    p.vals <- tab[[is.pval]]
+    p.out <- FUN(p.values=p.vals, grouping=ids, weights=weights)
+    com.p <- p.out$p.value
+    ref.names <- names(com.p)
 
-    names(out[[2]]) <- sprintf("num.%s.%s", c("up", "down"), rep(colnames(tab)[fc.col], each=2))
-    combined <- DataFrame(num.tests=out[[1]], out[[2]], row.names=groups)
-    combined[[colnames(tab)[is.pval]]] <- out[[3]]
-    combined$FDR <- p.adjust(out[[3]], method="BH")
+    fc.col <- .parseFCcol(fc.col, tab) 
+    fcs <- as.list(tab[fc.col])
+    fc.out <- vector("list", length(fcs))
+    for (f in seq_along(fcs)) {
 
-    # Adding direction.
-    if (length(fc.col)==1L) {
-        labels <- c("mixed", "up", "down")
-        combined$direction <- labels[out[[4]] + 1L]
+        # NOTE: p.threshold=fc.threshold is not a bug.
+        n.out <- countGroupedDirection(p.vals, ids, fcs[[f]], 
+            p.threshold=fc.threshold, method=count.correct) 
+
+        stopifnot(identical(names(n.out$up), ref.names))
+        stopifnot(identical(names(n.out$down), ref.names))
+        n.out <- n.out[c("up", "down")]
+        names(n.out) <- sprintf("num.%s.%s", names(n.out), names(fcs)[f])
+        fc.out[[f]] <- n.out
+    }
+    
+    ntests <- table(ids)
+    ntests <- ntests[ref.names]
+    ntests <- as.integer(ntests)
+
+    if (length(fc.out)) {
+        fc.out <- unlist(fc.out, recursive=FALSE)
+        combined <- DataFrame(num.tests=ntests, lapply(fc.out, unname), row.names=ref.names)
+    } else {
+        combined <- DataFrame(num.tests=ntests, row.names=ref.names)
+    }
+    com.p <- unname(com.p)
+    combined[[colnames(tab)[is.pval]]] <- com.p
+    combined$FDR <- p.adjust(com.p, method="BH")
+
+    # Adding direction, if we can.
+    if (length(fcs)==1L) {
+        dir.out <- summarizeGroupedDirection(fcs[[1]], ids, p.out$influential) 
+        stopifnot(identical(names(dir.out), ref.names))
+        combined$direction <- unname(dir.out)
     }
 
     # Adding representative log-fold changes.
-    combined$rep.test <- input$original[out[[5]]+1L]
+    combined$rep.test <- originals[p.out$representative]
     if (length(fc.col)!=0L) {
-        combined <- cbind(combined, rep=tab[out[[5]] + 1L,fc.col,drop=FALSE])
+        combined <- cbind(combined, rep=tab[p.out$representative,fc.col,drop=FALSE])
     }
 
     combined
