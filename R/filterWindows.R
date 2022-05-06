@@ -72,7 +72,7 @@ filterWindowsLocal <- function(data, background, assay.data="counts", assay.back
     bwidth <- getWidths(background)
     dwidth <- getWidths(data)
     relative.width <- (bwidth  - dwidth)/dwidth
-    assay(background, i=assay.back) <- (assay(background, i=assay.back, withDimnames=FALSE) 
+    assay(background, i=assay.back, withDimnames=FALSE) <- (assay(background, i=assay.back, withDimnames=FALSE) 
         - assay(data, assay=assay.data, withDimnames=FALSE))
 
     # Some protection for negative widths (counts should be zero, so only the prior gets involved in bg.ab).
