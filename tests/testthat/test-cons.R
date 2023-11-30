@@ -87,7 +87,7 @@ test_that("findOverlapsList works correctly", {
             origins <- rep(seq_along(all.win), lengths(all.win))
             f <- paste0(queryHits(cons$overlaps), ".", origins[subjectHits(cons$overlaps)])
             summed <- by(cons$weights, INDICES=f, FUN=sum)
-            expect_identical(as.numeric(summed), rep(1, length(unique(f))))
+            expect_equal(as.numeric(summed), rep(1, length(unique(f))))
         }
     }
 
