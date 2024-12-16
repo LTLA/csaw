@@ -80,18 +80,15 @@ This is often more appropriate, e.g., the 5' end of the alignment represents the
 }
 
 \section{Constructor}{
-\describe{
-	\item{}{\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges())}:
-		Creates a readParam object. 
-		Each argument is placed in the corresponding slot, with coercion into the appropriate type.
-	}
-}
+\code{readParam(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA, restrict=NULL, discard=GRanges())}:
+Creates a readParam object. 
+Each argument is placed in the corresponding slot, with coercion into the appropriate type.
 }
 
 \section{Subsetting}{
-In the code snippes below, \code{x} is a readParam object.
+In the code snippets below, \code{x} is a readParam object.
 \describe{
-	\item{}{\code{x$name}: 
+	\item{\code{x$name}:}{
 	Returns the value in slot \code{name}.
 	}
 }
@@ -100,14 +97,14 @@ In the code snippes below, \code{x} is a readParam object.
 \section{Other methods}{
 In the code snippets below, \code{x} is a readParam object.
 \describe{
-    \item{}{\code{show(x)}:
+    \item{\code{show(x)}:}{
 	Describes the parameter settings in plain English.
   	}
-	\item{}{\code{reform(x, ...)}:
+	\item{\code{reform(x, ...)}:}{
 		Creates a new readParam object, based on the existing \code{x}.
 		Any named arguments in \code{...} are used to modify the values of the slots in the new object, with type coercion as necessary.
 	}
-}	
+}
 }
 
 \author{
