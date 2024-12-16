@@ -1,5 +1,5 @@
 Package: csaw
-Version: 1.41.0
+Version: 1.41.1
 Date: 2023-11-29
 Title: ChIP-Seq Analysis with Windows
 Authors@R:
@@ -36,7 +36,6 @@ Suggests:
     BiocManager
 LinkingTo:
     Rhtslib,
-    zlibbioc,
     Rcpp
 biocViews:
     MultipleComparison,
