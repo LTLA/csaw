@@ -46,10 +46,12 @@ SEXP find_maxima(SEXP chrs, SEXP starts, SEXP ends, SEXP metric, SEXP range) {
     // Setting up structures to compute maxima on the fly.
 	order_set incoming;
 	pqueue first_to_leave;
+    Rcpp::LogicalVector output(nlen);
     if (nlen) { 
 	    first_to_leave.push(incoming.insert(region_data(0, _ends[0], _metric[0])));
+    } else {
+        return output;
     }
-    Rcpp::LogicalVector output(nlen);
 
 	// Assuming we're sorted by sptr.
 	int right_edge=1;
