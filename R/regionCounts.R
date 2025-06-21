@@ -1,5 +1,5 @@
 #' @export
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam

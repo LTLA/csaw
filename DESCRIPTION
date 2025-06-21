@@ -1,13 +1,13 @@
 Package: csaw
-Version: 1.43.0
-Date: 2025-01-29
+Version: 1.43.1
+Date: 2025-06-20
 Title: ChIP-Seq Analysis with Windows
 Authors@R:
     c(person("Aaron", "Lun", role=c("aut", "cre"), email = "infinite.monkeys.with.keyboards@gmail.com"),
     person("Gordon", "Smyth", role="aut"))
 Depends:
-    GenomicRanges,
-    SummarizedExperiment
+    GenomicRanges (>= 1.61.1),
+    SummarizedExperiment (>= 1.39.1)
 Imports:
     Rcpp,
     Matrix,
@@ -18,7 +18,7 @@ Imports:
     methods,
     S4Vectors,
     IRanges,
-    GenomeInfoDb,
+    Seqinfo,
     stats,
     BiocParallel,
     metapod,
@@ -53,4 +53,4 @@ License: GPL-3
 NeedsCompilation: yes
 SystemRequirements: C++11, GNU make
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2

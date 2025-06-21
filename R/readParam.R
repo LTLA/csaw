@@ -116,7 +116,7 @@ readParam <- function(pe="none", max.frag=500, dedup=FALSE, minq=NA, forward=NA,
         processed.discard=.setupDiscard(discard))
 }
 
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @importFrom BiocGenerics start end
 .setupDiscard <- function(discard) {
     by.chr <- split(discard, seqnames(discard))

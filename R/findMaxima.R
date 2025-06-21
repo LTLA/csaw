@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom BiocGenerics strand start end
 #' @importFrom S4Vectors runValue
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 findMaxima <- function(regions, range, metric, ignore.strand=TRUE)
 # This function finds the maximum window in 'data', given a range
 # around which the maxima is to be considered. The 'metric' is,

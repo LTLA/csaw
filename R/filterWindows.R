@@ -146,7 +146,7 @@ filterWindowsControl <- function(data, background, assay.data="counts", assay.ba
 
 #' @importFrom stats median 
 #' @importFrom BiocGenerics start
-#' @importFrom GenomeInfoDb seqlengths seqnames
+#' @importFrom Seqinfo seqlengths seqnames
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom S4Vectors metadata
 .getWindowNum <- function(data) 

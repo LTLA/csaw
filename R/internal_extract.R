@@ -1,6 +1,6 @@
 #' @importFrom Rsamtools index 
 #' @importFrom BiocGenerics path
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @importFrom BiocGenerics start end 
 .extractSE <- function(bam.file, where, param) 
 # Extracts single-end read data from a BAM file with removal of unmapped,
@@ -50,7 +50,7 @@
 
 #' @importFrom Rsamtools index 
 #' @importFrom BiocGenerics path
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 #' @importFrom BiocGenerics start end
 .extractPE <- function(bam.file, where, param, with.reads=FALSE, diagnostics=FALSE)
 # A function to extract PE data for a particular chromosome. Synchronisation

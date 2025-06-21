@@ -4,7 +4,7 @@
 #' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom GenomeInfoDb seqnames
+#' @importFrom Seqinfo seqnames
 profileSites <- function(bam.files, regions, param=readParam(), range=5000, ext=100, 
     average=TRUE, normalize="none", strand=c("ignore", "use", "match"), BPPARAM=SerialParam()) 
 # Computes the coverage profile around putative binding sites. The 5' edge of the

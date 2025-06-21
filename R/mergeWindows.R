@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom BiocGenerics strand strand<- start end
 #' @importFrom S4Vectors runValue
-#' @importFrom GenomeInfoDb seqnames Seqinfo seqlevels seqlengths
+#' @importFrom Seqinfo seqnames Seqinfo seqlevels seqlengths
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 mergeWindows <- function(ranges, tol, signs=NULL, max.width=NULL, ignore.strand=TRUE)

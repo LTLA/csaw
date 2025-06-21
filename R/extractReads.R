@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom GenomicRanges GRanges GRangesList
 #' @importFrom IRanges IRanges overlapsAny
-#' @importFrom GenomeInfoDb Seqinfo seqnames
+#' @importFrom Seqinfo Seqinfo seqnames
 #' @importFrom Rsamtools scanBamHeader
 #' @importFrom S4Vectors Rle
 #' @importFrom BiocGenerics strand strand<- start end

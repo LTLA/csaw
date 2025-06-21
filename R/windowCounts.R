@@ -2,7 +2,7 @@
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom SummarizedExperiment SummarizedExperiment
-#' @importFrom GenomeInfoDb seqlevels<- seqlengths<-
+#' @importFrom Seqinfo seqlevels<- seqlengths<-
 #' @importFrom BiocParallel bpmapply bpisup bpstart bpstop SerialParam
 windowCounts <- function(bam.files, spacing=50, width=spacing, ext=100, shift=0, filter=10, bin=FALSE, 
      param=readParam(), BPPARAM=SerialParam())

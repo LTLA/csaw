@@ -1,7 +1,7 @@
 #' @export
 #' @importFrom IRanges promoters trim IRanges flank findOverlaps
 #' @importFrom BiocGenerics strand start end
-#' @importFrom GenomeInfoDb seqnames seqinfo
+#' @importFrom Seqinfo seqnames seqinfo
 #' @importFrom GenomicRanges GRanges
 #' @importFrom S4Vectors queryHits subjectHits
 #' @importFrom methods is
